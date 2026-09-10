@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "node test/spatialMcp.test.mjs"
+    "test": "node test/spatialMcp.test.mjs && node test/agentShield.test.mjs"
   },
   "keywords": [
     "mcp",

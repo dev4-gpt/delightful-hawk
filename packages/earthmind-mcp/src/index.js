@@ -19,6 +19,12 @@ import {
   evaluateOrbitalConjunction,
   evaluateGridThermalStrain
 } from './anomalyRules.js';
+import { validateAndSanitizeToolCall } from './agentShield.js';
+import {
+  generateSubseaLoiteringQuery,
+  generateDatacenterGridStrainQuery,
+  latLonToH3Index
+} from './bigqueryLakehouse.js';
 
 const SERVER_NAME = 'earthmind-spatial-mcp';
 const SERVER_VERSION = '0.1.0';
@@ -202,13 +208,39 @@ const TOOLS = [
       },
       required: ['startCoord', 'targetCoord']
     }
+  },
+  {
+    name: 'generate_bigquery_lakehouse_query',
+    description: 'Generates production BigQuery GIS SQL and Uber H3 hexagonal spatial queries for massive streaming telemetry datasets.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        domain: {
+          type: 'string',
+          enum: ['subsea_loitering', 'datacenter_grid_strain'],
+          description: 'The geospatial domain query to generate'
+        },
+        options: {
+          type: 'object',
+          description: 'Domain-specific filter options (e.g. bufferMeters, speedKnotsMax, heatThresholdCelsius)'
+        }
+      },
+      required: ['domain']
+    }
   }
 ];
 
 /**
- * Handle execution of specific MCP tool calls
+ * Handle execution of specific MCP tool calls with AgentShield security gating
  */
-export function handleToolCall(name, args) {
+export function handleToolCall(name, rawArgs) {
+  // Pre-execution security validation and sanitization via AgentShield
+  const shield = validateAndSanitizeToolCall(name, rawArgs);
+  if (!shield.allowed) {
+    throw new Error(`[AgentShield Violation] ${shield.error}`);
+  }
+  const args = shield.sanitizedArgs;
+
   switch (name) {
     case 'calculate_distance_and_heading': {
       const distMeters = haversineDistanceMeters(args.originLat, args.originLon, args.targetLat, args.targetLon);
@@ -217,20 +249,52 @@ export function handleToolCall(name, args) {
         distanceMeters: Math.round(distMeters),
         distanceKm: Math.round((distMeters / 1000.0) * 100) / 100,
         distanceNauticalMiles: Math.round((distMeters / 1852.0) * 100) / 100,
-        initialBearingDegrees: Math.round(bearing * 10) / 10
+        initialBearingDegrees: Math.round(bearing * 10) / 10,
+        securityCleared: true
       };
     }
     case 'evaluate_line_of_sight': {
-      return evaluateLineOfSight(args.observer, args.target);
+      return {
+        ...evaluateLineOfSight(args.observer, args.target),
+        securityCleared: true
+      };
     }
     case 'detect_subsea_cable_threat': {
-      return evaluateSubseaCableThreat(args.vessel, args.cable);
+      return {
+        ...evaluateSubseaCableThreat(args.vessel, args.cable),
+        securityCleared: true
+      };
     }
     case 'evaluate_orbital_conjunction': {
-      return evaluateOrbitalConjunction(args.primarySat, args.secondaryObject, args.thresholdKm);
+      return {
+        ...evaluateOrbitalConjunction(args.primarySat, args.secondaryObject, args.thresholdKm),
+        securityCleared: true
+      };
     }
     case 'evaluate_datacenter_grid_strain': {
-      return evaluateGridThermalStrain(args.datacenter, args.gridNode, args.ambientTempC);
+      return {
+        ...evaluateGridThermalStrain(args.datacenter, args.gridNode, args.ambientTempC),
+        securityCleared: true
+      };
+    }
+    case 'generate_bigquery_lakehouse_query': {
+      const opts = args.options || {};
+      if (args.domain === 'subsea_loitering') {
+        return {
+          domain: 'subsea_loitering',
+          engine: 'BigQuery GIS (ST_GeogPoint / ST_DWithin / Uber H3)',
+          sql: generateSubseaLoiteringQuery(opts),
+          securityCleared: true
+        };
+      } else if (args.domain === 'datacenter_grid_strain') {
+        return {
+          domain: 'datacenter_grid_strain',
+          engine: 'BigQuery GIS + Open-Meteo Weather Mesh',
+          sql: generateDatacenterGridStrainQuery(opts),
+          securityCleared: true
+        };
+      }
+      throw new Error(`Unsupported domain for BigQuery Lakehouse query: ${args.domain}`);
     }
     case 'generate_cinematic_camera_path': {
       const distance = haversineDistanceMeters(args.startCoord.lat, args.startCoord.lon, args.targetCoord.lat, args.targetCoord.lon);
@@ -268,7 +332,8 @@ export function handleToolCall(name, args) {
             pitch: -25,
             duration: Math.round(totalSec * 0.3)
           }
-        ]
+        ],
+        securityCleared: true
       };
     }
     default:
