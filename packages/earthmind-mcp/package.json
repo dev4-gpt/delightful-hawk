@@ -1,0 +1,26 @@
+{
+  "name": "earthmind-mcp",
+  "version": "0.1.0",
+  "description": "The open 3D Model Context Protocol (MCP) server providing spatial reasoning, line-of-sight, terrain analysis, and critical infrastructure anomaly detection to AI agents.",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "earthmind-mcp": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node test/spatialMcp.test.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "spatial-ai",
+    "geospatial",
+    "cesium",
+    "3d-world-models",
+    "gis",
+    "sentinel-mesh"
+  ],
+  "author": "Aetheris AI",
+  "license": "MIT"
+}

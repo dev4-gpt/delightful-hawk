@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+.DS_Store
+
+# Caches
+.gev-cache/
+.cache/
+dist/
+build/
+*.log
+
+# Environment files
+.env
+.env.local
