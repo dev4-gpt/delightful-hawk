@@ -35,6 +35,13 @@ import { initFirstRunExperience } from './firstRunExperience.js';
 import { initKeySetup } from './keySetup.js';
 import { loadPhotorealisticTileset } from './mapStartup.js';
 
+import cartridgeRegistry from './modules/cartridgeRegistry.js';
+import { createSentinelMeshCartridge } from './modules/sentinelMeshCartridge.js';
+import { createOrbitalOpsCartridge } from './modules/orbitalOpsCartridge.js';
+import { createGridTwinCartridge } from './modules/gridTwinCartridge.js';
+import { createGeoRiskCartridge } from './modules/geoRiskCartridge.js';
+import { initCartridgeSwitcher } from './modules/cartridgeSwitcher.js';
+
 initLogoGaze();
 
 /**
@@ -327,6 +334,16 @@ async function init() {
       requestRender: governorRequestRender,
     };
     window.__godsEyeView.voiceCommands = initGevVoiceCommands({ viewer, styleManager, dataManager, sceneDirector, annotations });
+
+    // Cartridge initialization
+    cartridgeRegistry.register(createSentinelMeshCartridge());
+    cartridgeRegistry.register(createOrbitalOpsCartridge());
+    cartridgeRegistry.register(createGridTwinCartridge());
+    cartridgeRegistry.register(createGeoRiskCartridge());
+    cartridgeRegistry.activate('sentinel-mesh');
+    initCartridgeSwitcher(cartridgeRegistry, viewer);
+    window.__aetherisCartridges = cartridgeRegistry;
+    window.__godsEyeView.__aetherisCartridges = cartridgeRegistry;
 
   } catch (error) {
     console.error("God's Eye View initialization failed:", error);
