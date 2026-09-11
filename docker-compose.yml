@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      target: gateway
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./apps/gateway:/app/apps/gateway
+
+  console:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./gods-eye-view:/app
+    command: npm run dev -- --port 4173 --host
+    ports:
+      - "4173:4173"
+    environment:
+      - CESIUM_ION_TOKEN=${CESIUM_ION_TOKEN}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  agents:
+    build:
+      context: .
+      target: agents
+    ports:
+      - "8000:8000"
+    environment:
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./agents:/app/agents
