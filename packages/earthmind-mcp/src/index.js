@@ -263,7 +263,9 @@ export function handleToolCall(name, rawArgs) {
       const bearing = calculateBearing(args.startCoord.lat, args.startCoord.lon, args.targetCoord.lat, args.targetCoord.lon);
       const totalSec = args.durationSec || 12;
 
-      const peakAltitude = Math.max(args.startCoord.alt, args.targetCoord.alt, distance * 0.25);
+      const startAlt = Number(args.startCoord?.alt) || 1000;
+      const targetAlt = Number(args.targetCoord?.alt) || 1000;
+      const peakAltitude = Math.max(startAlt, targetAlt, distance * 0.25);
 
       return {
         totalDistanceMeters: Math.round(distance),
@@ -272,7 +274,7 @@ export function handleToolCall(name, rawArgs) {
           {
             lat: args.startCoord.lat,
             lon: args.startCoord.lon,
-            alt: args.startCoord.alt,
+            alt: startAlt,
             heading: Math.round(bearing),
             pitch: -35,
             duration: Math.round(totalSec * 0.3)
@@ -288,7 +290,7 @@ export function handleToolCall(name, rawArgs) {
           {
             lat: args.targetCoord.lat,
             lon: args.targetCoord.lon,
-            alt: args.targetCoord.alt,
+            alt: targetAlt,
             heading: Math.round((bearing + 15) % 360),
             pitch: -25,
             duration: Math.round(totalSec * 0.3)

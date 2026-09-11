@@ -3,9 +3,15 @@ import os
 import uuid
 from typing import Optional
 
-from google_antigravity import LocalAgentConfig, policy
-from google_antigravity.mcp import McpStdioServer
-from google_antigravity.runner import AgentRunner
+try:
+    from compat import LocalAgentConfig, policy, McpStdioServer, AgentRunner
+except ImportError:
+    try:
+        from .compat import LocalAgentConfig, policy, McpStdioServer, AgentRunner
+    except ImportError:
+        from google_antigravity import LocalAgentConfig, policy
+        from google_antigravity.mcp import McpStdioServer
+        from google_antigravity.runner import AgentRunner
 
 from schemas.anomaly_report import CrossDomainAssessment
 from hooks.geo_error_recovery import GeoErrorRecoveryHook

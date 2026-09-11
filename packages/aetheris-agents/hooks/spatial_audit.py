@@ -2,7 +2,14 @@ import json
 import logging
 import time
 from typing import Any, Dict
-from google_antigravity import hooks
+
+try:
+    from compat import hooks
+except ImportError:
+    try:
+        from ..compat import hooks
+    except ImportError:
+        from google_antigravity import hooks
 
 logger = logging.getLogger("spatial_audit")
 

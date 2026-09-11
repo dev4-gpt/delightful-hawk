@@ -1,4 +1,8 @@
-import pytest
+try:
+    import pytest
+except ImportError:
+    pytest = None
+
 from schemas.anomaly_report import GeoPoint, SpatialAnomaly, CrossDomainAssessment
 from hooks.geo_error_recovery import GeoErrorRecoveryHook
 
@@ -45,3 +49,12 @@ def test_geo_error_recovery_hook():
     err3 = Exception("Rate limit reached")
     res3 = hook.on_tool_error("some_tool", {}, err3)
     assert "backoff" in res3
+
+if __name__ == '__main__':
+    print("Running Aetheris Agent tests...")
+    test_anomaly_report_schema()
+    print("✓ test_anomaly_report_schema passed")
+    test_geo_error_recovery_hook()
+    print("✓ test_geo_error_recovery_hook passed")
+    print("🎉 ALL PYTHON AGENT TESTS PASSED!")
+

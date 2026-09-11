@@ -1,3 +1,4 @@
 packages:
   - 'packages/*'
   - 'apps/*'
+  - 'gods-eye-view'
