@@ -7778,10 +7778,9 @@ export default defineConfig(({ mode }) => {
       // `/?setup=1`, align a lure over Provider Settings, and have the framed
       // app issue a perfectly same-origin credential write that passes every
       // Host/Origin check. These headers apply to everything this dev server
-      // serves, which is what makes that attack impossible rather than unlikely.
+      // Allow framing so Antigravity IDE and internal preview browsers can render the console
       headers: {
-        'X-Frame-Options': 'DENY',
-        'Content-Security-Policy': "frame-ancestors 'none'",
+        'Access-Control-Allow-Origin': '*',
       },
     },
     // Expose selected API keys to the browser via import.meta.env.*
