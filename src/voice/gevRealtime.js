@@ -9,6 +9,7 @@ import {
   resolveVoiceModel,
   serializeCostLimits,
 } from './voiceCost.js';
+import { createWebSpeechFallback } from './webSpeechFallback.js';
 
 const TOKEN_URL = '/api/realtime/token';
 const REALTIME_CALLS_URL = 'https://api.openai.com/v1/realtime/calls';
@@ -374,7 +375,28 @@ export class GevRealtimeController {
     let localStream = null;
     let localPc = null;
     try {
-      const minted = await fetchRealtimeToken(this.voiceTier);
+      let minted;
+      try {
+        minted = await fetchRealtimeToken(this.voiceTier);
+      } catch (tokenError) {
+        this.debugLog('token.error.fallback', { error: tokenError.message });
+        if (this.abandonStart(epoch, { localStream, localPc })) return;
+        
+        if (!this.webSpeechFallback) {
+          this.webSpeechFallback = createWebSpeechFallback({
+            runner: this.runner,
+            ui: this.ui,
+            cartridgeRegistry: this.dataManager?.cartridgeRegistry || window.__aetherisCartridges || window.__gevCartridgeRegistry
+          });
+        }
+        
+        this.setStatus('listening', 'LOCAL VOICE');
+        if (this.ui?.status) {
+          this.ui.status.style.color = '#00ff00';
+        }
+        this.webSpeechFallback.start();
+        return;
+      }
       const token = minted.token;
       if (this.abandonStart(epoch, { localStream, localPc })) return;
       // Bind the session meter to the model actually served. An env override
@@ -768,6 +790,9 @@ export class GevRealtimeController {
   }
 
   stop(options = {}) {
+    if (this.webSpeechFallback) {
+      this.webSpeechFallback.stop();
+    }
     const { removeUi = false, preserveStatus = false, preserveRadioPlayback = false } = options;
     // Bump the epoch so any start() awaiting a token/getUserMedia/SDP bails and
     // releases its own resources instead of promoting them onto a stopped
