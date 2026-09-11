@@ -115,6 +115,18 @@ class CartridgeRegistry {
     return () => this._listeners.delete(listener);
   }
 
+  /**
+   * Event emitter style listener for specific events ('activated', 'deactivated')
+   */
+  on(eventName, callback) {
+    if (typeof callback !== 'function') return () => {};
+    return this.subscribe(({ event, cartridge }) => {
+      if (event === eventName) {
+        callback(cartridge);
+      }
+    });
+  }
+
   _notifyListeners(event, cartridge) {
     for (const listener of this._listeners) {
       try {
