@@ -1,4 +1,3 @@
-// gods-eye-view/src/modules/cartridgeRegistry.js
 /**
  * Aetheris Modular Cartridge Registry
  * Manages domain intelligence modules (SentinelMesh, OrbitalOps, GridTwin, GeoRisk)
@@ -15,6 +14,7 @@ export const CARTRIDGE_IDS = {
 class CartridgeRegistry {
   constructor() {
     this._cartridges = new Map();
+    this._visualizers = new Map();
     this._activeCartridgeId = null;
     this._listeners = new Set();
   }
@@ -22,12 +22,6 @@ class CartridgeRegistry {
   /**
    * Registers a domain intelligence cartridge
    * @param {Object} cartridge Cartridge definition
-   * @param {string} cartridge.id Unique identifier
-   * @param {string} cartridge.title Display title
-   * @param {string} cartridge.category Category (Defense, Space, Energy, Climate)
-   * @param {Function} cartridge.onActivate Callback when module becomes active
-   * @param {Function} cartridge.onDeactivate Callback when module becomes inactive
-   * @param {Function} cartridge.evaluateAlerts Function to evaluate domain alerts
    */
   register(cartridge) {
     if (!cartridge.id) throw new Error('Cartridge must have a valid id');
@@ -35,6 +29,10 @@ class CartridgeRegistry {
       ...cartridge,
       registeredAt: Date.now()
     });
+  }
+
+  registerVisualizer(cartridgeId, visualizer) {
+    this._visualizers.set(cartridgeId, visualizer);
   }
 
   /**
@@ -70,12 +68,20 @@ class CartridgeRegistry {
       if (typeof prior.onDeactivate === 'function') {
         prior.onDeactivate(context);
       }
+      const priorVis = this._visualizers.get(this._activeCartridgeId);
+      if (priorVis && typeof priorVis.hide === 'function') {
+        priorVis.hide();
+      }
     }
 
     this._activeCartridgeId = cartridgeId;
     const current = this._cartridges.get(cartridgeId);
     if (typeof current.onActivate === 'function') {
       current.onActivate(context);
+    }
+    const currentVis = this._visualizers.get(cartridgeId);
+    if (currentVis && typeof currentVis.show === 'function') {
+      currentVis.show();
     }
 
     this._notifyListeners('activated', current);
@@ -90,6 +96,10 @@ class CartridgeRegistry {
     const prior = this._cartridges.get(this._activeCartridgeId);
     if (typeof prior.onDeactivate === 'function') {
       prior.onDeactivate(context);
+    }
+    const priorVis = this._visualizers.get(this._activeCartridgeId);
+    if (priorVis && typeof priorVis.hide === 'function') {
+      priorVis.hide();
     }
     this._activeCartridgeId = null;
     this._notifyListeners('deactivated', prior);
@@ -117,3 +127,4 @@ class CartridgeRegistry {
 }
 
 export const cartridgeRegistry = new CartridgeRegistry();
+export default cartridgeRegistry;

@@ -36,6 +36,12 @@ import { initKeySetup } from './keySetup.js';
 import { loadPhotorealisticTileset } from './mapStartup.js';
 
 import cartridgeRegistry from './modules/cartridgeRegistry.js';
+import { createSubseaVisualizer } from "./modules/visualizers/subseaVisualizer.js";
+import { createOrbitalVisualizer } from "./modules/visualizers/orbitalVisualizer.js";
+import { createGridTwinVisualizer } from "./modules/visualizers/gridTwinVisualizer.js";
+import { createGeoRiskVisualizer } from "./modules/visualizers/geoRiskVisualizer.js";
+import { initAgentBridge } from "./modules/agentBridge.js";
+
 import { createSentinelMeshCartridge } from './modules/sentinelMeshCartridge.js';
 import { createOrbitalOpsCartridge } from './modules/orbitalOpsCartridge.js';
 import { createGridTwinCartridge } from './modules/gridTwinCartridge.js';
@@ -340,6 +346,19 @@ async function init() {
     cartridgeRegistry.register(createOrbitalOpsCartridge());
     cartridgeRegistry.register(createGridTwinCartridge());
     cartridgeRegistry.register(createGeoRiskCartridge());
+
+    const subseaVis = createSubseaVisualizer(viewer, Cesium);
+    const orbitalVis = createOrbitalVisualizer(viewer, Cesium);
+    const gridTwinVis = createGridTwinVisualizer(viewer, Cesium);
+    const geoRiskVis = createGeoRiskVisualizer(viewer, Cesium);
+
+    cartridgeRegistry.registerVisualizer('sentinel-mesh', subseaVis);
+    cartridgeRegistry.registerVisualizer('orbital-ops', orbitalVis);
+    cartridgeRegistry.registerVisualizer('grid-twin', gridTwinVis);
+    cartridgeRegistry.registerVisualizer('geo-risk', geoRiskVis);
+
+    initAgentBridge(viewer);
+
     cartridgeRegistry.activate('sentinel-mesh');
     initCartridgeSwitcher(cartridgeRegistry, viewer);
     window.__aetherisCartridges = cartridgeRegistry;
