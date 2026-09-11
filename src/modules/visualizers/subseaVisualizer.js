@@ -1,8 +1,16 @@
 export function createSubseaVisualizer(viewer, Cesium) {
     let entities = [];
 
+    const hide = () => {
+        for (const entity of entities) {
+            viewer.entities.remove(entity);
+        }
+        entities = [];
+    };
+
     return {
         show: () => {
+            hide();
             // TAT-14 Cable
             entities.push(viewer.entities.add({
                 polyline: {

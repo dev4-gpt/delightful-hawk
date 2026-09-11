@@ -46,7 +46,25 @@ export class WebSpeechController {
   }
 
   start() {
-    if (!this.recognition) return;
+    this.ensureTextCommandInput();
+    if (!this.recognition) {
+      if (this.ui) {
+        if (this.ui.root) {
+          this.ui.root.dataset.status = 'listening';
+          this.ui.root.dataset.microphone = 'standby';
+        }
+        if (this.ui.status) {
+          this.ui.status.textContent = 'TEXT COMMAND ACTIVE';
+          this.ui.status.style.color = '#00f0ff';
+        }
+        if (this.ui.detail) {
+          this.ui.detail.textContent = 'MIC UNAVAILABLE — USE COMMAND BAR';
+        }
+      }
+      this.addBridgeMessage('[SYSTEM] Web Speech API unavailable in this environment. Tactical text command bar activated.');
+      return;
+    }
+
     this.isListening = true;
     try {
       this.recognition.start();
@@ -65,6 +83,62 @@ export class WebSpeechController {
         this.ui.detail.textContent = 'LOCAL VOICE';
       }
     }
+  }
+
+  ensureTextCommandInput() {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('aetheris-voice-text-input')) return;
+    const targetParent = document.getElementById('agent-tactical-drawer') || document.body;
+    const inputContainer = document.createElement('div');
+    inputContainer.id = 'aetheris-voice-text-input';
+    inputContainer.style.cssText = `
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      width: 100%;
+      pointer-events: auto;
+    `;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Tactical command (e.g. "orbital", "fly to London")...';
+    input.style.cssText = `
+      flex: 1;
+      background: rgba(15, 25, 40, 0.9);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 4px;
+      color: #fff;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      padding: 5px 8px;
+      outline: none;
+    `;
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'EXEC';
+    submitBtn.style.cssText = `
+      background: rgba(0, 240, 255, 0.2);
+      border: 1px solid #00f0ff;
+      border-radius: 4px;
+      color: #00f0ff;
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 5px 10px;
+      cursor: pointer;
+    `;
+    const send = () => {
+      const val = input.value.trim();
+      if (val) {
+        this.handleTranscript(val.toLowerCase());
+        input.value = '';
+      }
+    };
+    submitBtn.onclick = send;
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') send();
+    };
+    inputContainer.appendChild(input);
+    inputContainer.appendChild(submitBtn);
+    targetParent.appendChild(inputContainer);
   }
 
   stop() {

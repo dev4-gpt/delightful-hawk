@@ -90,6 +90,8 @@ export function initCartridgeSwitcher(registry, viewer) {
   cartridges.forEach(c => {
     const btn = document.createElement('button');
     btn.className = `cs-tab-${c.id}`;
+    btn.dataset.cartridgeId = c.id;
+    btn.setAttribute('aria-label', c.label);
     const icon = DOMAIN_ICONS[c.id] || '⚡';
     btn.innerHTML = `<span style="margin-right: 4px;">${icon}</span>${c.label}`;
     btn.style.cssText = `

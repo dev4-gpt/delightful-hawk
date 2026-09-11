@@ -1,8 +1,16 @@
 export function createOrbitalVisualizer(viewer, Cesium) {
     let entities = [];
 
+    const hide = () => {
+        for (const entity of entities) {
+            viewer.entities.remove(entity);
+        }
+        entities = [];
+    };
+
     return {
         show: () => {
+            hide();
             const primaryPositions = [];
             for (let i = 0; i <= 360; i += 5) {
                 const lon = i;
