@@ -23,15 +23,16 @@ Built on WGS84 ellipsoidal geometry and inspired by the open-source **God's Eye 
 ## Quick Start: Connecting to Claude Desktop or Cursor
 
 ### 1. Claude Desktop Setup
-Add EarthMind to your `claude_desktop_config.json`:
+Add EarthMind to your `claude_desktop_config.json` using the published NPM package:
 
 ```json
 {
   "mcpServers": {
     "earthmind-spatial": {
-      "command": "node",
+      "command": "npx",
       "args": [
-        "/path/to/packages/earthmind-mcp/src/index.js"
+        "-y",
+        "@aetheris/earthmind-mcp"
       ]
     }
   }
@@ -39,6 +40,13 @@ Add EarthMind to your `claude_desktop_config.json`:
 ```
 
 Restart Claude Desktop, and your AI assistant will immediately possess 3D geospatial intelligence tools!
+
+### 2. Cursor Configuration
+
+In your Cursor IDE settings, navigate to Features -> MCP, and add a new MCP server:
+- **Type:** `command`
+- **Name:** `earthmind`
+- **Command:** `npx -y @aetheris/earthmind-mcp`
 
 ---
 

@@ -65,4 +65,26 @@ describe('Gateway Tests', () => {
     const body = JSON.parse(response.payload);
     assert.ok(Array.isArray(body.vessels));
   });
+
+  test('/api/voice/personas returns personas', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/api/voice/personas'
+    });
+    assert.strictEqual(response.statusCode, 200);
+    const body = JSON.parse(response.payload);
+    assert.ok(body.personas);
+    assert.ok(body.personas.tactical_command);
+  });
+
+  test('/api/voice/synthesize returns audio', async () => {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/api/voice/synthesize',
+      payload: { text: 'Test text', persona: 'tactical_command' }
+    });
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.headers['content-type'], 'audio/wav');
+    assert.ok(response.rawPayload.length > 0);
+  });
 });

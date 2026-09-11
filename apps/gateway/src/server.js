@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
 import url from 'node:url';
+import { synthesizeSpeech, getVoicePersonas } from './services/ttsService.js';
 
 export async function buildServer() {
   const fastify = Fastify({ logger: false });
@@ -25,6 +26,25 @@ export async function buildServer() {
       uptime: process.uptime(),
       memory: process.memoryUsage()
     };
+  });
+
+  fastify.get('/api/voice/personas', async (request, reply) => {
+    return {
+      personas: getVoicePersonas(),
+      voxCpmStatus: process.env.VOXCPM_API_URL || 'http://127.0.0.1:8080/v1/audio/speech'
+    };
+  });
+
+  fastify.post('/api/voice/synthesize', async (request, reply) => {
+    const { text, persona } = request.body || {};
+    if (!text) {
+      return reply.code(400).send({ error: 'Missing text parameter' });
+    }
+    
+    const audioBuffer = await synthesizeSpeech({ text, voicePersona: persona, format: 'wav' });
+    
+    reply.header('Content-Type', 'audio/wav');
+    return audioBuffer;
   });
 
   fastify.get('/api/opensky', async (request, reply) => {
