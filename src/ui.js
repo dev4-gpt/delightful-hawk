@@ -7738,6 +7738,16 @@ export class StyleManager {
       if (otherPanel && !otherPanel.classList.contains('dock-pinned')) {
         this.setPanelCollapsed('location-bar', true, { restore, persist, syncShare });
       }
+    } else if (!nextCollapsed && !restore && panelId === 'global-context-panel') {
+      const pp = document.getElementById('pp-toggles');
+      if (pp && !pp.classList.contains('collapsed')) {
+        this.setPanelCollapsed('pp-toggles', true, { restore, persist, syncShare });
+      }
+    } else if (!nextCollapsed && !restore && panelId === 'pp-toggles') {
+      const ctx = document.getElementById('global-context-panel');
+      if (ctx && !ctx.classList.contains('collapsed')) {
+        this.setPanelCollapsed('global-context-panel', true, { restore, persist, syncShare });
+      }
     }
     panelEl.classList.toggle('collapsed', nextCollapsed);
     if (nextCollapsed && this.cockpitView?.active && panelId === 'data-panel'

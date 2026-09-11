@@ -573,14 +573,16 @@ export class SceneDirector {
     return { scene, shot };
   }
 
-  /** Prompt the user for a name and append a new empty scene to the project. */
+  /** Append a new empty scene to the project with non-blocking auto-naming. */
   _createScene() {
-    const sceneName = window.prompt('New scene name', `Scene ${this._project.scenes.length + 1}`);
-    if (!sceneName) return;
+    const defaultName = `Scene ${this._project.scenes.length + 1}`;
+    const sceneName = (typeof window !== 'undefined' && window.__interactiveScenePrompt)
+      ? (window.prompt('New scene name', defaultName) || defaultName)
+      : defaultName;
 
     const scene = {
       id: uid('scene'),
-      title: sceneName.trim() || `Scene ${this._project.scenes.length + 1}`,
+      title: sceneName.trim() || defaultName,
       shots: [],
     };
 
@@ -1036,10 +1038,11 @@ export class SceneDirector {
    * @param {string} [reason='Stopped'] - Human-readable cancellation reason
    */
   stopScene(reason = 'Stopped') {
-    if (!this._running || !this._runToken) return;
-    this._runToken.cancelled = true;
+    if (!this._running && !this._runToken) return;
+    if (this._runToken) this._runToken.cancelled = true;
     this._runAbort?.abort();
-    this.viewer.camera.cancelFlight();
+    this.viewer?.camera?.cancelFlight?.();
+    this._finishRun();
     this._updateStatus(reason);
     this._logEvent('scene_stopped', { reason });
   }

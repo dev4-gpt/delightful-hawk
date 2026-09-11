@@ -6,6 +6,11 @@ export class WebSpeechController {
     this.recognition = null;
     this.isListening = false;
     this.synthesis = window.speechSynthesis;
+
+    // Eagerly mount tactical text command bar on initial boot
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      setTimeout(() => this.ensureTextCommandInput(), 500);
+    }
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {

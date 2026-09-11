@@ -7746,7 +7746,7 @@ body:not(.ui-clean-view):not(.recording-mode) #cesium-credits {
   justify-content: center;
 }
 
-#command-dock #control-panel .dock-tray-toggle {
+#command-dock :is(#control-panel, #location-bar) .dock-tray-toggle {
   box-sizing: border-box;
   width: 100%;
   color: inherit;
@@ -7757,7 +7757,7 @@ body:not(.ui-clean-view):not(.recording-mode) #cesium-credits {
   outline: none;
 }
 
-#command-dock #control-panel .dock-tray-toggle:focus-visible {
+#command-dock :is(#control-panel, #location-bar) .dock-tray-toggle:focus-visible {
   outline: 1px solid color-mix(in srgb, var(--accent) 80%, transparent);
   outline-offset: 3px;
   border-radius: 3px;

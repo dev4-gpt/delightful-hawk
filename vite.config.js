@@ -2371,6 +2371,16 @@ function terrainHeightsProxy() {
               + ' — serving stale points when available'
             );
           }
+          if (outcome.status === 502 && Array.isArray(points)) {
+            const fallbackResults = points.map((p) => {
+              const key = terrainPointKey(p);
+              const cached = mem.get(key);
+              if (cached && validTerrainResult(cached.result)) return cached.result;
+              return { lon: p[0], lat: p[1], height: 0, ellipsoid: 0 };
+            });
+            send(200, { results: fallbackResults, fallback: true });
+            return;
+          }
           send(outcome.status, outcome.body);
         } catch (err) {
           send(500, { error: `terrain heights proxy error: ${err?.message || err}` });
@@ -3279,15 +3289,15 @@ function openSkyProxy() {
           const requestedMode = normalizeOpenSkyAuthMode(process.env.OPENSKY_AUTH_MODE);
           if (await serveAdsbLolPointFallback(req, res, requestedMode, 'opensky_proxy_error_regional_fallback')) return;
           res.writeHead(
-            502,
+            200,
             buildOpenSkyHeaders({
-              cacheStatus: 'MISS',
+              cacheStatus: 'FALLBACK',
               requestedMode,
-              usedMode: 'error',
-              reason: 'proxy_error',
+              usedMode: 'fallback',
+              reason: 'proxy_fallback_empty',
             })
           );
-          res.end(JSON.stringify({ error: 'OpenSky proxy error' }));
+          res.end(JSON.stringify({ time: Math.floor(Date.now() / 1000), states: [] }));
         }
       });
     },
@@ -4843,8 +4853,8 @@ function adsbLolProxy() {
             res.end(_cache);
             return;
           }
-          res.writeHead(502, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'ADS-B proxy error' }));
+          res.writeHead(200, { 'Content-Type': 'application/json', 'X-ADS-B-Cache': 'FALLBACK' });
+          res.end(JSON.stringify({ ac: [], total: 0 }));
         }
       });
     },
