@@ -1,4 +1,3 @@
-// packages/earthmind-mcp/src/spatialMath.js
 /**
  * Core 3D Geodetic & Spatial Math Primitives
  * WGS84 ellipsoid constants and spatial analytical functions for AI agents.
@@ -8,6 +7,7 @@ export const WGS84_SEMI_MAJOR_AXIS = 6378137.0; // meters (a)
 export const WGS84_SEMI_MINOR_AXIS = 6356752.314245; // meters (b)
 export const WGS84_FLATTENING = 1 / 298.257223563; // f
 export const WGS84_E_SQUARED = 0.00669437999014; // e^2
+export const WGS84_MEAN_RADIUS = 6371008.8; // Mean Earth radius in meters
 
 /**
  * Calculates Great-Circle distance between two coordinates in meters (Haversine formula).
@@ -18,7 +18,7 @@ export const WGS84_E_SQUARED = 0.00669437999014; // e^2
  * @returns {number} Distance in meters
  */
 export function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371008.8; // Mean Earth radius in meters
+  const R = WGS84_MEAN_RADIUS;
   const dLat = ((lat2 - lat1) * Math.PI) / 180.0;
   const dLon = ((lon2 - lon1) * Math.PI) / 180.0;
   const radLat1 = (lat1 * Math.PI) / 180.0;
@@ -86,7 +86,7 @@ export function ecefDistance(p1, p2) {
  * @returns {{hasLineOfSight: boolean, surfaceDistanceM: number, straightLineDistanceM: number, horizonDistanceObsM: number, horizonDistanceTgtM: number}}
  */
 export function evaluateLineOfSight(observer, target) {
-  const R = 6371008.8; // Earth radius
+  const R = WGS84_MEAN_RADIUS;
   const surfaceDist = haversineDistanceMeters(observer.lat, observer.lon, target.lat, target.lon);
 
   const obsECEF = geodeticToECEF(observer.lat, observer.lon, observer.alt);
@@ -127,20 +127,58 @@ export function pointToPathDistance(point, path) {
   let closestVertex = path[0];
   let segmentIdx = 0;
 
+  const R = WGS84_MEAN_RADIUS;
+
   for (let i = 0; i < path.length - 1; i++) {
     const p1 = path[i];
     const p2 = path[i + 1];
     
-    // Sample along segment at 10 intervals
-    for (let t = 0; t <= 1.0; t += 0.1) {
-      const sampleLat = p1.lat + t * (p2.lat - p1.lat);
-      const sampleLon = p1.lon + t * (p2.lon - p1.lon);
-      const d = haversineDistanceMeters(point.lat, point.lon, sampleLat, sampleLon);
-      if (d < minDistance) {
-        minDistance = d;
-        closestVertex = { lat: sampleLat, lon: sampleLon };
-        segmentIdx = i;
-      }
+    // Antimeridian handling for segment
+    let p2Lon = p2.lon;
+    if (Math.abs(p2Lon - p1.lon) > 180) {
+      p2Lon += p2Lon < p1.lon ? 360 : -360;
+    }
+    
+    // Antimeridian handling for point
+    let ptLon = point.lon;
+    if (Math.abs(ptLon - p1.lon) > 180) {
+      ptLon += ptLon < p1.lon ? 360 : -360;
+    }
+
+    const dist12 = haversineDistanceMeters(p1.lat, p1.lon, p2.lat, p2Lon);
+    if (dist12 === 0) continue;
+    
+    const bearing12 = calculateBearing(p1.lat, p1.lon, p2.lat, p2Lon) * Math.PI / 180;
+    const bearing13 = calculateBearing(p1.lat, p1.lon, point.lat, ptLon) * Math.PI / 180;
+    const dist13 = haversineDistanceMeters(p1.lat, p1.lon, point.lat, ptLon);
+
+    const crossTrackDist = Math.asin(Math.sin(dist13 / R) * Math.sin(bearing13 - bearing12)) * R;
+    const alongTrackDist = Math.acos(Math.cos(dist13 / R) / Math.cos(crossTrackDist / R)) * R;
+
+    let d;
+    let closestPtLat, closestPtLon;
+
+    if (alongTrackDist < 0) {
+      d = dist13;
+      closestPtLat = p1.lat;
+      closestPtLon = p1.lon;
+    } else if (alongTrackDist > dist12) {
+      d = haversineDistanceMeters(p2.lat, p2Lon, point.lat, ptLon);
+      closestPtLat = p2.lat;
+      closestPtLon = p2Lon;
+    } else {
+      d = Math.abs(crossTrackDist);
+      const fraction = alongTrackDist / dist12;
+      closestPtLat = p1.lat + fraction * (p2.lat - p1.lat);
+      closestPtLon = p1.lon + fraction * (p2Lon - p1.lon);
+    }
+    
+    closestPtLon = ((closestPtLon + 180) % 360) - 180;
+
+    if (d < minDistance) {
+      minDistance = d;
+      closestVertex = { lat: closestPtLat, lon: closestPtLon };
+      segmentIdx = i;
     }
   }
 

@@ -1,74 +1,60 @@
-#!/usr/bin/env node
-// packages/earthmind-mcp/src/index.js
 /**
- * EarthMind 3D Spatial Model Context Protocol (MCP) Server
- * Exposes standardized 3D geospatial analytical tools, line-of-sight analysis,
- * and critical infrastructure anomaly detection to AI models.
+ * EarthMind MCP Server
+ * Migration note: Currently using hand-rolled JSON-RPC over stdio. 
+ * Will be migrated to @modelcontextprotocol/sdk in a future release.
  */
 
-import * as readline from 'readline';
-import {
-  haversineDistanceMeters,
-  calculateBearing,
-  geodeticToECEF,
-  evaluateLineOfSight,
-  pointToPathDistance
-} from './spatialMath.js';
-import {
-  evaluateSubseaCableThreat,
-  evaluateOrbitalConjunction,
-  evaluateGridThermalStrain
-} from './anomalyRules.js';
+import readline from 'readline';
 import { validateAndSanitizeToolCall } from './agentShield.js';
-import {
-  generateSubseaLoiteringQuery,
-  generateDatacenterGridStrainQuery,
-  latLonToH3Index
-} from './bigqueryLakehouse.js';
+import { haversineDistanceMeters, calculateBearing } from './spatialMath.js';
+import { evaluateLineOfSight } from './spatialMath.js';
+import { evaluateSubseaCableThreat, evaluateOrbitalConjunction, evaluateGridThermalStrain } from './anomalyRules.js';
+import { generateSubseaLoiteringQuery, generateDatacenterGridStrainQuery } from './bigqueryLakehouse.js';
 
-const SERVER_NAME = 'earthmind-spatial-mcp';
-const SERVER_VERSION = '0.1.0';
+const SERVER_NAME = 'earthmind-mcp';
+const SERVER_VERSION = '0.2.0';
 
-/**
- * List of available MCP tools
- */
-const TOOLS = [
+function log(level, msg, data = {}) {
+  const entry = { ts: new Date().toISOString(), level, msg, ...data };
+  process.stderr.write(JSON.stringify(entry) + '\n');
+}
+
+let requestCount = 0;
+
+process.on('uncaughtException', (err) => {
+  log('fatal', 'Uncaught exception', { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+export const TOOLS = [
   {
     name: 'calculate_distance_and_heading',
-    description: 'Calculate Great-Circle distance (in meters and km) and initial forward azimuth bearing between two geodetic coordinates on the WGS84 ellipsoid.',
+    description: 'Calculates the Great-Circle distance and initial bearing between two coordinates.',
     inputSchema: {
       type: 'object',
       properties: {
-        originLat: { type: 'number', description: 'Origin latitude in decimal degrees [-90, 90]' },
-        originLon: { type: 'number', description: 'Origin longitude in decimal degrees [-180, 180]' },
-        targetLat: { type: 'number', description: 'Target latitude in decimal degrees [-90, 90]' },
-        targetLon: { type: 'number', description: 'Target longitude in decimal degrees [-180, 180]' }
+        originLat: { type: 'number' },
+        originLon: { type: 'number' },
+        targetLat: { type: 'number' },
+        targetLon: { type: 'number' }
       },
       required: ['originLat', 'originLon', 'targetLat', 'targetLon']
     }
   },
   {
     name: 'evaluate_line_of_sight',
-    description: 'Evaluate 3D Line-of-Sight (LOS) between an observer and a target taking into account Earth curvature and altitudes.',
+    description: 'Calculates 3D line-of-sight considering Earth curvature.',
     inputSchema: {
       type: 'object',
       properties: {
         observer: {
           type: 'object',
-          properties: {
-            lat: { type: 'number', description: 'Observer latitude' },
-            lon: { type: 'number', description: 'Observer longitude' },
-            alt: { type: 'number', description: 'Observer altitude in meters above sea level' }
-          },
+          properties: { lat: { type: 'number' }, lon: { type: 'number' }, alt: { type: 'number' } },
           required: ['lat', 'lon', 'alt']
         },
         target: {
           type: 'object',
-          properties: {
-            lat: { type: 'number', description: 'Target latitude' },
-            lon: { type: 'number', description: 'Target longitude' },
-            alt: { type: 'number', description: 'Target altitude in meters above sea level' }
-          },
+          properties: { lat: { type: 'number' }, lon: { type: 'number' }, alt: { type: 'number' } },
           required: ['lat', 'lon', 'alt']
         }
       },
@@ -77,48 +63,41 @@ const TOOLS = [
   },
   {
     name: 'detect_subsea_cable_threat',
-    description: 'SentinelMesh Watchstander: Evaluates whether a marine vessel poses an anchor-drag, loitering, or sabotage threat to a subsea fiber-optic cable or landing station.',
+    description: 'Evaluates marine vessel proximity to subsea cables.',
     inputSchema: {
       type: 'object',
       properties: {
         vessel: {
           type: 'object',
           properties: {
-            mmsi: { type: 'string', description: 'Vessel MMSI identifier' },
-            name: { type: 'string', description: 'Vessel name' },
-            lat: { type: 'number', description: 'Current latitude' },
-            lon: { type: 'number', description: 'Current longitude' },
-            speedKnots: { type: 'number', description: 'Speed over ground in knots' },
-            durationNearMins: { type: 'number', description: 'Minutes spent in vicinity (default 15)' }
+            mmsi: { type: 'string' },
+            name: { type: 'string' },
+            lat: { type: 'number' },
+            lon: { type: 'number' },
+            speedKnots: { type: 'number' },
+            durationNearMins: { type: 'number' }
           },
           required: ['mmsi', 'lat', 'lon', 'speedKnots']
         },
         cable: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'Cable ID' },
-            name: { type: 'string', description: 'Cable name' },
+            id: { type: 'string' },
+            name: { type: 'string' },
             coordinates: {
               type: 'array',
               items: {
                 type: 'object',
-                properties: {
-                  lat: { type: 'number' },
-                  lon: { type: 'number' }
-                },
+                properties: { lat: { type: 'number' }, lon: { type: 'number' } },
                 required: ['lat', 'lon']
-              },
-              description: 'Array of geodetic vertices defining the cable path'
+              }
             },
             landingStations: {
               type: 'array',
               items: {
                 type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  lat: { type: 'number' },
-                  lon: { type: 'number' }
-                }
+                properties: { name: { type: 'string' }, lat: { type: 'number' }, lon: { type: 'number' } },
+                required: ['name', 'lat', 'lon']
               }
             }
           },
@@ -130,40 +109,28 @@ const TOOLS = [
   },
   {
     name: 'evaluate_orbital_conjunction',
-    description: 'OrbitalOps Watchstander: Evaluates close-approach conjunction risk between a satellite and space debris or secondary orbital body.',
+    description: 'Evaluates close approach between two orbital bodies.',
     inputSchema: {
       type: 'object',
       properties: {
         primarySat: {
           type: 'object',
-          properties: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-            lat: { type: 'number' },
-            lon: { type: 'number' },
-            altKm: { type: 'number' }
-          },
+          properties: { id: { type: 'string' }, name: { type: 'string' }, lat: { type: 'number' }, lon: { type: 'number' }, altKm: { type: 'number' } },
           required: ['id', 'name', 'lat', 'lon', 'altKm']
         },
         secondaryObject: {
           type: 'object',
-          properties: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-            lat: { type: 'number' },
-            lon: { type: 'number' },
-            altKm: { type: 'number' }
-          },
+          properties: { id: { type: 'string' }, name: { type: 'string' }, lat: { type: 'number' }, lon: { type: 'number' }, altKm: { type: 'number' } },
           required: ['id', 'name', 'lat', 'lon', 'altKm']
         },
-        thresholdKm: { type: 'number', description: 'Warning threshold in kilometers (default 15)' }
+        thresholdKm: { type: 'number' }
       },
       required: ['primarySat', 'secondaryObject']
     }
   },
   {
     name: 'evaluate_datacenter_grid_strain',
-    description: 'GridTwin Watchstander: Evaluates power grid stress and thermal overload risk for an AI datacenter cluster.',
+    description: 'Evaluates AI datacenter power draw against local grid capacity and ambient temperature.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -171,7 +138,7 @@ const TOOLS = [
           type: 'object',
           properties: {
             name: { type: 'string' },
-            drawMw: { type: 'number', description: 'Current power consumption in Megawatts' }
+            drawMw: { type: 'number' }
           },
           required: ['name', 'drawMw']
         },
@@ -179,18 +146,18 @@ const TOOLS = [
           type: 'object',
           properties: {
             name: { type: 'string' },
-            capacityMw: { type: 'number', description: 'Rated substation capacity in Megawatts' }
+            capacityMw: { type: 'number' }
           },
           required: ['name', 'capacityMw']
         },
-        ambientTempC: { type: 'number', description: 'Local ambient temperature in Celsius' }
+        ambientTempC: { type: 'number' }
       },
       required: ['datacenter', 'gridNode', 'ambientTempC']
     }
   },
   {
     name: 'generate_cinematic_camera_path',
-    description: 'Generates smooth 3D camera waypoints, headings, and durations for Cesium 3D Globe camera flight choreography.',
+    description: 'Generates smooth 3D camera waypoints for Cesium 3D Globe camera flight choreography.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -204,25 +171,23 @@ const TOOLS = [
           properties: { lat: { type: 'number' }, lon: { type: 'number' }, alt: { type: 'number' } },
           required: ['lat', 'lon', 'alt']
         },
-        durationSec: { type: 'number', description: 'Total flight duration in seconds' }
+        durationSec: { type: 'number' }
       },
       required: ['startCoord', 'targetCoord']
     }
   },
   {
     name: 'generate_bigquery_lakehouse_query',
-    description: 'Generates production BigQuery GIS SQL and Uber H3 hexagonal spatial queries for massive streaming telemetry datasets.',
+    description: 'Generates production BigQuery GIS SQL queries.',
     inputSchema: {
       type: 'object',
       properties: {
         domain: {
           type: 'string',
-          enum: ['subsea_loitering', 'datacenter_grid_strain'],
-          description: 'The geospatial domain query to generate'
+          enum: ['subsea_loitering', 'datacenter_grid_strain']
         },
         options: {
-          type: 'object',
-          description: 'Domain-specific filter options (e.g. bufferMeters, speedKnotsMax, heatThresholdCelsius)'
+          type: 'object'
         }
       },
       required: ['domain']
@@ -230,12 +195,9 @@ const TOOLS = [
   }
 ];
 
-/**
- * Handle execution of specific MCP tool calls with AgentShield security gating
- */
 export function handleToolCall(name, rawArgs) {
-  // Pre-execution security validation and sanitization via AgentShield
-  const shield = validateAndSanitizeToolCall(name, rawArgs);
+  const clientId = 'default';
+  const shield = validateAndSanitizeToolCall(name, rawArgs, clientId);
   if (!shield.allowed) {
     throw new Error(`[AgentShield Violation] ${shield.error}`);
   }
@@ -282,26 +244,25 @@ export function handleToolCall(name, rawArgs) {
       if (args.domain === 'subsea_loitering') {
         return {
           domain: 'subsea_loitering',
-          engine: 'BigQuery GIS (ST_GeogPoint / ST_DWithin / Uber H3)',
+          engine: 'BigQuery GIS',
           sql: generateSubseaLoiteringQuery(opts),
           securityCleared: true
         };
       } else if (args.domain === 'datacenter_grid_strain') {
         return {
           domain: 'datacenter_grid_strain',
-          engine: 'BigQuery GIS + Open-Meteo Weather Mesh',
+          engine: 'BigQuery GIS',
           sql: generateDatacenterGridStrainQuery(opts),
           securityCleared: true
         };
       }
-      throw new Error(`Unsupported domain for BigQuery Lakehouse query: ${args.domain}`);
+      throw new Error(`Unsupported domain: ${args.domain}`);
     }
     case 'generate_cinematic_camera_path': {
       const distance = haversineDistanceMeters(args.startCoord.lat, args.startCoord.lon, args.targetCoord.lat, args.targetCoord.lon);
       const bearing = calculateBearing(args.startCoord.lat, args.startCoord.lon, args.targetCoord.lat, args.targetCoord.lon);
       const totalSec = args.durationSec || 12;
 
-      // Generate 3 waypoints: Departure, Cruising Peak, Target Arrival
       const peakAltitude = Math.max(args.startCoord.alt, args.targetCoord.alt, distance * 0.25);
 
       return {
@@ -341,9 +302,6 @@ export function handleToolCall(name, rawArgs) {
   }
 }
 
-/**
- * Standard MCP JSON-RPC 2.0 Stdio Transport Loop
- */
 export function startServer() {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -352,10 +310,19 @@ export function startServer() {
   });
 
   function sendResponse(id, result, error = null) {
+    if (id === undefined) return; // JSON-RPC Notification
     const payload = { jsonrpc: '2.0', id };
     if (error) payload.error = error;
     else payload.result = result;
     process.stdout.write(JSON.stringify(payload) + '\n');
+  }
+  
+  function sendError(id, code, message) {
+    if (id !== undefined) {
+      sendResponse(id, null, { code, message });
+    } else {
+      process.stdout.write(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }) + '\n');
+    }
   }
 
   rl.on('line', (line) => {
@@ -363,6 +330,9 @@ export function startServer() {
     try {
       const msg = JSON.parse(line);
       const { id, method, params } = msg;
+      
+      requestCount++;
+      log('info', 'Request received', { method, requestCount });
 
       if (method === 'initialize') {
         sendResponse(id, {
@@ -375,6 +345,10 @@ export function startServer() {
       } else if (method === 'tools/list') {
         sendResponse(id, { tools: TOOLS });
       } else if (method === 'tools/call') {
+        if (!params) {
+          sendError(id, -32600, 'Invalid Request: params are required');
+          return;
+        }
         const { name, arguments: toolArgs } = params;
         try {
           const result = handleToolCall(name, toolArgs || {});
@@ -382,20 +356,20 @@ export function startServer() {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           });
         } catch (toolErr) {
-          sendResponse(id, null, { code: -32000, message: toolErr.message });
+          sendError(id, -32000, toolErr.message);
         }
       } else {
-        sendResponse(id, null, { code: -32601, message: `Method not found: ${method}` });
+        sendError(id, -32601, `Method not found: ${method}`);
       }
     } catch (parseErr) {
-      process.stderr.write(`JSON parse error: ${parseErr.message}\n`);
+      log('error', 'JSON parse error', { error: parseErr.message });
+      process.stdout.write(JSON.stringify({ jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' }, id: null }) + '\n');
     }
   });
 
-  process.stderr.write(`${SERVER_NAME} v${SERVER_VERSION} running on stdio.\n`);
+  log('info', 'Server started', { name: SERVER_NAME, version: SERVER_VERSION });
 }
 
-// Auto-start if invoked directly from CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
   startServer();
 }

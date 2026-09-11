@@ -1,31 +1,50 @@
-// packages/earthmind-mcp/src/bigqueryLakehouse.js
 /**
  * BigQuery Spatial Lakehouse & GIS Connector
  * Generates production BigQuery GIS SQL, partitioned streaming ingestion statements,
  * and Uber H3 hexagonal spatial indexing for massive geospatial telemetry scale.
  */
 
+export const ALLOWED_TABLES = new Set([
+  'aetheris.maritime.live_ais',
+  'aetheris.infrastructure.subsea_cables',
+  'aetheris.energy.datacenters',
+  'aetheris.energy.substations',
+  'aetheris.environment.open_meteo_live',
+]);
+
+export function validateTableName(table) {
+  if (!ALLOWED_TABLES.has(table)) {
+    throw new Error(`[SQL_INJECTION_BLOCKED] Table '${table}' is not in the allowlist. Allowed: ${[...ALLOWED_TABLES].join(', ')}`);
+  }
+  return table;
+}
+
 /**
- * Approximate conversion of geodetic lat/lon to an Uber H3-style resolution-7 hexagonal cell index.
- * Resolution 7 provides an average hexagon edge length of ~1.22 km and area of ~5.16 km^2,
- * optimal for spatial clustering of marine vessels and aircraft tracks.
+ * Converts geodetic coordinates to an H3 hexagonal cell index.
  * 
- * @param {number} lat 
- * @param {number} lon 
- * @param {number} resolution (default 7)
- * @returns {string} Hexadecimal cell identifier
+ * NOTE: This is a placeholder that generates deterministic pseudo-H3 indices.
+ * For production, install `h3-js` and use: import { latLngToCell } from 'h3-js';
+ * 
+ * @param {number} lat - Latitude in decimal degrees [-90, 90]
+ * @param {number} lon - Longitude in decimal degrees [-180, 180]  
+ * @param {number} resolution - H3 resolution level (0-15, default 7)
+ * @returns {string} H3 index string
  */
 export function latLonToH3Index(lat, lon, resolution = 7) {
-  // Normalize lat/lon into grid coordinate space
-  const latNorm = Math.floor(((lat + 90.0) / 180.0) * Math.pow(2, resolution + 8));
-  const lonNorm = Math.floor(((lon + 180.0) / 360.0) * Math.pow(2, resolution + 8));
-
-  // Construct a deterministic 64-bit style hex index string
-  const prefix = (0x8000 | (resolution << 8)).toString(16);
-  const part1 = (latNorm & 0xffff).toString(16).padStart(4, '0');
-  const part2 = (lonNorm & 0xffff).toString(16).padStart(4, '0');
-
-  return `87${prefix.slice(2)}${part1}${part2}`;
+  // Input validation
+  if (lat < -90 || lat > 90) throw new RangeError(`Latitude ${lat} out of bounds [-90, 90]`);
+  if (lon < -180 || lon > 180) throw new RangeError(`Longitude ${lon} out of bounds [-180, 180]`);
+  if (resolution < 0 || resolution > 15) throw new RangeError(`Resolution ${resolution} out of bounds [0, 15]`);
+  
+  // TODO: Replace with real h3-js implementation:
+  // import { latLngToCell } from 'h3-js';
+  // return latLngToCell(lat, lon, resolution);
+  
+  // Deterministic placeholder using geohash-style encoding
+  const latBin = Math.floor(((lat + 90) / 180) * (1 << 20));
+  const lonBin = Math.floor(((lon + 180) / 360) * (1 << 20));
+  const combined = (BigInt(resolution) << 40n) | (BigInt(latBin) << 20n) | BigInt(lonBin);
+  return `8${resolution.toString(16)}${combined.toString(16).padStart(12, '0')}`;
 }
 
 /**
@@ -35,23 +54,29 @@ export function latLonToH3Index(lat, lon, resolution = 7) {
  * @param {string} dataset 
  * @param {string} table 
  * @param {Array<object>} records 
- * @returns {string} Executable SQL query
+ * @returns {object} Executable SQL query and parameters
  */
 export function generateSpatialIngestSQL(dataset, table, records) {
-  if (!records || records.length === 0) return '';
-
-  const values = records.map(r => {
-    const h3Cell = latLonToH3Index(r.lat, r.lon);
-    const speed = r.speedKnots ?? r.velocity ?? 0.0;
-    const nameSafe = (r.name || 'UNKNOWN').replace(/'/g, "\\'");
-    const idSafe = (r.id || r.mmsi || 'UNKNOWN').replace(/'/g, "\\'");
-    return `('${idSafe}', '${nameSafe}', ST_GEOGPOINT(${r.lon}, ${r.lat}), ${speed}, '${h3Cell}', CURRENT_TIMESTAMP())`;
-  }).join(',\n    ');
-
-  return `INSERT INTO \`${dataset}.${table}\`
-    (entity_id, entity_name, location_geog, speed_knots, h3_res7_cell, recorded_at)
-VALUES
-    ${values};`;
+  // Validate table name
+  const fullTable = `${validateTableName(`${dataset}.${table}`)}`;
+  
+  if (!records || records.length === 0) return { sql: '', params: {} };
+  
+  // Return parameterized SQL + params for BigQuery client
+  const rows = records.map((r, i) => ({
+    entity_id: String(r.id || r.mmsi || 'UNKNOWN'),
+    entity_name: String(r.name || 'UNKNOWN'),
+    lat: Number(r.lat),
+    lon: Number(r.lon),
+    speed_knots: Number(r.speedKnots ?? r.velocity ?? 0),
+    h3_cell: latLonToH3Index(Number(r.lat), Number(r.lon)),
+  }));
+  
+  return {
+    sql: `INSERT INTO \`${fullTable}\` (entity_id, entity_name, location_geog, speed_knots, h3_res7_cell, recorded_at) VALUES ${rows.map(() => '(?, ?, ST_GEOGPOINT(?, ?), ?, ?, CURRENT_TIMESTAMP())').join(', ')}`,
+    params: rows,
+    warning: 'Use BigQuery client library with parameterized queries. Do NOT execute this SQL via string concatenation.'
+  };
 }
 
 /**
@@ -73,6 +98,17 @@ export function generateSubseaLoiteringQuery({
   speedKnotsMax = 2.0,
   windowHours = 2
 } = {}) {
+  const vTable = validateTableName(vesselTable);
+  const cTable = validateTableName(cableTable);
+  
+  const buffer = Number(bufferMeters);
+  const speedMax = Number(speedKnotsMax);
+  const winHours = Number(windowHours);
+  
+  if (isNaN(buffer) || isNaN(speedMax) || isNaN(winHours)) {
+    throw new TypeError('Numeric parameters must be valid numbers');
+  }
+
   return `WITH RecentVessels AS (
   SELECT
     entity_id AS mmsi,
@@ -82,10 +118,10 @@ export function generateSubseaLoiteringQuery({
     recorded_at,
     h3_res7_cell
   FROM
-    \`${vesselTable}\`
+    \`${vTable}\`
   WHERE
-    recorded_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${windowHours} HOUR)
-    AND speed_knots <= ${speedKnotsMax}
+    recorded_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${winHours} HOUR)
+    AND speed_knots <= ${speedMax}
 ),
 ProximityEvents AS (
   SELECT
@@ -101,9 +137,9 @@ ProximityEvents AS (
   FROM
     RecentVessels v
   JOIN
-    \`${cableTable}\` c
+    \`${cTable}\` c
   ON
-    ST_DWITHIN(v.location_geog, c.cable_geog, ${bufferMeters})
+    ST_DWITHIN(v.location_geog, c.cable_geog, ${buffer})
 )
 SELECT
   mmsi,
@@ -143,6 +179,17 @@ export function generateDatacenterGridStrainQuery({
   heatThresholdCelsius = 38.0,
   utilizationThresholdPercent = 85.0
 } = {}) {
+  const dcTable = validateTableName(datacenterTable);
+  const subTable = validateTableName(substationTable);
+  const wTable = validateTableName(weatherTable);
+  
+  const heatC = Number(heatThresholdCelsius);
+  const utilPct = Number(utilizationThresholdPercent);
+  
+  if (isNaN(heatC) || isNaN(utilPct)) {
+    throw new TypeError('Numeric parameters must be valid numbers');
+  }
+
   return `WITH DatacenterGridJoin AS (
   SELECT
     d.datacenter_id,
@@ -155,13 +202,13 @@ export function generateDatacenterGridStrainQuery({
     w.ambient_temp_c,
     w.heat_index_c
   FROM
-    \`${datacenterTable}\` d
+    \`${dcTable}\` d
   JOIN
-    \`${substationTable}\` s
+    \`${subTable}\` s
   ON
     d.substation_id = s.substation_id
   JOIN
-    \`${weatherTable}\` w
+    \`${wTable}\` w
   ON
     ST_DWITHIN(s.location_geog, w.station_geog, 25000)
 )
@@ -173,9 +220,9 @@ SELECT
   load_utilization_pct,
   ambient_temp_c,
   CASE
-    WHEN load_utilization_pct >= ${utilizationThresholdPercent} AND ambient_temp_c >= ${heatThresholdCelsius} THEN 'CRITICAL_THERMAL_OVERLOAD'
-    WHEN load_utilization_pct >= ${utilizationThresholdPercent} THEN 'STRAINED_HIGH_LOAD'
-    WHEN ambient_temp_c >= ${heatThresholdCelsius} THEN 'ELEVATED_AMBIENT_HEAT'
+    WHEN load_utilization_pct >= ${utilPct} AND ambient_temp_c >= ${heatC} THEN 'CRITICAL_THERMAL_OVERLOAD'
+    WHEN load_utilization_pct >= ${utilPct} THEN 'STRAINED_HIGH_LOAD'
+    WHEN ambient_temp_c >= ${heatC} THEN 'ELEVATED_AMBIENT_HEAT'
     ELSE 'NOMINAL'
   END AS grid_status
 FROM

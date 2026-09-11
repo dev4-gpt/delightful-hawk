@@ -1,43 +1,37 @@
-// packages/earthmind-mcp/src/agentShield.js
 /**
- * AgentShield Security Gatekeeper for EarthMind SpatialMCP
- * Modeled on Affaan Mustafa's agentshield & ECC security watchdog patterns.
- * 
- * Enforces:
- * 1. Pre-execution Tool Gating: Validates tool names against allowed schemas.
- * 2. Spatial Bounding-Box Clamping: Prevents oversized spatial queries (DoS protection) and validates WGS84 ranges.
- * 3. Prompt-Injection & Tainted Telemetry Sanitizer: Sanitizes strings in entity annotations against LLM jailbreaks.
- * 4. Telemetry Rate Limiter: In-memory sliding window rate limiter per client/session.
+ * AgentShield Security Gating
+ * Defends against prompt injection, denial-of-service, and invalid geospatial bounds.
  */
 
-// Injection patterns to detect and neutralize
-const INJECTION_REGEXES = [
-  /ignore\s+(all\s+)?previous\s+instructions/i,
-  /disregard\s+(all\s+)?prior/i,
-  /you\s+are\s+now\s+in\s+DAN\s+mode/i,
-  /system\s*:\s*role/i,
-  /<\|(?:im_start|im_end|endoftext)\|>/i,
-  /<script[\s\S]*?>[\s\S]*?<\/script>/i,
-  /eval\s*\(/i,
-  /drop\s+table/i,
-  /select\s+.*\s+from\s+information_schema/i,
-  /--\s*$/m,
-  /\bexec\s*\(/i
-];
+import { ALLOWED_TABLES } from './bigqueryLakehouse.js';
 
-// Configuration limits
 export const SHIELD_CONFIG = {
-  MAX_QUERY_RADIUS_KM: 500, // Maximum allowed search radius in kilometers
-  MAX_PATH_COORDINATES: 2000, // Maximum coordinates in a single polyline
-  MAX_STRING_LENGTH: 500, // Maximum string length for identifiers & annotations
-  RATE_LIMIT_MAX_REQUESTS: 120, // Max tool calls per minute window
-  RATE_LIMIT_WINDOW_MS: 60000 // 1 minute
+  INJECTION_REGEXES: [
+    // Prompt injection / LLM jailbreak patterns
+    /ignore\s+(all\s+)?previous\s+instructions/i,
+    /disregard\s+(all\s+)?prior/i,
+    /you\s+are\s+now\s+in\s+DAN\s+mode/i,
+    /system\s*:\s*role/i,
+    /<\|(?:im_start|im_end|endoftext)\|>/i,
+    // XSS / code injection
+    /<script[\s\S]*?>[\s\S]*?<\/script>/i,
+    /eval\s*\(/i,
+    /\bexec\s*\(/i,
+    // SQL injection patterns
+    /(?:drop|delete|truncate)\s+table/i,
+    /select\s+.*\s+from\s+information_schema/i,
+    /;\s*(?:update|insert|grant)/i,
+    /--\s*$/m,
+  ],
+  MAX_QUERY_RADIUS_KM: 5000,
+  MAX_PATH_COORDINATES: 25000,
+  MAX_STRING_LENGTH: 500,
+  RATE_LIMIT_MAX_REQUESTS: 120,
+  RATE_LIMIT_WINDOW_MS: 60000
 };
 
-/**
- * In-memory sliding window rate tracker
- */
-const requestTimestamps = [];
+/** @type {Map<string, number[]>} Per-client sliding window timestamps */
+const clientRateLimitMap = new Map();
 
 /**
  * Sanitizes arbitrary text input to prevent indirect prompt injection
@@ -53,7 +47,7 @@ export function sanitizeString(text) {
   let truncated = text.slice(0, SHIELD_CONFIG.MAX_STRING_LENGTH);
   let detected = null;
 
-  for (const regex of INJECTION_REGEXES) {
+  for (const regex of SHIELD_CONFIG.INJECTION_REGEXES) {
     if (regex.test(truncated)) {
       detected = regex.toString();
       truncated = truncated.replace(regex, '[REDACTED_SECURITY_THREAT]');
@@ -89,21 +83,26 @@ export function validateWGS84Coordinates(lat, lon) {
  * 
  * @returns {{ allowed: boolean, remaining: number }}
  */
-export function checkRateLimit() {
+export function checkRateLimit(clientId = 'default') {
   const now = Date.now();
-  // Purge expired timestamps
-  while (requestTimestamps.length > 0 && requestTimestamps[0] <= now - SHIELD_CONFIG.RATE_LIMIT_WINDOW_MS) {
-    requestTimestamps.shift();
+  if (!clientRateLimitMap.has(clientId)) {
+    clientRateLimitMap.set(clientId, []);
   }
-
-  if (requestTimestamps.length >= SHIELD_CONFIG.RATE_LIMIT_MAX_REQUESTS) {
+  const timestamps = clientRateLimitMap.get(clientId);
+  
+  // Purge expired
+  while (timestamps.length > 0 && timestamps[0] <= now - SHIELD_CONFIG.RATE_LIMIT_WINDOW_MS) {
+    timestamps.shift();
+  }
+  
+  if (timestamps.length >= SHIELD_CONFIG.RATE_LIMIT_MAX_REQUESTS) {
     return { allowed: false, remaining: 0 };
   }
-
-  requestTimestamps.push(now);
+  
+  timestamps.push(now);
   return {
     allowed: true,
-    remaining: SHIELD_CONFIG.RATE_LIMIT_MAX_REQUESTS - requestTimestamps.length
+    remaining: SHIELD_CONFIG.RATE_LIMIT_MAX_REQUESTS - timestamps.length
   };
 }
 
@@ -111,7 +110,7 @@ export function checkRateLimit() {
  * Resets the rate limiter (useful for test isolation)
  */
 export function resetRateLimiter() {
-  requestTimestamps.length = 0;
+  clientRateLimitMap.clear();
 }
 
 /**
@@ -122,9 +121,9 @@ export function resetRateLimiter() {
  * @param {object} args 
  * @returns {{ allowed: boolean, sanitizedArgs: object, error?: string }}
  */
-export function validateAndSanitizeToolCall(toolName, args) {
+export function validateAndSanitizeToolCall(toolName, args, clientId = 'default') {
   // 1. Check Rate Limiter
-  const rateStatus = checkRateLimit();
+  const rateStatus = checkRateLimit(clientId);
   if (!rateStatus.allowed) {
     return {
       allowed: false,
@@ -237,6 +236,28 @@ export function validateAndSanitizeToolCall(toolName, args) {
 
       const vEnd = validateWGS84Coordinates(sanitized.targetCoord.lat, sanitized.targetCoord.lon);
       if (!vEnd.valid) return { allowed: false, sanitizedArgs: sanitized, error: `Target: ${vEnd.reason}` };
+      break;
+    }
+
+    case 'generate_bigquery_lakehouse_query': {
+      const allowedDomains = ['subsea_loitering', 'datacenter_grid_strain'];
+      if (!allowedDomains.includes(sanitized.domain)) {
+        return { allowed: false, sanitizedArgs: sanitized, error: `Invalid domain: ${sanitized.domain}` };
+      }
+      
+      if (sanitized.options) {
+        for (const [k, v] of Object.entries(sanitized.options)) {
+          if (typeof v === 'string') {
+             if (k.endsWith('Table')) {
+               if (!ALLOWED_TABLES.has(v)) {
+                 return { allowed: false, sanitizedArgs: sanitized, error: `Table ${v} is not in allowlist` };
+               }
+             } else {
+               sanitized.options[k] = sanitizeString(v).cleanText;
+             }
+          }
+        }
+      }
       break;
     }
 

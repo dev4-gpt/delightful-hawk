@@ -1,9 +1,8 @@
-// packages/earthmind-mcp/src/anomalyRules.js
 /**
  * Critical Infrastructure & Space Domain Anomaly Detection Engines
  */
 
-import { haversineDistanceMeters, pointToPathDistance } from './spatialMath.js';
+import { haversineDistanceMeters, pointToPathDistance, geodeticToECEF, ecefDistance } from './spatialMath.js';
 
 /**
  * SentinelMesh Anomaly Rule: Subsea Fiber & Maritime Infrastructure Watchstander
@@ -94,16 +93,11 @@ export function evaluateSubseaCableThreat(vessel, cable) {
  * @returns {Object} Conjunction assessment
  */
 export function evaluateOrbitalConjunction(primarySat, secondaryObject, thresholdKm = 15) {
-  // Approximate surface distance
-  const surfaceDistKm = haversineDistanceMeters(
-    primarySat.lat,
-    primarySat.lon,
-    secondaryObject.lat,
-    secondaryObject.lon
-  ) / 1000.0;
-
+  // Convert satellite positions to ECEF (altitude in meters = altKm * 1000)
+  const primaryECEF = geodeticToECEF(primarySat.lat, primarySat.lon, primarySat.altKm * 1000);
+  const secondaryECEF = geodeticToECEF(secondaryObject.lat, secondaryObject.lon, secondaryObject.altKm * 1000);
+  const totalEuclideanDistKm = ecefDistance(primaryECEF, secondaryECEF) / 1000.0;
   const altDeltaKm = Math.abs(primarySat.altKm - secondaryObject.altKm);
-  const totalEuclideanDistKm = Math.sqrt(surfaceDistKm * surfaceDistKm + altDeltaKm * altDeltaKm);
 
   const isCollisionRisk = totalEuclideanDistKm <= thresholdKm;
   const isSevereRisk = totalEuclideanDistKm <= thresholdKm / 3.0;
@@ -134,7 +128,7 @@ export function evaluateOrbitalConjunction(primarySat, secondaryObject, threshol
  */
 export function evaluateGridThermalStrain(datacenter, gridNode, ambientTempC) {
   // Heat strain index: higher ambient temperature reduces transmission line cooling capacity
-  const capacityReductionPct = Math.max(0, (ambientTempC - 25) * 1.8);
+  const capacityReductionPct = Math.max(0, (ambientTempC - 35) * 1.5);
   const effectiveCapacityMw = gridNode.capacityMw * (1 - capacityReductionPct / 100.0);
   const utilizationPct = Math.round((datacenter.drawMw / effectiveCapacityMw) * 100);
 

@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-.DS_Store
+.pnpm-store/
 
 # Caches
 .gev-cache/
@@ -9,6 +9,29 @@ dist/
 build/
 *.log
 
+# Build outputs
+*.tsbuildinfo
+
 # Environment files
 .env
 .env.local
+.env.*.local
+
+# Turbo
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/

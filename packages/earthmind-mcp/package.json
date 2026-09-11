@@ -1,7 +1,7 @@
 {
   "name": "earthmind-mcp",
-  "version": "0.1.0",
-  "description": "The open 3D Model Context Protocol (MCP) server providing spatial reasoning, line-of-sight, terrain analysis, and critical infrastructure anomaly detection to AI agents.",
+  "version": "0.2.0",
+  "description": "Production 3D Model Context Protocol (MCP) server: spatial reasoning, line-of-sight, terrain analysis, and critical infrastructure anomaly detection for AI agents.",
   "main": "src/index.js",
   "type": "module",
   "bin": {
@@ -9,18 +9,26 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "node test/spatialMcp.test.mjs && node test/agentShield.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "lint": "echo 'lint placeholder'",
+    "typecheck": "echo 'typecheck placeholder'"
   },
   "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "spatial-ai",
-    "geospatial",
-    "cesium",
-    "3d-world-models",
-    "gis",
-    "sentinel-mesh"
+    "mcp", "model-context-protocol", "spatial-ai", "geospatial",
+    "cesium", "3d-world-models", "gis", "sentinel-mesh",
+    "bigquery", "h3", "wgs84", "ecef"
   ],
   "author": "Aetheris AI",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0",
+    "pino": "^9.6.0"
+  },
+  "devDependencies": {
+    "pino-pretty": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }

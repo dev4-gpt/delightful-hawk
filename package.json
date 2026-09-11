@@ -1,0 +1,15 @@
+{
+  "name": "aetheris",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

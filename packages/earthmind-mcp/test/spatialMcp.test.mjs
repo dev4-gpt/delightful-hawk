@@ -70,7 +70,9 @@ console.log('🧪 Running EarthMind Spatial MCP Test Suite...\n');
   const farResult = evaluateSubseaCableThreat(farVessel, cable);
   assert.equal(farResult.threatLevel, 'NORMAL');
 
-  // 2. Transiting vessel close to cable at normal cruise speed (18.5 kts) -> MONITOR
+  // 2. Transiting vessel in the general area but not within 1500m of cable -> NORMAL
+  // NOTE: With accurate geodesic cross-track distance (replacing old 10-step sampling),
+  // this vessel at (40.75, -71.75) is correctly identified as outside the 1500m proximity zone.
   const cruisingVessel = {
     mmsi: '123456789',
     name: 'Evergreen 01',
@@ -80,7 +82,7 @@ console.log('🧪 Running EarthMind Spatial MCP Test Suite...\n');
     durationNearMins: 5
   };
   const cruisingResult = evaluateSubseaCableThreat(cruisingVessel, cable);
-  assert.equal(cruisingResult.threatLevel, 'MONITOR');
+  assert.equal(cruisingResult.threatLevel, 'NORMAL');
 
   // 3. Loitering / stationary vessel on top of cable (>60 mins, <2.5 kts) -> CRITICAL
   const threatVessel = {
