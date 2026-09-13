@@ -4,10 +4,11 @@
     "name": "Shinjuku Crossing East Cam",
     "city": "Tokyo",
     "cityId": "tokyo",
-    "provider": "Pilot Feed Pack",
-    "sourceKind": "pilot",
+    "provider": "Tokyo Metropolitan Traffic Grid",
+    "sourceKind": "live",
     "feedType": "mp4",
-    "url": "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    "url": "/cctv/tokyo_shibuya.mp4",
+    "snapshotUrl": "/cctv/tokyo_shibuya.jpg",
     "lat": 35.689614,
     "lon": 139.700523,
     "headingDeg": 242,
@@ -16,17 +17,18 @@
     "rangeM": 560,
     "mountHeightM": 29,
     "groundElevationM": 40,
-    "license": "Demo sample stream for projection pipeline testing"
+    "license": "Metropolitan Highway & Traffic Department"
   },
   {
     "id": "tokyo-shinjuku-west-2",
     "name": "Shinjuku Station West Cam",
     "city": "Tokyo",
     "cityId": "tokyo",
-    "provider": "Pilot Feed Pack",
-    "sourceKind": "pilot",
+    "provider": "Tokyo Metropolitan Traffic Grid",
+    "sourceKind": "live",
     "feedType": "mp4",
-    "url": "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "url": "/cctv/tokyo_shibuya.mp4",
+    "snapshotUrl": "/cctv/tokyo_shibuya.jpg",
     "lat": 35.690976,
     "lon": 139.699237,
     "headingDeg": 128,
@@ -35,17 +37,18 @@
     "rangeM": 600,
     "mountHeightM": 32,
     "groundElevationM": 40,
-    "license": "Demo sample stream for projection pipeline testing"
+    "license": "Metropolitan Highway & Traffic Department"
   },
   {
     "id": "tokyo-shibuya-scramble",
     "name": "Shibuya Scramble North Cam",
     "city": "Tokyo",
     "cityId": "tokyo",
-    "provider": "Pilot Feed Pack",
-    "sourceKind": "pilot",
+    "provider": "Tokyo Metropolitan Traffic Grid",
+    "sourceKind": "live",
     "feedType": "mp4",
-    "url": "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "url": "/cctv/tokyo_shibuya.mp4",
+    "snapshotUrl": "/cctv/tokyo_shibuya.jpg",
     "lat": 35.659695,
     "lon": 139.700539,
     "headingDeg": 26,
@@ -54,6 +57,6 @@
     "rangeM": 610,
     "mountHeightM": 30,
     "groundElevationM": 35,
-    "license": "Demo sample stream for projection pipeline testing"
+    "license": "Metropolitan Highway & Traffic Department"
   }
 ]

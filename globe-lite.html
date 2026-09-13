@@ -98,7 +98,7 @@ button { font-family: inherit; cursor: pointer; }
       <button onclick="flyTo('ashburn')"    style="padding:5px 4px;border-radius:5px;background:#0f172a;border:1px solid #334155;color:#cbd5e1;font-size:8px;text-align:left;">⚡ Ashburn Grid</button>
       <button onclick="flyTo('california')" style="padding:5px 4px;border-radius:5px;background:#0f172a;border:1px solid #334155;color:#cbd5e1;font-size:8px;text-align:left;">🔥 CA Firefront</button>
     </div>
-    <button onclick="toggleThreat()" style="width:100%;padding:7px;border-radius:7px;background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.55);color:#fca5a5;font-weight:700;font-size:9px;">⚠️ <span id="tl">Simulate Rogue Anchor Drag</span></button>
+    <button onclick="toggleThreat()" style="width:100%;padding:7px;border-radius:7px;background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.55);color:#fca5a5;font-weight:700;font-size:9px;">⚠️ <span id="tl">INJECT THREAT VECTOR // ANCHOR DRAG</span></button>
   </div>
   <div class="ia glass" style="border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;flex:1;overflow:hidden;min-height:0;">
     <span style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;">Live Telemetry</span>
@@ -201,12 +201,22 @@ function proj(la,lo,ex){
 
 // ── DATA ───────────────────────────────────────────────────────────────────
 const CONTS=[
-  [[70,-160],[65,-140],[60,-125],[50,-125],[40,-124],[30,-115],[20,-105],[15,-90],[20,-85],[30,-80],[40,-74],[50,-65],[60,-65],[70,-90],[75,-120]],
-  [[12,-72],[5,-75],[-10,-78],[-30,-72],[-50,-75],[-55,-68],[-45,-60],[-25,-45],[-10,-37],[0,-50],[8,-60]],
-  [[60,-10],[55,0],[50,5],[45,0],[38,-9],[36,-5],[38,15],[40,25],[45,35],[55,30],[65,25],[70,25],[65,10]],
-  [[35,-5],[30,-10],[15,-17],[5,0],[-15,12],[-34,18],[-34,26],[-20,35],[5,50],[12,44],[30,32],[35,20]],
-  [[75,100],[70,170],[60,160],[45,140],[35,120],[22,110],[10,105],[15,80],[25,65],[35,50],[45,40],[60,50],[70,70]],
-  [[-12,130],[-15,140],[-25,150],[-38,145],[-35,115],[-20,115]]
+  // North America & Central America
+  [[71,-156],[70,-140],[68,-130],[58,-130],[54,-130],[48,-124],[45,-124],[38,-123],[32,-117],[28,-112],[23,-110],[24,-107],[20,-105],[16,-98],[14,-92],[15,-88],[18,-91],[19,-96],[22,-97],[26,-97],[29,-94],[29,-89],[30,-85],[25,-80],[28,-80],[32,-79],[35,-75],[39,-74],[41,-72],[44,-69],[47,-65],[46,-60],[51,-55],[55,-60],[60,-64],[62,-75],[55,-80],[52,-82],[56,-88],[60,-90],[64,-90],[68,-100],[70,-115],[72,-128],[71,-156]],
+  // South America
+  [[12,-72],[10,-75],[5,-77],[0,-80],[-5,-81],[-15,-75],[-20,-70],[-30,-71],[-40,-74],[-50,-75],[-55,-67],[-52,-68],[-45,-63],[-38,-57],[-34,-53],[-30,-50],[-23,-43],[-18,-39],[-13,-38],[-8,-35],[-3,-40],[-1,-48],[5,-52],[8,-60],[11,-65],[12,-72]],
+  // Europe
+  [[71,28],[68,16],[62,5],[58,6],[54,9],[50,2],[46,-1],[43,-9],[37,-9],[36,-5],[36,0],[40,15],[44,12],[45,14],[40,18],[38,24],[36,28],[42,28],[46,30],[46,38],[54,36],[60,30],[65,22],[70,25],[71,28]],
+  // British Isles
+  [[58,-5],[58,-2],[55,-1],[51,1],[50,-5],[52,-5],[54,-3],[58,-5]],
+  // Africa
+  [[37,10],[35,-5],[30,-10],[22,-17],[15,-17],[10,-14],[5,-5],[4,9],[4,12],[2,10],[-5,12],[-15,12],[-25,15],[-34,18],[-34,26],[-28,32],[-20,35],[-10,40],[0,42],[12,51],[12,44],[15,40],[22,38],[28,34],[32,32],[32,24],[36,12],[37,10]],
+  // Asia & Eurasia
+  [[73,70],[77,105],[72,130],[70,165],[65,178],[60,165],[55,160],[50,140],[40,130],[35,120],[30,122],[25,118],[22,114],[20,107],[10,105],[1,104],[8,98],[15,96],[22,89],[20,85],[15,80],[8,77],[15,74],[22,69],[25,60],[25,55],[15,50],[12,44],[20,40],[30,35],[37,36],[40,30],[42,40],[45,50],[50,55],[55,60],[65,60],[73,70]],
+  // Japan Archipelago
+  [[45,142],[43,145],[41,141],[35,140],[34,136],[35,133],[33,130],[35,135],[40,140],[45,142]],
+  // Australia & New Zealand
+  [[-12,132],[-15,136],[-12,142],[-20,148],[-28,153],[-37,150],[-38,144],[-35,138],[-35,117],[-30,115],[-22,114],[-18,122],[-15,124],[-12,132]]
 ];
 const CABLES=[
   [[40.71,-74],[43.5,-60],[46,-40],[48.5,-20],[50.7,-4.5]],
@@ -335,7 +345,7 @@ function flyTo(loc){const f=FLY[loc];if(!f)return;S.ty=f.yaw;S.tp=f.pitch;S.tz=f
 window.flyTo=flyTo;
 
 // ── CARTRIDGES ─────────────────────────────────────────────────────────────
-const CM={'sentinel-mesh':{el:'cs',badge:'SentinelMesh',desc:'Correlating AIS vessel tracking with undersea cables to detect anchor drag.',btn:'Simulate Rogue Anchor Drag',loc:'atlantic'},'orbital-ops':{el:'co',badge:'OrbitalOps',desc:'Autonomous LEO debris close-approach conjunction assessment engine.',btn:'Simulate Satellite Conjunction',loc:'orbit'},'grid-twin':{el:'cg',badge:'GridTwin',desc:'AI cluster power draw vs heat domes — substation cascade prevention.',btn:'Simulate Heat Dome Overload',loc:'ashburn'},'geo-risk':{el:'cr',badge:'GeoRisk',desc:'NASA VIIRS fire pixels correlated with critical facilities.',btn:'Simulate Wildfire Encroachment',loc:'california'}};
+const CM={'sentinel-mesh':{el:'cs',badge:'SentinelMesh',desc:'Correlating AIS vessel tracking with undersea cables to detect anchor drag.',btn:'INJECT THREAT VECTOR // ANCHOR DRAG',loc:'atlantic'},'orbital-ops':{el:'co',badge:'OrbitalOps',desc:'Autonomous LEO debris close-approach conjunction assessment engine.',btn:'ACTIVE CONJUNCTION VECTOR // LEO',loc:'orbit'},'grid-twin':{el:'cg',badge:'GridTwin',desc:'AI cluster power draw vs heat domes — substation cascade prevention.',btn:'SIMULATE GRID CASCADE // HEAT DOME',loc:'ashburn'},'geo-risk':{el:'cr',badge:'GeoRisk',desc:'NASA VIIRS fire pixels correlated with critical facilities.',btn:'ACTIVE PERIMETER BREACH // WILDFIRE',loc:'california'}};
 function sc(id){
   S.cartridge=id;S.threat=false;document.getElementById('albox').style.display='none';
   ['cs','co','cg','cr'].forEach(k=>{const e=document.getElementById(k);e.style.background='rgba(30,41,59,.4)';e.style.borderColor='#334155';e.style.color='#94a3b8';});

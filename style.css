@@ -6740,14 +6740,68 @@ body.recording-mode #param-slider-panel,
 body.recording-mode #control-panel,
 body.recording-mode #location-bar,
 body.recording-mode #data-panel,
-body.recording-mode #cctv-panel,
 body.recording-mode #radio-panel,
 body.recording-mode #global-context-panel,
 body.recording-mode #gev-voice-control,
-body.recording-mode #scene-panel {
+body.recording-mode #scene-panel,
+body.recording-mode #loading-screen {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  display: none !important;
+}
+
+#cctv-panel.recording-visible,
+body.recording-mode #cctv-panel.recording-visible {
+  position: fixed !important;
+  top: 168px !important;
+  right: 24px !important;
+  width: 380px !important;
+  max-height: calc(100vh - 180px) !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 9999 !important;
+  background: rgba(10, 18, 32, 0.94) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,240,255,0.2) !important;
+}
+
+#cctv-panel.recording-visible .cctv-panel-inner,
+body.recording-mode #cctv-panel.recording-visible .cctv-panel-inner {
+  height: auto !important;
+  min-height: 250px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+#cctv-panel.recording-visible .cctv-frame-wrap,
+#cctv-panel.recording-visible #cctv-source-badge,
+#cctv-panel.recording-visible #cctv-meta,
+#cctv-panel.recording-visible .cctv-controls,
+#cctv-panel.recording-visible .cctv-calibration-block,
+#cctv-panel.recording-visible .cctv-summary-label,
+#cctv-panel.recording-visible #cctv-summary {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+#cctv-panel.recording-visible .cctv-controls {
+  display: flex !important;
+}
+
+#cctv-panel.recording-visible #cctv-frame {
+  width: 100% !important;
+  height: 200px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  display: block !important;
+  opacity: 1 !important;
 }
 
 body.recording-mode #scene-runtime.active {
@@ -9480,7 +9534,7 @@ body.ui-clean-view #key-setup,
 body.recording-mode #key-setup,
 body.cockpit-mode #key-setup,
 body.scene-playback-mode #key-setup {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 620px) {

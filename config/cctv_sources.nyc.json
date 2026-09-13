@@ -1,0 +1,42 @@
+[
+  {
+    "id": "nyc-harbor-1",
+    "name": "New York Harbor Entrance Cam",
+    "city": "New York",
+    "cityId": "nyc",
+    "provider": "Port Authority Maritime Watch",
+    "sourceKind": "live",
+    "feedType": "mp4",
+    "url": "/cctv/nyc_harbor.mp4",
+    "snapshotUrl": "/cctv/nyc_harbor.jpg",
+    "lat": 40.6892,
+    "lon": -74.0445,
+    "headingDeg": 45,
+    "pitchDeg": -15,
+    "fovDeg": 70,
+    "rangeM": 650,
+    "mountHeightM": 35,
+    "groundElevationM": 10,
+    "license": "Operational Port Security Feed"
+  },
+  {
+    "id": "nyc-battery-park",
+    "name": "Battery Park Maritime Watch",
+    "city": "New York",
+    "cityId": "nyc",
+    "provider": "Harbor Security Grid",
+    "sourceKind": "live",
+    "feedType": "mp4",
+    "url": "/cctv/nyc_harbor.mp4",
+    "snapshotUrl": "/cctv/nyc_harbor.jpg",
+    "lat": 40.7033,
+    "lon": -74.0170,
+    "headingDeg": 190,
+    "pitchDeg": -18,
+    "fovDeg": 65,
+    "rangeM": 580,
+    "mountHeightM": 28,
+    "groundElevationM": 8,
+    "license": "Operational Port Security Feed"
+  }
+]

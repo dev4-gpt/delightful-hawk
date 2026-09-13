@@ -34,6 +34,7 @@ import { installScopeMask } from './scopeMask.js';
 import { initFirstRunExperience } from './firstRunExperience.js';
 import { initKeySetup } from './keySetup.js';
 import { loadPhotorealisticTileset } from './mapStartup.js';
+import { initLandmarks3D } from './landmarks3d.js';
 
 import cartridgeRegistry from './modules/cartridgeRegistry.js';
 import { createSubseaVisualizer } from "./modules/visualizers/subseaVisualizer.js";
@@ -129,6 +130,11 @@ async function init() {
       },
     });
 
+    // Enforce sun-independent daylight reconnaissance illumination
+    viewer.scene.globe.enableLighting = false;
+    viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date('2026-06-21T12:00:00Z'));
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0b1d3a');
+
     // Cap the default render loop at 60 fps. Cesium's loop otherwise runs at
     // the display's refresh rate — 120 Hz on ProMotion panels — doubling GPU
     // and CPU burn for zero visual benefit in a map app whose animation
@@ -202,6 +208,8 @@ async function init() {
 
     // Initialize the style manager (post-processing, HUD, locations, share links)
     const styleManager = new StyleManager(viewer, { mapStackController });
+    // Initialize 3D photorealistic landmarks & urban architecture
+    const landmarks3d = initLandmarks3D(viewer);
     // The previous multi-canvas weather compositor remains disabled. Cockpit
     // clouds use a separate, capped low-resolution GPU pass that never attaches
     // Cesium fog or post-process stages and is fully stopped in map mode.
@@ -326,7 +334,9 @@ async function init() {
     // loop burning behind a hidden tab. (perf wave 2 fix)
     syncVisibilitySuspension();
 
+    window.Cesium = Cesium;
     window.__godsEyeView = {
+      Cesium,
       viewer,
       styleManager,
       tileset,
@@ -336,6 +346,7 @@ async function init() {
       annotations,
       weatherEffects,
       cockpitCloudEffects,
+      landmarks3d,
       getRenderGovernorDiagnostics,
       requestRender: governorRequestRender,
     };

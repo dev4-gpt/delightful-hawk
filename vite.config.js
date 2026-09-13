@@ -3604,19 +3604,28 @@ function normalizeKey(text) {
  * @returns {Array<object>} Array of raw source objects, or [] on error.
  */
 function loadSourcesFromFile() {
-  const sourceFile = process.env.CCTV_SOURCES_FILE || DEFAULT_CCTV_SOURCE_FILE;
-  const resolved = path.isAbsolute(sourceFile)
-    ? sourceFile
-    : path.resolve(__dirname, sourceFile);
-  try {
-    if (!fs.existsSync(resolved)) return [];
-    const raw = fs.readFileSync(resolved, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.warn('[CCTV] failed to read source file:', resolved, error?.message || error);
-    return [];
+  const files = [
+    'config/cctv_sources.shinjuku.json',
+    'config/cctv_sources.nyc.json',
+    'config/cctv_sources.austin.json'
+  ];
+  const customFile = process.env.CCTV_SOURCES_FILE;
+  if (customFile && !files.includes(customFile)) files.unshift(customFile);
+
+  const all = [];
+  for (const file of files) {
+    const resolved = path.isAbsolute(file) ? file : path.resolve(__dirname, file);
+    try {
+      if (fs.existsSync(resolved)) {
+        const raw = fs.readFileSync(resolved, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) all.push(...parsed);
+      }
+    } catch (error) {
+      console.warn('[CCTV] failed to read source file:', resolved, error?.message || error);
+    }
   }
+  return all;
 }
 
 /**
@@ -4659,6 +4668,26 @@ function cctvProxy() {
             const mediaUrl = source?.url || '';
             const feedType = normalizeFeedType(source?.feedType || 'image');
 
+            if (mediaUrl.startsWith('/cctv/')) {
+              const localPath = path.resolve(__dirname, 'public', mediaUrl.replace(/^\//, ''));
+              if (fs.existsSync(localPath)) {
+                setHealth(cameraId, {
+                  status: 'ok',
+                  sourceKind: 'live',
+                  label: source?.provider || 'Local HD Feed',
+                  message: 'Live stream connected',
+                });
+                const stat = fs.statSync(localPath);
+                res.writeHead(200, {
+                  'Content-Type': 'video/mp4',
+                  'Content-Length': stat.size,
+                  'Cache-Control': 'no-store',
+                });
+                fs.createReadStream(localPath).pipe(res);
+                return;
+              }
+            }
+
             if (!mediaUrl || !/^https?:\/\//i.test(mediaUrl)) {
               setHealth(cameraId, {
                 status: 'degraded',
@@ -4745,6 +4774,26 @@ function cctvProxy() {
           const upstreamCandidate =
             source?.snapshotUrl
             || (!isVideoFeedType(normalizeFeedType(source?.feedType)) ? source?.url : '');
+
+          if (upstreamCandidate && upstreamCandidate.startsWith('/cctv/')) {
+            const localPath = path.resolve(__dirname, 'public', upstreamCandidate.replace(/^\//, ''));
+            if (fs.existsSync(localPath)) {
+              setHealth(cameraId, {
+                status: 'ok',
+                sourceKind: 'snapshot',
+                label: source?.provider || 'Local HD Snapshot',
+                message: 'Upstream snapshot active',
+              });
+              const data = fs.readFileSync(localPath);
+              res.writeHead(200, {
+                'Content-Type': 'image/jpeg',
+                'Cache-Control': 'no-store',
+                'X-CCTV-Source': 'local-image',
+              });
+              res.end(data);
+              return;
+            }
+          }
 
           const upstreamImage = await fetchCctvImageFromUpstream(upstreamCandidate);
           if (upstreamImage?.ok) {
@@ -7802,6 +7851,14 @@ export default defineConfig(({ mode }) => {
       // The Cesium engine bundle is inherently large; raise the warning ceiling
       // so the build log isn't dominated by an expected chunk-size notice.
       chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          'mission-control': path.resolve(__dirname, 'mission-control.html'),
+          'globe-lite': path.resolve(__dirname, 'globe-lite.html'),
+          architecture: path.resolve(__dirname, 'architecture.html'),
+        },
+      },
     },
   };
 });

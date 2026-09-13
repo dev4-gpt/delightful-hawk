@@ -345,10 +345,14 @@ export class MapStackController {
       provider = await Cesium.createWorldImageryAsync({ style: stack.style });
     } else if (stack.kind === 'esri-imagery') {
       try {
-        provider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(ESRI_WORLD_IMAGERY_URL, {
+        const esriPromise = Cesium.ArcGisMapServerImageryProvider.fromUrl(ESRI_WORLD_IMAGERY_URL, {
           credit: ESRI_IMAGERY_CREDIT,
           enablePickFeatures: false,
         });
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Esri timeout')), 4000)
+        );
+        provider = await Promise.race([esriPromise, timeoutPromise]);
       } catch (error) {
         // The keyless DEFAULT landing must never strand a first run on a blank
         // globe because Esri is unreachable — fall back to OSM tiles for this

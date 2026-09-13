@@ -135,11 +135,11 @@
         <!-- Simulation Trigger Buttons -->
         <div class="pt-2 flex flex-col gap-2">
           <button onclick="triggerSimulatedThreat()" id="btn-sim-threat" class="w-full py-2 px-3 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/40 font-semibold text-xs transition-all flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <span id="threat-button-text">Simulate Rogue Anchor Drag</span>
+            <span>⚠️</span>
+            <span id="threat-button-text">INJECT THREAT VECTOR // ANCHOR DRAG</span>
           </button>
-          <button onclick="resetScenario()" class="w-full py-1.5 px-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-400 border border-slate-700 text-xs transition-all">
-            Reset Scenario to Nominal
+          <button onclick="resetScenario()" id="btn-reset" class="w-full py-1.5 px-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs transition-all">
+            SYSTEM RESTORE // NOMINAL STATE
           </button>
         </div>
       </div>
@@ -260,7 +260,7 @@
 
         <!-- Preset Attack Vector Buttons -->
         <div class="flex flex-col gap-1.5">
-          <span class="text-[10px] text-slate-400 font-semibold uppercase">Simulate Attack Payload:</span>
+          <span class="text-[10px] text-slate-400 font-semibold uppercase">Active Adversarial Audit:</span>
           <div class="grid grid-cols-2 gap-1.5">
             <button onclick="applyAttackPreset('prompt_injection')" class="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 border border-slate-700 text-left truncate">
               🚨 Prompt Injection
@@ -446,7 +446,7 @@
         title.textContent = 'SentinelMesh Controls';
         badge.textContent = 'Maritime Defense';
         desc.textContent = 'Autonomous watchstander detecting anomalous vessel loitering and anchor-drag threats over undersea fiber-optic cables.';
-        threatBtnText.textContent = 'Simulate Rogue Anchor Drag';
+        threatBtnText.textContent = 'INJECT THREAT VECTOR // ANCHOR DRAG';
 
         container.innerHTML = `
           <div>
@@ -468,7 +468,7 @@
         title.textContent = 'OrbitalOps Controls';
         badge.textContent = 'Space Systems';
         desc.textContent = 'Autonomous LEO debris and satellite close-approach conjunction assessment engine.';
-        threatBtnText.textContent = 'Simulate Satellite Conjunction';
+        threatBtnText.textContent = 'INJECT THREAT VECTOR // LEO CONJUNCTION';
 
         container.innerHTML = `
           <div>
@@ -483,7 +483,7 @@
         title.textContent = 'GridTwin Controls';
         badge.textContent = 'Energy & AI';
         desc.textContent = 'Correlates AI compute cluster power draw with regional ambient heat domes to detect substation failure risks.';
-        threatBtnText.textContent = 'Simulate Heat Dome Overload';
+        threatBtnText.textContent = 'INJECT THREAT VECTOR // THERMAL STRAIN';
 
         container.innerHTML = `
           <div>
@@ -505,7 +505,7 @@
         title.textContent = 'GeoRisk Controls';
         badge.textContent = 'Climate Response';
         desc.textContent = 'Correlates NASA VIIRS thermal fire pixels with critical facilities and viewshed cameras.';
-        threatBtnText.textContent = 'Simulate Wildfire Encroachment';
+        threatBtnText.textContent = 'INJECT THREAT VECTOR // WILDFIRE';
 
         container.innerHTML = `
           <div>
