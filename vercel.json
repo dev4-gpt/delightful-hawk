@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "name": "aetheris",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/mission-control", "destination": "/mission-control.html" },
+    { "source": "/globe-lite", "destination": "/globe-lite.html" },
+    { "source": "/architecture", "destination": "/architecture.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
