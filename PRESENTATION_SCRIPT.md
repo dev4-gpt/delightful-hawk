@@ -1,6 +1,6 @@
 # AETHERIS // Global Spatial Intelligence Presentation Script
 **95-Second Synchronized Walkthrough Voiceover (212 Words @ ~134 WPM)**
-*Video File: [`aetheris_full_demo_walkthrough.mp4`](file:///Users/aryamandev/Library/Mobile%20Documents/com~apple~CloudDocs/Documents/antigravity/delightful-hawking/aetheris_full_demo_walkthrough.mp4)*
+*Video File: [`aetheris_full_demo_walkthrough.mp4`](file:///Users/aryamandev/Developer/delightful-hawking/aetheris_full_demo_walkthrough.mp4)*
 
 ---
 
