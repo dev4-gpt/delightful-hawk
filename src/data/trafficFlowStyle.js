@@ -78,3 +78,42 @@ export function flowDensityMult(level, { jamBoost = false } = {}) {
   if (jamBoost) return Math.min(4, 1 / Math.max(level, 0.25));
   return Math.min(2.5, 1 / Math.max(level, 0.4));
 }
+
+/**
+ * Multi-tier congestion gradient palette (Green -> Amber -> Crimson -> Deep Blood Red).
+ * Used for high-contrast geospatial traffic flow heatmaps across major metropolitan grids.
+ */
+export const CONGESTION_GRADIENT_RGBA = {
+  emerald: [16, 185, 129, 0.95],     // Free flow (level >= 0.85) - #10b981
+  chartreuse: [132, 204, 22, 0.95],  // Steady flow (0.70 <= level < 0.85) - #84cc16
+  amber: [245, 158, 11, 0.95],       // Moderate slowdown (0.55 <= level < 0.70) - #f59e0b
+  crimson: [239, 68, 68, 0.95],      // Heavy congestion (0.35 <= level < 0.55) - #ef4444
+  deep_jam: [153, 27, 27, 0.98],     // Gridlock / severe jam (level < 0.35) - #991b1b
+};
+
+/**
+ * Resolve the calibrated multi-tier congestion RGBA color grade for a traffic level.
+ * @param {number} level - traffic_level 0..1 (1 = free flow).
+ * @returns {number[]} [r, g, b, a]
+ */
+export function flowCongestionGradient(level) {
+  if (!Number.isFinite(level)) return CONGESTION_GRADIENT_RGBA.emerald;
+  if (level >= FREE_THRESHOLD) return CONGESTION_GRADIENT_RGBA.emerald;
+  if (level >= 0.70) return CONGESTION_GRADIENT_RGBA.chartreuse;
+  if (level >= SLOW_THRESHOLD) return CONGESTION_GRADIENT_RGBA.amber;
+  if (level >= 0.35) return CONGESTION_GRADIENT_RGBA.crimson;
+  return CONGESTION_GRADIENT_RGBA.deep_jam;
+}
+
+/**
+ * Return CSS hex color string for the multi-tier congestion grade.
+ * @param {number} level - traffic_level 0..1.
+ * @returns {string} Hex color string (e.g. '#10b981', '#f59e0b', '#ef4444', '#991b1b')
+ */
+export function flowCongestionHex(level) {
+  if (!Number.isFinite(level) || level >= FREE_THRESHOLD) return '#10b981';
+  if (level >= 0.70) return '#84cc16';
+  if (level >= SLOW_THRESHOLD) return '#f59e0b';
+  if (level >= 0.35) return '#ef4444';
+  return '#991b1b';
+}

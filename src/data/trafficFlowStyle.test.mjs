@@ -7,6 +7,9 @@ import {
   flowSpeedScale,
   flowDensityMult,
   FLOW_BUCKET_RGBA,
+  CONGESTION_GRADIENT_RGBA,
+  flowCongestionGradient,
+  flowCongestionHex,
 } from './trafficFlowStyle.js';
 
 // ── bucket thresholds ───────────────────────────────────────
@@ -103,4 +106,24 @@ test('flowDensityMult: opts omitted or jamBoost false keeps the shipped 2.5 cap'
   assert.equal(flowDensityMult(0.1), 2.5);
   assert.equal(flowDensityMult(0.1, {}), 2.5);
   assert.equal(flowDensityMult(0.1, { jamBoost: false }), 2.5);
+});
+
+// ── multi-tier congestion gradient tests ────────────────────
+
+test('flowCongestionGradient: green -> amber -> crimson -> deep jam', () => {
+  assert.deepEqual(flowCongestionGradient(0.95), CONGESTION_GRADIENT_RGBA.emerald);
+  assert.deepEqual(flowCongestionGradient(0.75), CONGESTION_GRADIENT_RGBA.chartreuse);
+  assert.deepEqual(flowCongestionGradient(0.60), CONGESTION_GRADIENT_RGBA.amber);
+  assert.deepEqual(flowCongestionGradient(0.40), CONGESTION_GRADIENT_RGBA.crimson);
+  assert.deepEqual(flowCongestionGradient(0.20), CONGESTION_GRADIENT_RGBA.deep_jam);
+  // Non-finite input degrades to emerald
+  assert.deepEqual(flowCongestionGradient(NaN), CONGESTION_GRADIENT_RGBA.emerald);
+});
+
+test('flowCongestionHex: returns calibrated hex strings', () => {
+  assert.equal(flowCongestionHex(1), '#10b981');
+  assert.equal(flowCongestionHex(0.72), '#84cc16');
+  assert.equal(flowCongestionHex(0.58), '#f59e0b');
+  assert.equal(flowCongestionHex(0.42), '#ef4444');
+  assert.equal(flowCongestionHex(0.15), '#991b1b');
 });

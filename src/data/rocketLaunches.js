@@ -3211,15 +3211,12 @@ function addLaunchEntity(launch, activeTleText = _activeTleText) {
       id: `rocket-transfer:${launch.id}`,
       polyline: {
         positions: ascentPath,
-        width: 1.5,
-        // The animated vehicle uses Cartesian interpolation between these
-        // exact samples. Prevent Cesium from replacing each segment with a
-        // geodesic arc, which would visually separate the dot from the line.
+        width: 5,
         arcType: Cesium.ArcType.NONE,
-        material: new Cesium.PolylineDashMaterialProperty({
-          color: Cesium.Color.fromCssColorString('#7bed9f').withAlpha(0.8),
-          dashLength: 24,
-          dashPattern: 0xF0F0,
+        material: new Cesium.PolylineGlowMaterialProperty({
+          glowPower: 0.28,
+          taperPower: 0.85,
+          color: Cesium.Color.fromCssColorString(satelliteTrack ? '#00f0ff' : '#ff9f43'),
         }),
       },
       properties: {
@@ -3229,6 +3226,54 @@ function addLaunchEntity(launch, activeTleText = _activeTleText) {
           ? 'Launch site to propagated insertion'
           : 'Launch site to forward projected insertion',
       },
+    });
+    // Crisp inner core line for high-altitude visual clarity
+    _dataSource.entities.add({
+      id: `rocket-transfer-core:${launch.id}`,
+      polyline: {
+        positions: ascentPath,
+        width: 1.8,
+        arcType: Cesium.ArcType.NONE,
+        material: new Cesium.PolylineDashMaterialProperty({
+          color: Cesium.Color.WHITE.withAlpha(0.92),
+          dashLength: 16,
+          dashPattern: 0xCCCC,
+        }),
+      },
+      properties: {
+        launchId: launch.id,
+        phase: 'ASCENT_CORE_SPLINE',
+      },
+    });
+
+    // 3D Orbital Ascent Milestones along spline
+    const milestones = [
+      { key: 'MAX_Q', label: 'MAX-Q (T+1:12)', progress: 0.14, color: '#ffd166', alt: '~13 km' },
+      { key: 'MECO', label: 'MECO (T+2:28)', progress: 0.35, color: '#ff9f43', alt: '~72 km' },
+      { key: 'SES_1', label: 'SES-1 (T+2:36)', progress: 0.38, color: '#00f0ff', alt: '~80 km' },
+      { key: 'SECO', label: 'SECO (T+8:45)', progress: 0.94, color: '#7bed9f', alt: '~210 km' },
+    ];
+
+    milestones.forEach((m) => {
+      const mPos = samplePath(ascentPath, m.progress);
+      if (!mPos) return;
+
+      _dataSource.entities.add({
+        id: `rocket-milestone:${launch.id}:${m.key}`,
+        position: mPos,
+        point: {
+          pixelSize: 5,
+          color: Cesium.Color.fromCssColorString(m.color),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 1.5,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+        properties: {
+          launchId: launch.id,
+          milestone: m.key,
+          altitudeEst: m.alt,
+        },
+      });
     });
   }
 }
@@ -3571,6 +3616,18 @@ export function _setRocketMissionOverlayHostForTest(host = null) {
 /** Test seam that exercises the real selection/deselection path. */
 export function _setSelectedRocketMissionForTest(launchId = null) {
   setSelectedMission(launchId, Boolean(launchId));
+}
+
+if (typeof window !== 'undefined') {
+  window.__gevLaunches = {
+    focusNextLaunch() {
+      if (_launches?.length > 0) {
+        const next = _launches[0];
+        setSelectedMission(next.id, true);
+      }
+    },
+    getLaunches: () => _launches,
+  };
 }
 
 export default rocketLaunchesLayer;

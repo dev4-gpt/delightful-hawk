@@ -107,26 +107,26 @@ const SIZE_BY_TYPE = {
  * @const {Object<string, Cesium.Color>}
  */
 const FLOW_BUCKET_COLORS = {
-  free: Cesium.Color.fromCssColorString('#2ecc71').withAlpha(0.9),
-  slow: Cesium.Color.fromCssColorString('#f0b23e').withAlpha(0.9),
-  jam: Cesium.Color.fromCssColorString('#e05252').withAlpha(0.9),
+  free: Cesium.Color.fromCssColorString('#10b981').withAlpha(0.95),
+  slow: Cesium.Color.fromCssColorString('#f59e0b').withAlpha(0.95),
+  jam: Cesium.Color.fromCssColorString('#ef4444').withAlpha(0.95),
 };
 
 // ─── Jam-viz prototype (live mode only — see 2026-07-21 design doc) ────────
 /** @const {number} Max congestion heat-line polylines per render (jam first). */
-const HEAT_LINE_CAP = 400;
+const HEAT_LINE_CAP = 500;
 /** @const {number} Px — glowing jam corridor line width. */
-const HEAT_LINE_JAM_WIDTH = 9;
+const HEAT_LINE_JAM_WIDTH = 11;
 /** @const {number} Px — flat slow corridor line width. */
-const HEAT_LINE_SLOW_WIDTH = 4;
+const HEAT_LINE_SLOW_WIDTH = 5;
 /** @const {number} Jam heat-line alpha midpoint (pulse oscillates around it). */
-const HEAT_JAM_BASE_ALPHA = 0.55;
+const HEAT_JAM_BASE_ALPHA = 0.65;
 /** @const {number} Jam heat-line pulse amplitude (±, ~1.6 s period). */
-const HEAT_JAM_PULSE_ALPHA = 0.2;
-/** @const {Cesium.Color} Jam corridor color (bucket red, alpha pulsed live). */
-const HEAT_JAM_COLOR = Cesium.Color.fromCssColorString('#e05252');
+const HEAT_JAM_PULSE_ALPHA = 0.25;
+/** @const {Cesium.Color} Jam corridor color (bucket crimson, alpha pulsed live). */
+const HEAT_JAM_COLOR = Cesium.Color.fromCssColorString('#ef4444');
 /** @const {Cesium.Color} Slow corridor color (bucket amber, faint + static). */
-const HEAT_SLOW_COLOR = Cesium.Color.fromCssColorString('#f0b23e').withAlpha(0.2);
+const HEAT_SLOW_COLOR = Cesium.Color.fromCssColorString('#f59e0b').withAlpha(0.35);
 /**
  * @const {number} Meters — jam dots depth-test-punch through the 3D tiles out
  * to this camera distance so queues stay visible at city scale. The single
@@ -2502,5 +2502,24 @@ const trafficLayer = {
     };
   },
 };
+
+if (typeof window !== 'undefined') {
+  window.__gevTraffic = {
+    focusCongestion() {
+      if (_viewer?.camera) {
+        _viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(139.7006, 35.6595, 1200),
+          orientation: {
+            heading: Cesium.Math.toRadians(25),
+            pitch: Cesium.Math.toRadians(-28),
+            roll: 0,
+          },
+          duration: 2.0,
+        });
+      }
+    },
+    getStats: () => trafficLayer.getStats(),
+  };
+}
 
 export default trafficLayer;
