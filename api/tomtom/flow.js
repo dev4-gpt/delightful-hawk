@@ -13,25 +13,13 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'no_key', message: 'TOMTOM_API_KEY not configured' });
   }
 
-  const slug = req.query.slug || [];
-  let z, x, y;
-  if (Array.isArray(slug) && slug.length >= 3) {
-    z = slug[0];
-    x = slug[1];
-    y = slug[2].replace(/\.pbf$/i, '');
-  } else {
-    const m = String(req.url || '').match(/\/flow\/(\d+)\/(\d+)\/(\d+)(\.pbf)?/i);
-    if (m) {
-      z = m[1];
-      x = m[2];
-      y = m[3];
-    }
+  const rawUrl = String(req.url || '');
+  const m = rawUrl.match(/\/flow\/(\d+)\/(\d+)\/(\d+)/i) || rawUrl.match(/(\d+)\/(\d+)\/(\d+)/i);
+  if (!m) {
+    return res.status(400).json({ error: 'invalid_tile_coordinates', url: rawUrl });
   }
 
-  if (!z || !x || !y) {
-    return res.status(400).json({ error: 'invalid_tile_coordinates' });
-  }
-
+  const [, z, x, y] = m;
   const upstreamUrl = `https://api.tomtom.com/traffic/map/4/tile/flow/relative/${z}/${x}/${y}.pbf?key=${encodeURIComponent(apiKey)}`;
 
   try {
