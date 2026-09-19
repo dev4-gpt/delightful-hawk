@@ -9,7 +9,6 @@
     { "source": "/mission-control", "destination": "/mission-control.html" },
     { "source": "/globe-lite", "destination": "/globe-lite.html" },
     { "source": "/architecture", "destination": "/architecture.html" },
-    { "source": "/studio", "destination": "/studio.html" },
     { "source": "/api/tomtom/flow/(.*)", "destination": "/api/tomtom/flow" }
   ],
   "headers": [
