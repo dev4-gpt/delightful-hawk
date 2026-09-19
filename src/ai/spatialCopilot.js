@@ -8,6 +8,8 @@
  * @module spatialCopilot
  */
 
+import { AgentShield } from './agentShield.js';
+
 // Preset strategic points of interest (lat, lon, altitude, pitch, heading)
 export const STRATEGIC_TARGETS = {
   'austin': { name: 'Austin, Texas (C2 Hub)', lat: 30.2672, lon: -97.7431, alt: 1200, pitch: -30, heading: 0 },
@@ -33,11 +35,12 @@ export const STRATEGIC_TARGETS = {
 };
 
 export class SpatialCopilot {
-  constructor({ viewer = null, dataManager = null, styleManager = null, annotations = null } = {}) {
+  constructor({ viewer = null, dataManager = null, styleManager = null, annotations = null, shield = null } = {}) {
     this.viewer = viewer;
     this.dataManager = dataManager;
     this.styleManager = styleManager;
     this.annotations = annotations;
+    this.shield = shield || new AgentShield();
     this.tacticalEntities = new Set();
     this.activePerimeters = [];
   }
@@ -56,15 +59,30 @@ export class SpatialCopilot {
 
   /**
    * Parse natural language command into structured spatial intent.
+   * Scans input through AgentShield v2.0 before execution.
    * @param {string} rawInput 
+   * @param {object} context Optional authorization context
    * @returns {object} structured intent
    */
-  parseIntent(rawInput) {
+  parseIntent(rawInput, context = {}) {
     if (!rawInput || typeof rawInput !== 'string') {
       return { type: 'UNKNOWN', query: '' };
     }
 
-    const query = rawInput.trim();
+    // AgentShield v2.0 Security Gate
+    const scan = this.shield.scanPrompt(rawInput, context);
+    if (!scan.safe) {
+      return {
+        type: 'SECURITY_BLOCKED',
+        query: rawInput,
+        reason: scan.reason,
+        flaggedPatterns: scan.flaggedPatterns,
+        auditHash: scan.hash,
+        sanitizedText: scan.sanitizedText
+      };
+    }
+
+    const query = scan.sanitizedText || rawInput.trim();
     const lower = query.toLowerCase();
 
     // 1. Help
@@ -229,6 +247,15 @@ export class SpatialCopilot {
             '• Sensors: "toggle satellites", "show military aircraft", "hide fires"\n' +
             '• Missions: "track falcon 9 launches", "focus traffic congestion"\n' +
             '• Intel: "generate tactical sitrep", "clear overlays"'
+        };
+
+      case 'SECURITY_BLOCKED':
+        return {
+          status: 'blocked',
+          action: 'SECURITY_ALERT',
+          speech: `Security alert. Directive blocked by AgentShield.`,
+          message: `[SECURITY BLOCKED] ${intent.reason || 'Adversarial pattern detected.'} (Audit: ${intent.auditHash?.slice(0, 16)}...)`,
+          flaggedPatterns: intent.flaggedPatterns
         };
 
       case 'CLEAR_OVERLAYS':
