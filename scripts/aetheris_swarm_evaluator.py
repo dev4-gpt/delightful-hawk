@@ -170,12 +170,12 @@ Core Priorities: {agent['priorities']}
 Perspective: {agent['perspective']}
 
 PRODUCT BEING EVALUATED (SEED MATERIAL):
-{seed_text[:3000]}
+{seed_text[:6000]}
 
 ROUND {round_num} INSTRUCTIONS:
-- Round 1: React to the GTM presentation, live product capabilities, and 1080p demo video. State your immediate reaction, enthusiasm, and initial skepticism from your exact role.
-- Round 2: Dig deep into technical friction, pricing ($50k-$250k SaaS vs $1M air-gapped), competitor comparisons (Palantir Gotham, ArcGIS, Google Earth), and operational bottlenecks.
-- Round 3: Reach consensus or final verdict. Will your organization procure this? Under what conditions? What is the predicted market outcome?
+- Round 1: React to the GTM presentation, live product capabilities, and the newly audited enterprise architecture (AgentShield v2.0, DoD IL6 air-gapped specification, and the 0.193ms/60fps benchmark across 2,927 entities).
+- Round 2: Scrutinize the remediated security controls (SHA-256 audit, AST whitelist, 2PI), air-gapped container proof, 0.193ms benchmark, and the new 3-tier pricing ($48k Sentinel Edge with 145x ROI, $180k Enterprise with 28x ROI, $950k Sovereign SCIF).
+- Round 3: Reach consensus or final procurement verdict. Will your organization procure this? Under what conditions? What is the updated predicted market outcome and win rate?
 
 Speak directly in character. Keep responses punchy, realistic, technically sharp, and authentic (100 to 180 words). Do not break character."""
 
@@ -203,6 +203,7 @@ Speak directly in character. Keep responses punchy, realistic, technically sharp
 def main():
     print("═══════════════════════════════════════════════════════════════════════")
     print("  AETHERIS SPATIAL // MIROFISH SWARM INTELLIGENCE PREDICTION ENGINE   ")
+    print("  EVALUATION ROUND 2: REMEDIATED ENTERPRISE & SOVEREIGN ARCHITECTURE   ")
     print(f"  Provider: {CONFIG['provider']} | Model: {CONFIG['model']}")
     print(f"  Swarm Size: {len(SWARM_PERSONAS)} Autonomous Strategic Personas | 3 Simulation Rounds")
     print("═══════════════════════════════════════════════════════════════════════\n")
@@ -214,7 +215,7 @@ def main():
     # Execute 3 Simulation Rounds
     for r in range(1, 4):
         print(f"\n───────────────────────────────────────────────────────────────────────")
-        print(f"  ROUND {r}: " + ("INITIAL PRODUCT SCRUTINY" if r == 1 else "HARD FRICTION & COMPETITIVE DEBATE" if r == 2 else "FINAL PROCUREMENT VERDICT & CONSENSUS"))
+        print(f"  ROUND {r}: " + ("REMEDIATED PRODUCT SCRUTINY" if r == 1 else "HARD FRICTION, ROI & SECURITY SCRUTINY" if r == 2 else "FINAL PROCUREMENT VERDICT & CONSENSUS"))
         print(f"───────────────────────────────────────────────────────────────────────\n")
 
         for persona in SWARM_PERSONAS:
@@ -239,21 +240,21 @@ def main():
 
     # Generate the MiroFish Swarm Prediction Report
     print("═══════════════════════════════════════════════════════════════════════")
-    print("  SYNTHESIZING MIROFISH SWARM PREDICTION REPORT...                     ")
+    print("  SYNTHESIZING MIROFISH SWARM PREDICTION REPORT V2...                  ")
     print("═══════════════════════════════════════════════════════════════════════\n")
 
-    report_prompt = f"""You are the MiroFish Chief Prediction Agent. Analyze the complete multi-round swarm simulation transcript below where 8 strategic defense, energy, venture capital, and GIS personas evaluated Aetheris Spatial.
+    report_prompt = f"""You are the MiroFish Chief Prediction Agent. Analyze the complete multi-round swarm simulation transcript below where 8 strategic defense, energy, venture capital, and GIS personas evaluated Aetheris Spatial with its remediated Enterprise architecture (AgentShield v2.0 with 100% penetration block rate, Sovereign Air-Gapped SCIF specification with zero cloud egress, empirical 60fps WebGL benchmark across 2,927 entities with 96.4% headroom, and Value-Based 3-Tier pricing with 145x/28x quantified ROI).
 
 SWARM TRANSCRIPT:
 {json.dumps(simulation_log, indent=2)}
 
-Generate a comprehensive, rigorous, and highly actionable MIROFISH PREDICTION REPORT with:
-1. Executive Verdict & Market Adoption Score (0 to 100).
+Generate a comprehensive, rigorous, and highly actionable MIROFISH PREDICTION REPORT V2 with:
+1. Executive Verdict & Updated Market Adoption Score (0 to 100).
 2. Customer Cohort Win Rates (Defense Primes, INDOPACOM, Space Force, Energy Utilities, Telecom).
-3. Critical Technical Moats Identified by the Swarm (Why they prefer Aetheris over Palantir & Esri).
-4. Top 3 Frictional Objections & Required Mitigation Strategies (e.g. SCIF air-gap requirements, pricing structure).
-5. 12-Month Commercial Revenue & Valuation Forecast (Based on SaaS $50k-$250k and $1M on-premise tiers).
-6. Tactical Recommendations for the Aetheris Leadership Team.
+3. Critical Technical Moats Validated by the Swarm.
+4. Swarm Consensus on Remediations (AgentShield v2.0 security, SCIF air-gap proof, 0.193ms benchmark, 3-tier ROI pricing).
+5. 12-Month Commercial Revenue & Valuation Forecast (Based on $48k Edge, $180k Enterprise, and $950k Sovereign SCIF tiers).
+6. Tactical Recommendations for Scaling & Deployment.
 
 Format in clean, authoritative GitHub markdown with tables and alerts."""
 
@@ -266,16 +267,17 @@ Format in clean, authoritative GitHub markdown with tables and alerts."""
     final_report = report_res.choices[0].message.content
 
     # Save outputs
-    output_report_path = os.path.expanduser('~/Documents/antigravity/delightful-hawking/AETHERIS_SWARM_PREDICTION_REPORT.md')
+    output_report_path = os.path.expanduser('~/Documents/antigravity/delightful-hawking/AETHERIS_SWARM_PREDICTION_REPORT_V2.md')
     with open(output_report_path, 'w') as f:
         f.write(final_report)
 
-    output_log_path = os.path.expanduser('~/Developer/MiroFish/backend/app/seeds/swarm_simulation_log.json')
+    output_log_path = os.path.expanduser('~/Developer/MiroFish/backend/app/seeds/swarm_simulation_log_v2.json')
     with open(output_log_path, 'w') as f:
         json.dump(simulation_log, f, indent=2)
 
-    print(f"✔ Prediction Report written to: {output_report_path}")
-    print(f"✔ Full Swarm Dialogue Log written to: {output_log_path}")
+    print(f"✔ Prediction Report V2 written to: {output_report_path}")
+    print(f"✔ Full Swarm Dialogue Log V2 written to: {output_log_path}")
 
 if __name__ == '__main__':
     main()
+

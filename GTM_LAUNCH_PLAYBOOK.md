@@ -147,8 +147,26 @@ Aetheris is an **interactive WGS84 3D planetary digital twin** with an autonomou
    - *Multi-sensor anomaly correlation engine computing dynamic DEFCON ratings and automated military SITREPs.*
 6. **Slide 6: Dual-Workstation Strategy**:
    - *Aetheris Spatial (Defense & Geospatial World Engine) alongside Wiza (Standalone Generative Cinema Workstation).*
-7. **Slide 7: Business Model & Traction**:
-   - *SaaS Enterprise Licenses ($50k–$250k/yr per C2 hub) + Custom On-Premise Air-Gapped Deployments ($1M+).*
+7. **Slide 7: Business Model & Quantified ROI Tiers**:
+   - **Tier 1: Sentinel Edge ($48k/yr / corridor)**:
+     - Single-asset corridor monitoring (subsea fiber landings or transmission grids).
+     - *Quantified ROI*: 1 prevented subsea anchor-drag cable cut ($7M average repair + $1M/day rerouting penalty) = **145x Year 1 ROI**.
+   - **Tier 2: Tactical Enterprise ($180k/yr / sector)**:
+     - 14 live telemetry feeds, Horizon Spatial Copilot, dynamic 3D geofencing, multi-seat C2 terminal.
+     - *Quantified ROI*: 1 prevented regional power grid wildfire cascade (PJM Loudoun corridor, $5M/hr outage penalty) = **28x ROI**.
+   - **Tier 3: Sovereign SCIF / National Defense ($950k/yr)**:
+     - 100% air-gapped on-premise container appliance, local LLM/Whisper, zero network egress, DoD IL6 accreditation.
+     - *Quantified ROI*: Displaces $10M+ Palantir Gotham / Raytheon bespoke contracts at 90% savings.
+
+---
+
+### Quantified Customer ROI Breakdown
+
+| Target Sector | Risk Event Mitigated | Unmitigated Cost | Aetheris Annual Cost | Quantified Payoff |
+| :--- | :--- | :---: | :---: | :---: |
+| **Subsea Telecom Consortia** | Anchor-drag severance across TAT-14 / MAREA | **$7,000,000+** | **$48,000** (Sentinel Edge) | **145x ROI** (Year 1) |
+| **Regional Electrical Grids** | Wildfire contact on 500kV Loudoun transmission | **$5,000,000 / hr** | **$180,000** (Enterprise) | **28x ROI** (1 Hour) |
+| **Defense & Space Force** | LEO conjunction collision / orbital loss | **$85,000,000** (Sat value) | **$950,000** (Sovereign SCIF) | **89x ROI** |
 
 ---
 
