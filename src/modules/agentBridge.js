@@ -1,21 +1,33 @@
 /**
- * Tactical Antigravity Coordinator Terminal
+ * Aetheris Horizon — Sovereign Spatial Copilot & Evolution Coordinator
+ * 
  * Floating glassmorphic terminal streaming live agent telemetry, spatial sensor fusion,
- * and autonomous command dispatch across Aetheris domains.
+ * autonomous threat detection (Sentinel Watchstander), voice comms (Web Speech + VHF radio squelch),
+ * and real-time 3D camera/layer command dispatch across Aetheris domains.
+ * 
  * @module agentBridge
  */
+
+import { SpatialCopilot, STRATEGIC_TARGETS } from '../ai/spatialCopilot.js';
+import { SentinelWatchstander } from '../ai/sitrepEngine.js';
+import { TacticalVoiceOperator } from '../ai/voiceComms.js';
 
 let _bridgeContent = null;
 let _viewer = null;
 let _commandInput = null;
+let _micBtn = null;
+let _copilot = null;
+let _watchstander = null;
+let _voiceOperator = null;
 
 // Telemetry counters
 let _telemetry = {
     status: 'NOMINAL',
     latencyMs: 14,
-    activeAgents: 4,
-    fusedEvents: 142,
-    domainPills: ['ORBIT', 'TRAFFIC', 'GRID', 'AIS']
+    activeAgents: 6,
+    fusedEvents: 168,
+    defcon: 3,
+    domainPills: ['ORBIT', 'TRAFFIC', 'GRID', 'AIS', 'FIRMS', 'AIR']
 };
 
 /**
@@ -45,23 +57,23 @@ export function addAgentBridgeMessage(msg, color = null) {
 
     let computedColor = color;
     if (!computedColor) {
-        if (msg.includes('CRITICAL') || msg.includes('ALERT') || msg.includes('OVERLOAD') || msg.includes('JAM')) {
+        if (msg.includes('CRITICAL') || msg.includes('ALERT') || msg.includes('OVERLOAD') || msg.includes('JAM') || msg.includes('DEFCON 1') || msg.includes('DEFCON 2')) {
             computedColor = '#ff4d4f';
-        } else if (msg.includes('WARNING') || msg.includes('ELEVATED') || msg.includes('SLOW')) {
+        } else if (msg.includes('WARNING') || msg.includes('ELEVATED') || msg.includes('SLOW') || msg.includes('DEFCON 3')) {
             computedColor = '#ffa940';
-        } else if (msg.includes('PULSE') || msg.includes('TELEMETRY') || msg.includes('COORDINATOR')) {
+        } else if (msg.includes('PULSE') || msg.includes('TELEMETRY') || msg.includes('COORDINATOR') || msg.includes('SITREP')) {
             computedColor = '#00f0ff';
-        } else if (msg.includes('DOMAIN: SPACE') || msg.includes('ORBIT')) {
+        } else if (msg.includes('DOMAIN: SPACE') || msg.includes('ORBIT') || msg.includes('FALCON')) {
             computedColor = '#c084fc';
         } else if (msg.includes('DOMAIN: MARITIME') || msg.includes('AIS')) {
             computedColor = '#60a5fa';
         } else if (msg.includes('DOMAIN: ENERGY') || msg.includes('GRID')) {
             computedColor = '#f59e0b';
-        } else if (msg.includes('DOMAIN: DISASTER') || msg.includes('GEO-RISK')) {
+        } else if (msg.includes('DOMAIN: DISASTER') || msg.includes('GEO-RISK') || msg.includes('FIRMS')) {
             computedColor = '#f43f5e';
         } else if (msg.includes('TRAFFIC') || msg.includes('FLOW')) {
             computedColor = '#10b981';
-        } else if (msg.includes('USER COMMAND') || msg.includes('>')) {
+        } else if (msg.includes('USER COMMAND') || msg.includes('>') || msg.includes('VOICE IN')) {
             computedColor = '#67e8f9';
         } else {
             computedColor = '#94a3b8';
@@ -73,7 +85,7 @@ export function addAgentBridgeMessage(msg, color = null) {
     // Time badge
     const now = new Date();
     const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0').slice(0, 2);
-    line.innerHTML = `<span style="color: rgba(255,255,255,0.3); font-size: 10px; margin-right: 6px;">${timeStr}</span>${escapeHtml(msg)}`;
+    line.innerHTML = `<span style="color: rgba(255,255,255,0.3); font-size: 10px; margin-right: 6px;">${timeStr}</span>${escapeHtml(msg).replace(/\n/g, '<br/>&nbsp;&nbsp;')}`;
 
     content.appendChild(line);
 
@@ -84,7 +96,7 @@ export function addAgentBridgeMessage(msg, color = null) {
 
     content.scrollTop = content.scrollHeight;
 
-    if (content.children.length > 200) {
+    if (content.children.length > 250) {
         content.removeChild(content.firstChild);
     }
 }
@@ -109,6 +121,23 @@ function updateTelemetryPills() {
     if (countEl) {
         countEl.innerText = `${_telemetry.fusedEvents} EVT`;
     }
+    const defconEl = document.getElementById('ag-telemetry-defcon');
+    if (defconEl && _watchstander) {
+        defconEl.innerText = `DEFCON ${_watchstander.defconLevel}`;
+        if (_watchstander.defconLevel <= 2) {
+            defconEl.style.color = '#ff4d4f';
+            defconEl.style.borderColor = 'rgba(255, 77, 79, 0.5)';
+            defconEl.style.background = 'rgba(255, 77, 79, 0.15)';
+        } else if (_watchstander.defconLevel === 3) {
+            defconEl.style.color = '#ffa940';
+            defconEl.style.borderColor = 'rgba(255, 169, 64, 0.4)';
+            defconEl.style.background = 'rgba(255, 169, 64, 0.15)';
+        } else {
+            defconEl.style.color = '#34d399';
+            defconEl.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+            defconEl.style.background = 'rgba(52, 211, 153, 0.15)';
+        }
+    }
 }
 
 /**
@@ -122,6 +151,40 @@ export function initAgentBridge(viewer, registry = null) {
 
     _viewer = viewer;
 
+    // Instantiate Copilot & Sentinel engines
+    _copilot = new SpatialCopilot({
+        viewer: _viewer,
+        dataManager: (typeof window !== 'undefined' && window.__godsEyeView?.dataManager) || null,
+        styleManager: (typeof window !== 'undefined' && window.__godsEyeView?.styleManager) || null,
+        annotations: (typeof window !== 'undefined' && window.__godsEyeView?.annotations) || null
+    });
+
+    _watchstander = new SentinelWatchstander({
+        dataManager: (typeof window !== 'undefined' && window.__godsEyeView?.dataManager) || null
+    });
+
+    _voiceOperator = new TacticalVoiceOperator({
+        onTranscript: (spokenText) => {
+            addAgentBridgeMessage(`[VOICE IN] 🎙️ "${spokenText}"`);
+            handleUserTerminalCommand(spokenText, true);
+        },
+        onStatusChange: ({ isListening, isSpeaking }) => {
+            if (_micBtn) {
+                if (isListening) {
+                    _micBtn.style.color = '#ff4d4f';
+                    _micBtn.style.borderColor = '#ff4d4f';
+                    _micBtn.style.background = 'rgba(255, 77, 79, 0.2)';
+                    _micBtn.title = 'Listening... Click to stop';
+                } else {
+                    _micBtn.style.color = '#00f0ff';
+                    _micBtn.style.borderColor = 'rgba(0, 240, 255, 0.25)';
+                    _micBtn.style.background = 'rgba(0, 240, 255, 0.08)';
+                    _micBtn.title = 'Push-to-Talk Microphone';
+                }
+            }
+        }
+    });
+
     if (!document.getElementById('antigravity-coordinator-styles')) {
         const style = document.createElement('style');
         style.id = 'antigravity-coordinator-styles';
@@ -132,7 +195,7 @@ export function initAgentBridge(viewer, registry = null) {
                 100% { transform: scale(0.9); opacity: 0.9; box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7); }
             }
             .ag-glass-panel {
-                background: linear-gradient(135deg, rgba(10, 16, 28, 0.90) 0%, rgba(4, 8, 16, 0.96) 100%);
+                background: linear-gradient(135deg, rgba(10, 16, 28, 0.92) 0%, rgba(4, 8, 16, 0.98) 100%);
                 backdrop-filter: blur(16px) saturate(180%);
                 -webkit-backdrop-filter: blur(16px) saturate(180%);
                 border: 1px solid rgba(0, 240, 255, 0.28);
@@ -187,7 +250,7 @@ export function initAgentBridge(viewer, registry = null) {
         position: absolute;
         bottom: 24px;
         left: 24px;
-        width: 420px;
+        width: 440px;
         border-radius: 8px;
         color: #e0f0ff;
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -224,27 +287,29 @@ export function initAgentBridge(viewer, registry = null) {
 
     const title = document.createElement('div');
     title.innerHTML = `
-        <span style="color: #00f0ff; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em;">ANTIGRAVITY COORDINATOR</span>
-        <span style="color: rgba(0, 240, 255, 0.5); font-size: 9.5px; margin-left: 4px;">v2.6</span>
+        <span style="color: #00f0ff; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em;">AETHERIS COPILOT</span>
+        <span style="color: rgba(0, 240, 255, 0.5); font-size: 9.5px; margin-left: 4px;">v3.0-EVOLUTION</span>
     `;
 
     titleGroup.appendChild(pulseDot);
     titleGroup.appendChild(title);
 
-    // Right Telemetry Badges & Control
+    // Right Telemetry Badges & Controls
     const controls = document.createElement('div');
     controls.style.cssText = `display: flex; align-items: center; gap: 6px;`;
 
-    const statusPill = document.createElement('span');
-    statusPill.innerText = 'NOMINAL';
-    statusPill.style.cssText = `
-        background: rgba(16, 185, 129, 0.15);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        color: #34d399;
+    const defconBadge = document.createElement('span');
+    defconBadge.id = 'ag-telemetry-defcon';
+    defconBadge.innerText = 'DEFCON 3';
+    defconBadge.style.cssText = `
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: #ffa940;
         font-size: 9px;
         padding: 1px 5px;
         border-radius: 3px;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: 0.05em;
     `;
 
     const latPill = document.createElement('span');
@@ -294,7 +359,7 @@ export function initAgentBridge(viewer, registry = null) {
         padding: 0 4px;
     `;
 
-    controls.appendChild(statusPill);
+    controls.appendChild(defconBadge);
     controls.appendChild(latPill);
     controls.appendChild(clearBtn);
     controls.appendChild(toggle);
@@ -307,8 +372,8 @@ export function initAgentBridge(viewer, registry = null) {
     const content = document.createElement('div');
     content.id = 'agent-bridge-content';
     content.style.cssText = `
-        max-height: 175px;
-        min-height: 80px;
+        max-height: 185px;
+        min-height: 85px;
         overflow-y: auto;
         overflow-x: hidden;
         padding-right: 4px;
@@ -318,7 +383,7 @@ export function initAgentBridge(viewer, registry = null) {
     _bridgeContent = content;
     container.appendChild(content);
 
-    // Action Chips Row
+    // Action Chips Row (Quick Action Commands)
     const chipsBar = document.createElement('div');
     chipsBar.id = 'ag-chips-bar';
     chipsBar.style.cssText = `
@@ -332,11 +397,13 @@ export function initAgentBridge(viewer, registry = null) {
     `;
 
     const chips = [
-        { label: '🛰️ Falcon 9 Tracks', cmd: 'Falcon 9 orbital trajectories highlighted' },
-        { label: '🚦 Traffic Heatmap', cmd: 'TomTom real-time congestion heatmap synchronized' },
-        { label: '⚡ Substation Load', cmd: 'Loudoun 500kV telemetry queried: 99.4% peak strain' },
-        { label: '🌊 Maritime AIS', cmd: 'Subsea cable TAT-14 AIS perimeter scan complete' },
-        { label: '🌐 HUD Synth', cmd: 'Gemini/Groq cascading AI waterfall dispatched' },
+        { label: '📡 Live SITREP', query: 'generate tactical sitrep' },
+        { label: '🛰️ Falcon 9 Tracks', query: 'track falcon 9 launches' },
+        { label: '🛡️ 50km Geofence', query: 'draw 50km geofence around austin' },
+        { label: '🎯 Measure Range', query: 'measure distance from new york to london' },
+        { label: '🚦 Traffic Heatmap', query: 'focus traffic congestion' },
+        { label: '👁️ Thermal Vision', query: 'switch to thermal vision' },
+        { label: '🌐 Taiwan Strait', query: 'fly to taiwan strait' }
     ];
 
     chips.forEach(c => {
@@ -344,15 +411,15 @@ export function initAgentBridge(viewer, registry = null) {
         chip.className = 'ag-chip-btn';
         chip.innerText = c.label;
         chip.addEventListener('click', () => {
-            addAgentBridgeMessage(`[USER COMMAND] ${c.label}`);
-            executeTacticalCommand(c.label, c.cmd);
+            addAgentBridgeMessage(`[USER COMMAND] > ${c.query}`);
+            handleUserTerminalCommand(c.query);
         });
         chipsBar.appendChild(chip);
     });
 
     container.appendChild(chipsBar);
 
-    // Command Prompt Input Line
+    // Command Prompt Input Line with Voice Push-To-Talk Mic
     const inputRow = document.createElement('div');
     inputRow.id = 'ag-input-row';
     inputRow.style.cssText = `
@@ -366,6 +433,30 @@ export function initAgentBridge(viewer, registry = null) {
         padding: 3px 8px;
     `;
 
+    const micBtn = document.createElement('button');
+    micBtn.id = 'ag-mic-btn';
+    micBtn.innerHTML = '🎤';
+    micBtn.title = 'Tactical Voice Comms (Click or Push-to-Talk)';
+    micBtn.style.cssText = `
+        background: rgba(0, 240, 255, 0.08);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-radius: 3px;
+        color: #00f0ff;
+        font-size: 11px;
+        padding: 2px 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    `;
+    micBtn.addEventListener('click', () => {
+        if (_voiceOperator) {
+            _voiceOperator.toggleListening();
+        }
+    });
+    _micBtn = micBtn;
+
     const promptSymbol = document.createElement('span');
     promptSymbol.innerText = '>';
     promptSymbol.style.color = '#00f0ff';
@@ -374,7 +465,7 @@ export function initAgentBridge(viewer, registry = null) {
 
     const input = document.createElement('input');
     input.type = 'text';
-    input.placeholder = 'Dispatch command or tactical query...';
+    input.placeholder = 'Ask copilot: "fly to tokyo", "draw 50km geofence", "sitrep"...';
     input.style.cssText = `
         flex: 1;
         background: transparent;
@@ -396,6 +487,7 @@ export function initAgentBridge(viewer, registry = null) {
         }
     });
 
+    inputRow.appendChild(micBtn);
     inputRow.appendChild(promptSymbol);
     inputRow.appendChild(input);
     container.appendChild(inputRow);
@@ -409,28 +501,31 @@ export function initAgentBridge(viewer, registry = null) {
             chipsBar.style.display = 'flex';
             inputRow.style.display = 'flex';
             toggle.innerText = '[-]';
-            container.style.width = '420px';
+            container.style.width = '440px';
         } else {
             content.style.display = 'none';
             chipsBar.style.display = 'none';
             inputRow.style.display = 'none';
             toggle.innerText = '[+]';
-            container.style.width = '240px';
+            container.style.width = '260px';
         }
     });
 
     document.body.appendChild(container);
 
     // Boot Messages
-    addAgentBridgeMessage('[SYSTEM] Antigravity Coordinator Terminal online.');
-    addAgentBridgeMessage('[TELEMETRY] Sensor fusion linked to Vercel global edge.');
-    addAgentBridgeMessage('[STATUS] TomTom live traffic & SpaceDevs orbital engines active.');
+    addAgentBridgeMessage('[SYSTEM] Aetheris Horizon Spatial Copilot initialized.');
+    addAgentBridgeMessage('[WATCHSTANDER] Multi-sensor threat correlation armed (DEFCON 3).');
+    addAgentBridgeMessage('[COMMS] VHF Tactical Voice Operator online. Push-to-talk ready.');
 
     // Expose globally for cross-module dispatch
     if (typeof window !== 'undefined') {
         window.__aetherisBridge = {
             addMessage: addAgentBridgeMessage,
-            executeCommand: executeTacticalCommand,
+            executeCommand: handleUserTerminalCommand,
+            copilot: _copilot,
+            watchstander: _watchstander,
+            voice: _voiceOperator,
             telemetry: _telemetry,
         };
     }
@@ -456,52 +551,45 @@ export function initAgentBridge(viewer, registry = null) {
             }
         });
     }
+
+    // Periodic Watchstander Telemetry Heartbeat (every 45 seconds)
+    setInterval(() => {
+        if (_watchstander) {
+            const matrix = _watchstander.evaluateThreatMatrix();
+            updateTelemetryPills();
+        }
+    }, 45000);
 }
 
-function executeTacticalCommand(label, detail) {
-    if (label.includes('Falcon 9') || label.includes('Launches')) {
-        addAgentBridgeMessage('[ORBITAL] SpaceDevs active launch trajectories focused in 3D.', '#00f0ff');
-        if (typeof window !== 'undefined' && window.__gevLaunches) {
-            window.__gevLaunches.focusNextLaunch?.();
-        }
-    } else if (label.includes('Traffic') || label.includes('Heatmap')) {
-        addAgentBridgeMessage('[TRAFFIC] TomTom real-time congestion heatmap energized.', '#10b981');
-        if (typeof window !== 'undefined' && window.__gevTraffic) {
-            window.__gevTraffic.focusCongestion?.();
-        }
-    } else if (label.includes('Substation') || label.includes('Grid')) {
-        addAgentBridgeMessage('[GRID] Substation cluster synchronized: 3 alerts pending resolution.', '#f59e0b');
-    } else if (label.includes('Maritime') || label.includes('AIS')) {
-        addAgentBridgeMessage('[AIS] Scanning 14 subsea landing points across North Atlantic.', '#60a5fa');
-    } else if (label.includes('HUD')) {
-        addAgentBridgeMessage('[AI-ROUTER] Triggering live AI Waterfall synthesis...', '#c084fc');
-        fetch('/api/openai/hud-summary')
-            .then(res => res.json())
-            .then(data => {
-                const model = data.model || 'Gemini 2.5 Flash';
-                addAgentBridgeMessage(`[AI-ROUTER: ${model}] ${data.summary?.slice(0, 90)}...`, '#67e8f9');
-            })
-            .catch(() => {
-                addAgentBridgeMessage('[AI-ROUTER] Sensor fallback synthesized nominal spatial digest.');
-            });
+/**
+ * Handle input query through the Spatial Copilot engine.
+ * @param {string} raw 
+ * @param {boolean} spokenVoiceback Whether to speak the response via tactical radio
+ */
+async function handleUserTerminalCommand(raw, spokenVoiceback = false) {
+    if (!_copilot) {
+        addAgentBridgeMessage(`[COORDINATOR] Processed query: "${raw}".`);
+        return;
     }
-}
 
-function handleUserTerminalCommand(raw) {
-    const text = raw.toLowerCase().trim();
-    if (text === 'help' || text === '/help') {
-        addAgentBridgeMessage('[HELP] Available commands: /status, /traffic, /launches, /grid, /ais, /clear, /synth');
-    } else if (text === 'clear' || text === '/clear') {
-        if (_bridgeContent) _bridgeContent.innerHTML = '';
-    } else if (text.includes('traffic') || text.includes('flow')) {
-        executeTacticalCommand('Traffic', 'manual');
-    } else if (text.includes('launch') || text.includes('falcon') || text.includes('rocket')) {
-        executeTacticalCommand('Falcon 9 Tracks', 'manual');
-    } else if (text.includes('status') || text.includes('health')) {
-        addAgentBridgeMessage(`[COORDINATOR] Latency: ${_telemetry.latencyMs}ms | Fused Events: ${_telemetry.fusedEvents} | Status: NOMINAL`);
-    } else if (text.includes('synth') || text.includes('ai') || text.includes('summary')) {
-        executeTacticalCommand('HUD Synth', 'manual');
-    } else {
-        addAgentBridgeMessage(`[COORDINATOR] Processed query: "${raw}". Sensor correlation matrix updated.`, '#00f0ff');
+    // Parse structured spatial intent
+    const intent = _copilot.parseIntent(raw);
+    addAgentBridgeMessage(`[INTENT] ${intent.type}`);
+
+    try {
+        const result = await _copilot.executeIntent(intent);
+        if (result && result.message) {
+            addAgentBridgeMessage(result.message, result.status === 'success' ? '#00f0ff' : '#ffa940');
+
+            // Speak tactical response if requested
+            if (spokenVoiceback && _voiceOperator) {
+                const spokenText = result.action === 'SITREP' && result.sitrep?.spokenText
+                    ? result.sitrep.spokenText
+                    : result.message.replace(/\[[^\]]+\]/g, '').replace(/•/g, '').trim();
+                _voiceOperator.speakTactical(spokenText);
+            }
+        }
+    } catch (err) {
+        addAgentBridgeMessage(`[ERROR] Failed to execute intent: ${err.message}`, '#ff4d4f');
     }
 }
