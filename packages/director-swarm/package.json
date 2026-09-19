@@ -1,0 +1,22 @@
+{
+  "name": "@aetheris/director-swarm",
+  "version": "1.0.0",
+  "description": "Autonomous multi-agent cinematic production swarm (Screenplay, Cinematography, Voice, Video, Foley, and Assembly)",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "multi-agent",
+    "ai-director",
+    "screenplay-parser",
+    "cinematography",
+    "swarm",
+    "openmontage"
+  ],
+  "author": "Aetheris AI Corp",
+  "license": "Apache-2.0"
+}

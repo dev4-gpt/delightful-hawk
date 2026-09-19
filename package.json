@@ -4,6 +4,9 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "test": "turbo run test",
+    "test:all": "NODE_ENV=test node --test packages/*/test/*.test.js apps/*/test/*.test.js",
+    "studio": "node apps/studio/server.js",
+    "studio:test": "NODE_ENV=test node --test apps/studio/test/studio.test.js",
     "lint": "turbo run lint",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",

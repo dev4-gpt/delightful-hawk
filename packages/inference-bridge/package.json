@@ -1,0 +1,23 @@
+{
+  "name": "@aetheris/inference-bridge",
+  "version": "1.0.0",
+  "description": "High-throughput multi-provider inference router connecting Wan 2.1, SkyReels, Flux, VoxCPM, Duix-Avatar, and OpenMontage",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "wan2.1",
+    "skyreels",
+    "flux",
+    "voxcpm",
+    "duix-avatar",
+    "openmontage",
+    "inference-router"
+  ],
+  "author": "Aetheris AI Corp",
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@aetheris/worldgen-bench",
+  "version": "1.0.0",
+  "description": "Benchmark suite for evaluating 3D spatial consistency, metric depth alignment, and narrative continuity in video foundation models",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "bench": "node src/cli.js",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "benchmark",
+    "video-generation",
+    "spatial-consistency",
+    "camera-trajectory",
+    "depth-alignment",
+    "world-models"
+  ],
+  "author": "Aetheris AI Corp",
+  "license": "Apache-2.0"
+}

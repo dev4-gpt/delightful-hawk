@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aetheris World Studio — Sovereign Generative Cinema & 3D Spatial World Engine</title>
+  <link rel="stylesheet" href="/src/studioStyles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-badge">OPEN CORE</span>
+      <h1 class="brand-title">AETHERIS WORLD STUDIO</h1>
+    </div>
+    <div class="nav-telemetry">
+      <span class="status-pill pulse">WORLD ENGINE: ONLINE</span>
+      <span>INFERENCE: <strong id="activeProviderLabel" style="color: var(--accent-cyan)">HYBRID SERVERLESS</strong></span>
+      <span>VRAM: <strong style="color: var(--accent-emerald)">16.4 GB / 24 GB</strong></span>
+      <button class="btn-secondary" id="toggleModeBtn">SWITCH ENGINE</button>
+    </div>
+  </header>
+
+  <!-- Studio Bento Grid -->
+  <main class="studio-container">
+    <!-- Left Column: Unified Multi-Model Director Bar -->
+    <section class="glass-panel">
+      <div class="panel-header">
+        <span>DIRECTOR CONTROLS</span>
+        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim)">v1.0-ENTERPRISE</span>
+      </div>
+      <div class="panel-content">
+        <form id="generationForm">
+          <div class="control-group">
+            <label class="control-label" for="modelSelect">FOUNDATION MODEL</label>
+            <select class="select-input" id="modelSelect">
+              <option value="wan-2.1-t2v-14b" selected>Wan 2.1 (14B) — Video Diffusion Transformer</option>
+              <option value="wan-2.1-t2v-1.3b">Wan 2.1 (1.3B) — Ultra-Fast Consumer</option>
+              <option value="skyreels-v2">SkyReels-V2 — Cinematic Film Director</option>
+              <option value="flux-1-dev">Flux.1 Dev — Photorealistic Master Keyframes</option>
+              <option value="duix-avatar-v1">Duix-Avatar — Digital Human & Lipsync</option>
+              <option value="voxcpm-tts">VoxCPM — Zero-Shot Expressive Voice Clone</option>
+              <option value="openmontage-v1">OpenMontage — Automated 12-Stage Assembly</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="promptInput">SCENIC PROMPT / SCREENPLAY</label>
+            <textarea class="text-input" id="promptInput" rows="4" placeholder="Describe the scene, slugline, lighting, or full screenplay dialogue...">Cinematic 8k wide drone shot flying through Shibuya neon corridor at night, raining, wet reflections on asphalt, anamorphic lens flares, master prime 35mm.</textarea>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="cameraMotionSelect">3D CAMERA TRAJECTORY RIG</label>
+            <select class="select-input" id="cameraMotionSelect">
+              <option value="forward-dolly" selected>Forward 3D Spline Dolly (Depth-Conditioned)</option>
+              <option value="orbital-arc">Orbital 360° Arc Track</option>
+              <option value="crane-boom">Vertical Crane Rise (0m to 120m)</option>
+              <option value="fpv-dive">FPV High-Speed Urban Dive</option>
+              <option value="custom-cesium">Cesium 3D Ground Truth Spline Path</option>
+            </select>
+          </div>
+
+          <div class="control-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label class="control-label" for="aspectSelect">ASPECT RATIO</label>
+              <select class="select-input" id="aspectSelect">
+                <option value="2.39:1" selected>2.39:1 Anamorphic</option>
+                <option value="16:9">16:9 Cinematic Wide</option>
+                <option value="9:16">9:16 Mobile Vertical</option>
+              </select>
+            </div>
+            <div>
+              <label class="control-label" for="durationSelect">DURATION</label>
+              <select class="select-input" id="durationSelect">
+                <option value="5.0" selected>5 Seconds (120f)</option>
+                <option value="10.0">10 Seconds (240f)</option>
+                <option value="30.0">30 Seconds (Scene)</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="generateBtn">
+            <span>✨ DISPATCH TO WORLD ENGINE</span>
+          </button>
+        </form>
+
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+          <label class="control-label">AUTONOMOUS AGENT ACTIONS</label>
+          <button class="btn-secondary" id="autoDecomposeBtn" style="width: 100%; margin-bottom: 8px;">
+            🎬 AUTO-DECOMPOSE SCRIPT (SWARM)
+          </button>
+          <button class="btn-secondary" id="benchModelBtn" style="width: 100%;">
+            📊 RUN WORLDGEN BENCHMARK
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center Column: 3D Spatial Trajectory Viewport & Non-Linear Timeline -->
+    <section class="stage-panel">
+      <div class="spatial-canvas-container">
+        <canvas id="spatialCanvas"></canvas>
+        <div class="canvas-hud-overlay">
+          <div class="hud-tag">SPATIAL CAMERA RIG: <span id="rigState" style="color: var(--accent-cyan)">HERMITE SPLINE ACTIVE</span></div>
+          <div class="hud-tag">LATENT CONDITIONING: <span style="color: var(--accent-emerald)">6-DOF PLÜCKER RAYS + SYNTHETIC DEPTH</span></div>
+          <div class="hud-tag">WAYPOINTS: <span id="waypointCount">4 NODES</span> | FPS: <span>24.0</span></div>
+        </div>
+      </div>
+
+      <!-- Multi-Track Timeline -->
+      <div class="timeline-container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px;">
+          <span style="color: var(--accent-cyan)">MULTI-TRACK CINEMA TIMELINE</span>
+          <span id="playheadTime" style="color: var(--text-dim)">00:00.00 / 00:15.00</span>
+        </div>
+        <div class="timeline-track">
+          <div class="track-label">VIDEO (WAN)</div>
+          <div class="track-content" id="videoTrackContainer">
+            <div class="timeline-clip">Scene 1: Shibuya Corridor (5.0s)</div>
+            <div class="timeline-clip">Scene 2: Skyline Overlook (5.0s)</div>
+          </div>
+        </div>
+        <div class="timeline-track">
+          <div class="track-label">HUMAN (DUIX)</div>
+          <div class="track-content" id="avatarTrackContainer">
+            <div class="timeline-clip" style="background: rgba(16, 185, 129, 0.25); border-color: var(--accent-emerald)">Protagonist Avatar Performance</div>
+          </div>
+        </div>
+        <div class="timeline-track">
+          <div class="track-label">VOICE (VOX)</div>
+          <div class="track-content" id="voiceTrackContainer">
+            <div class="timeline-clip audio">"The world changes faster than memory..."</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Multi-Agent Director Swarm Console -->
+    <section class="glass-panel swarm-panel">
+      <div class="panel-header">
+        <span>DIRECTOR SWARM TELEMETRY</span>
+        <span class="status-pill" style="font-size: 10px;">5 AGENTS LIVE</span>
+      </div>
+      <div class="panel-content">
+        <div class="swarm-log" id="swarmTerminal">
+          <div class="swarm-entry active">
+            <span class="swarm-agent-tag">[SwarmCoordinator]</span> Production substrate online. Ready for screenplay or single-prompt dispatch.
+          </div>
+          <div class="swarm-entry">
+            <span class="swarm-agent-tag">[ScreenplayAgent]</span> Standby: Fountain format parser and dialogue classifier initialized.
+          </div>
+          <div class="swarm-entry">
+            <span class="swarm-agent-tag">[CinematographerAgent]</span> 3D spline camera path generator linked to Cesium world coordinates.
+          </div>
+          <div class="swarm-entry">
+            <span class="swarm-agent-tag">[SecurityShield]</span> Adversarial prompt injection defense active (0 violations).
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/studioApp.js"></script>
+</body>
+</html>

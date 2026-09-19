@@ -1,0 +1,27 @@
+{
+  "name": "@aetheris/studio",
+  "version": "1.0.0",
+  "description": "Production-grade open-source generative cinema and spatial world simulation studio",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@aetheris/spatial-grounding": "workspace:*",
+    "@aetheris/inference-bridge": "workspace:*",
+    "@aetheris/director-swarm": "workspace:*",
+    "@aetheris/security-shield": "workspace:*"
+  },
+  "keywords": [
+    "generative-video",
+    "open-higgsfield",
+    "wan2.1",
+    "skyreels",
+    "spatial-world-engine",
+    "production-studio"
+  ],
+  "author": "Aetheris AI Corp",
+  "license": "Apache-2.0"
+}

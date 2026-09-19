@@ -1,0 +1,21 @@
+{
+  "name": "@aetheris/security-shield",
+  "version": "1.0.0",
+  "description": "Enterprise AI guardrails, prompt injection detection, and air-gapped security auditing for autonomous creative swarms",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "agentshield",
+    "ai-security",
+    "prompt-injection",
+    "guardrails",
+    "air-gapped"
+  ],
+  "author": "Aetheris AI Corp",
+  "license": "Apache-2.0"
+}

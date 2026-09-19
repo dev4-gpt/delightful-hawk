@@ -1,0 +1,23 @@
+{
+  "name": "@aetheris/spatial-grounding",
+  "version": "1.0.0",
+  "description": "Physics-grounded 3D camera trajectory generation and synthetic spatial latent extraction for generative video diffusion models",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "spatial-intelligence",
+    "camera-trajectories",
+    "diffusion-models",
+    "wan2.1",
+    "controlnet",
+    "cesium",
+    "world-engine"
+  ],
+  "author": "Aetheris AI Corp",
+  "license": "Apache-2.0"
+}
