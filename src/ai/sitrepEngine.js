@@ -26,8 +26,21 @@ export class SentinelWatchstander {
     };
 
     this.activeThreats = [];
+    this.swarmAnomalies = [];
     this.defconLevel = 3; // 1 to 5 (5 = peacetime, 1 = maximum critical)
     this.threatIndex = 42; // 0 to 100
+  }
+
+  /**
+   * Ingest emergent multi-agent swarm threat vectors (e.g. generated from MiroFish or live radar feeds).
+   * @param {Array<object>} anomalies List of swarm anomaly events
+   */
+  ingestSwarmTelemetry(anomalies = []) {
+    if (Array.isArray(anomalies)) {
+      this.swarmAnomalies = [...anomalies];
+    }
+    this.telemetryState.lastUpdated = new Date().toISOString();
+    return this.evaluateThreatMatrix();
   }
 
   updateTelemetry(domain, data) {
@@ -46,7 +59,7 @@ export class SentinelWatchstander {
   }
 
   /**
-   * Run cross-correlation analysis across all sensor layers.
+   * Run cross-correlation analysis across all sensor layers and ingested swarm anomalies.
    * @returns {object} Threat assessment matrix
    */
   evaluateThreatMatrix() {
@@ -96,6 +109,20 @@ export class SentinelWatchstander {
     });
     calculatedIndex += 15;
 
+    // 5. Ingested Multi-Agent Swarm Anomalies (MiroFish / Red-Team Stress Vectors)
+    if (this.swarmAnomalies && this.swarmAnomalies.length > 0) {
+      this.swarmAnomalies.forEach((anomaly) => {
+        threats.push({
+          domain: anomaly.domain || 'CROSS-DOMAIN SWARM',
+          severity: anomaly.severity || 'CRITICAL',
+          code: anomaly.code || 'COORDINATED_SWARM_INCURSION',
+          detail: anomaly.description || 'Unidentified coordinated autonomous agent movement detected.',
+          recommendation: anomaly.recommendation || 'Scramble sector defense assets and enforce automated 3D geofence.'
+        });
+        calculatedIndex += (anomaly.threatWeight || 25);
+      });
+    }
+
     // Determine DEFCON based on calculatedIndex
     this.threatIndex = Math.min(100, calculatedIndex);
     if (this.threatIndex >= 80) this.defconLevel = 1;
@@ -143,7 +170,7 @@ export class SentinelWatchstander {
     ];
 
     matrix.activeThreats.forEach((t, i) => {
-      lines.push(`${i + 1}. [${t.domain}] ${t.detail}`);
+      lines.push(`${i + 1}. [${t.domain} // ${t.code}] ${t.detail}`);
     });
 
     lines.push(`----------------------------------------------------`);
