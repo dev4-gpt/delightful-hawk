@@ -245,12 +245,12 @@ export function initAgentBridge(viewer, registry = null) {
 
     const container = document.createElement('div');
     container.id = 'agent-tactical-drawer';
-    container.className = 'ag-glass-panel';
+    container.className = 'ag-glass-panel antigravity-glass-panel';
     container.style.cssText = `
         position: absolute;
         bottom: 24px;
         left: 24px;
-        width: 440px;
+        width: 460px;
         border-radius: 8px;
         color: #e0f0ff;
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -280,15 +280,16 @@ export function initAgentBridge(viewer, registry = null) {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: #00f0ff;
+        background: #00ffaa;
+        box-shadow: 0 0 8px #00ffaa;
         animation: ag-pulse-ring 2s infinite ease-in-out;
         flex-shrink: 0;
     `;
 
     const title = document.createElement('div');
     title.innerHTML = `
-        <span style="color: #00f0ff; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em;">AETHERIS COPILOT</span>
-        <span style="color: rgba(0, 240, 255, 0.5); font-size: 9.5px; margin-left: 4px;">v3.0-EVOLUTION</span>
+        <span style="color: #00ffaa; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em;">AETHERIS // ANTIGRAVITY COPILOT</span>
+        <span style="color: rgba(0, 255, 170, 0.6); font-size: 9.5px; margin-left: 4px;">v3.0-SWARM</span>
     `;
 
     titleGroup.appendChild(pulseDot);
@@ -301,6 +302,7 @@ export function initAgentBridge(viewer, registry = null) {
     const defconBadge = document.createElement('span');
     defconBadge.id = 'ag-telemetry-defcon';
     defconBadge.innerText = 'DEFCON 3';
+    defconBadge.className = 'antigravity-defcon-pulse';
     defconBadge.style.cssText = `
         background: rgba(245, 158, 11, 0.15);
         border: 1px solid rgba(245, 158, 11, 0.4);
@@ -368,6 +370,31 @@ export function initAgentBridge(viewer, registry = null) {
     header.appendChild(controls);
     container.appendChild(header);
 
+    // Antigravity Subagent Mesh Status Bar
+    const subagentMesh = document.createElement('div');
+    subagentMesh.id = 'ag-subagent-mesh';
+    subagentMesh.style.cssText = `
+        display: flex;
+        gap: 5px;
+        margin-bottom: 7px;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed rgba(0, 255, 170, 0.2);
+        overflow-x: auto;
+    `;
+    const subagents = [
+        { name: '🛰️ ORBITAL', status: 'NOMINAL', color: '#00ffaa' },
+        { name: '🌊 SUBSEA', status: 'NOMINAL', color: '#00ffaa' },
+        { name: '⚡ GRID', status: 'NOMINAL', color: '#00ffaa' },
+        { name: '🛡️ AUDIT', status: 'ACTIVE', color: '#38bdf8' }
+    ];
+    subagents.forEach(s => {
+        const badge = document.createElement('div');
+        badge.className = 'antigravity-subagent-badge';
+        badge.innerHTML = `<span class="antigravity-subagent-dot" style="background:${s.color}; box-shadow:0 0 6px ${s.color};"></span><span>${s.name}</span> <span style="color:${s.color}; font-size:9px; font-weight:bold; margin-left:2px;">${s.status}</span>`;
+        subagentMesh.appendChild(badge);
+    });
+    container.appendChild(subagentMesh);
+
     // Terminal Message Stream
     const content = document.createElement('div');
     content.id = 'agent-bridge-content';
@@ -383,12 +410,12 @@ export function initAgentBridge(viewer, registry = null) {
     _bridgeContent = content;
     container.appendChild(content);
 
-    // Action Chips Row (Quick Action Commands)
+    // Action Chips Row (Quick Action Commands & Antigravity C2 Slash Commands)
     const chipsBar = document.createElement('div');
     chipsBar.id = 'ag-chips-bar';
     chipsBar.style.cssText = `
         display: flex;
-        gap: 6px;
+        gap: 5px;
         margin-top: 8px;
         padding-top: 6px;
         border-top: 1px solid rgba(0, 240, 255, 0.12);
@@ -397,18 +424,21 @@ export function initAgentBridge(viewer, registry = null) {
     `;
 
     const chips = [
-        { label: '📡 Live SITREP', query: 'generate tactical sitrep' },
-        { label: '🛰️ Falcon 9 Tracks', query: 'track falcon 9 launches' },
-        { label: '🛡️ 50km Geofence', query: 'draw 50km geofence around austin' },
-        { label: '🎯 Measure Range', query: 'measure distance from new york to london' },
-        { label: '🚦 Traffic Heatmap', query: 'focus traffic congestion' },
-        { label: '👁️ Thermal Vision', query: 'switch to thermal vision' },
-        { label: '🌐 Taiwan Strait', query: 'fly to taiwan strait' }
+        { label: '⚡ /patrol', query: '/patrol', isSlash: true },
+        { label: '🛡️ /defcon 2', query: '/defcon 2', isSlash: true },
+        { label: '🔒 /audit', query: '/audit', isSlash: true },
+        { label: '📊 /benchmark', query: '/benchmark', isSlash: true },
+        { label: '📡 Live SITREP', query: 'generate tactical sitrep', isSlash: false },
+        { label: '🛰️ Falcon 9 Tracks', query: 'track falcon 9 launches', isSlash: false },
+        { label: '🛡️ 50km Geofence', query: 'draw 50km geofence around austin', isSlash: false },
+        { label: '🎯 Measure Range', query: 'measure distance from new york to london', isSlash: false },
+        { label: '🚦 Traffic Heatmap', query: 'focus traffic congestion', isSlash: false },
+        { label: '👁️ Thermal Vision', query: 'switch to thermal vision', isSlash: false }
     ];
 
     chips.forEach(c => {
         const chip = document.createElement('button');
-        chip.className = 'ag-chip-btn';
+        chip.className = c.isSlash ? 'antigravity-slash-pill' : 'ag-chip-btn';
         chip.innerText = c.label;
         chip.addEventListener('click', () => {
             addAgentBridgeMessage(`[USER COMMAND] > ${c.query}`);
@@ -501,7 +531,7 @@ export function initAgentBridge(viewer, registry = null) {
             chipsBar.style.display = 'flex';
             inputRow.style.display = 'flex';
             toggle.innerText = '[-]';
-            container.style.width = '440px';
+            container.style.width = '460px';
         } else {
             content.style.display = 'none';
             chipsBar.style.display = 'none';
@@ -515,6 +545,8 @@ export function initAgentBridge(viewer, registry = null) {
 
     // Boot Messages
     addAgentBridgeMessage('[SYSTEM] Aetheris Horizon Spatial Copilot initialized.');
+    addAgentBridgeMessage('[ANTIGRAVITY] Autonomous Subagent Swarm online (Orbital, Subsea, Grid, Audit).', '#00ffaa');
+    addAgentBridgeMessage('[C2 PROTOCOL] Native slash commands armed: /patrol, /defcon, /audit, /benchmark.', '#00ffaa');
     addAgentBridgeMessage('[WATCHSTANDER] Multi-sensor threat correlation armed (DEFCON 3).');
     addAgentBridgeMessage('[COMMS] VHF Tactical Voice Operator online. Push-to-talk ready.');
 

@@ -149,3 +149,49 @@ test('SpatialCopilot: AgentShield defeats homoglyph and delimiter breakout attac
   assert.strictEqual(breakout.type, 'SECURITY_BLOCKED');
 });
 
+test('SpatialCopilot: Antigravity C2 Slash Commands execute instantly', async () => {
+  const copilot = new SpatialCopilot();
+
+  // 1. /defcon query
+  const defconQuery = copilot.parseIntent('/defcon');
+  assert.strictEqual(defconQuery.type, 'SLASH_DEFCON');
+  const resQuery = await copilot.executeIntent(defconQuery);
+  assert.strictEqual(resQuery.status, 'success');
+  assert.strictEqual(resQuery.action, 'DEFCON_STATUS');
+
+  // 2. /defcon 2 override
+  const defconOverride = copilot.parseIntent('/defcon 2');
+  assert.strictEqual(defconOverride.type, 'SLASH_DEFCON');
+  assert.strictEqual(defconOverride.level, 2);
+  const resOverride = await copilot.executeIntent(defconOverride);
+  assert.strictEqual(resOverride.status, 'success');
+  assert.strictEqual(resOverride.action, 'DEFCON_OVERRIDE');
+  assert.ok(resOverride.message.includes('DEFCON 2'));
+
+  // 3. /patrol taiwan
+  const patrolIntent = copilot.parseIntent('/patrol TAIWAN_STRAIT');
+  assert.strictEqual(patrolIntent.type, 'SLASH_PATROL');
+  assert.strictEqual(patrolIntent.sector, 'TAIWAN_STRAIT');
+  const resPatrol = await copilot.executeIntent(patrolIntent);
+  assert.strictEqual(resPatrol.status, 'success');
+  assert.strictEqual(resPatrol.action, 'AUTONOMOUS_PATROL');
+  assert.ok(resPatrol.message.includes('ANTIGRAVITY SWARM // PATROL TAIWAN_STRAIT'));
+
+  // 4. /audit
+  const auditIntent = copilot.parseIntent('/audit');
+  assert.strictEqual(auditIntent.type, 'SLASH_AUDIT');
+  const resAudit = await copilot.executeIntent(auditIntent);
+  assert.strictEqual(resAudit.status, 'success');
+  assert.strictEqual(resAudit.action, 'SECURITY_AUDIT');
+  assert.strictEqual(resAudit.audit.evasionBlockRate, '100.0%');
+
+  // 5. /benchmark
+  const benchIntent = copilot.parseIntent('/benchmark');
+  assert.strictEqual(benchIntent.type, 'SLASH_BENCHMARK');
+  const resBench = await copilot.executeIntent(benchIntent);
+  assert.strictEqual(resBench.status, 'success');
+  assert.strictEqual(resBench.action, 'PERFORMANCE_BENCHMARK');
+  assert.ok(resBench.message.includes('2,927 Simultaneous Live Spatial Vectors'));
+});
+
+

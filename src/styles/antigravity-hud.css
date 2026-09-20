@@ -1,0 +1,128 @@
+/**
+ * Aetheris Spatial // Antigravity UI & Motion Design System
+ * 
+ * Implements the "Antigravity Vibe":
+ * 1. Weightless floating glassmorphism with layered diffused drop-shadows
+ * 2. 3D CSS perspective transforms and isometric snapping
+ * 3. Staggered domino entrances for tactical cards and badges
+ * 4. Micro-interactions: Breathing DEFCON pulse, radar sweep glow, and audio waves
+ */
+
+/* 1. Spatial Perspective Root */
+:root {
+  --ag-perspective: 1200px;
+  --ag-glass-bg: rgba(13, 15, 18, 0.78);
+  --ag-glass-border: rgba(0, 255, 170, 0.22);
+  --ag-glass-blur: blur(16px);
+  --ag-shadow-weightless: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 30px rgba(0, 255, 170, 0.08);
+  --ag-neon-cyan: #00ffaa;
+  --ag-neon-amber: #f59e0b;
+  --ag-neon-red: #ef4444;
+}
+
+.antigravity-perspective-stage {
+  perspective: var(--ag-perspective);
+  transform-style: preserve-3d;
+}
+
+/* 2. Weightless Floating Glassmorphism */
+.antigravity-glass-panel {
+  background: var(--ag-glass-bg) !important;
+  backdrop-filter: var(--ag-glass-blur) !important;
+  -webkit-backdrop-filter: var(--ag-glass-blur) !important;
+  border: 1px solid var(--ag-glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--ag-shadow-weightless) !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease-out, border-color 0.35s ease-out !important;
+  will-change: transform, box-shadow;
+}
+
+.antigravity-glass-panel:hover {
+  transform: translateY(-4px) translateZ(12px) scale(1.01) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 255, 170, 0.18) !important;
+  border-color: rgba(0, 255, 170, 0.45) !important;
+}
+
+/* 3. 3D Isometric Tilting for Mission Cartridges */
+.antigravity-isometric-tilt {
+  transform: rotateX(8deg) rotateY(-4deg) !important;
+  transform-origin: center bottom !important;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.antigravity-isometric-tilt:hover {
+  transform: rotateX(0deg) rotateY(0deg) translateY(-6px) scale(1.02) !important;
+}
+
+/* 4. Domino Staggered Entrances */
+.antigravity-stagger-1 { animation: agDominoFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s backwards; }
+.antigravity-stagger-2 { animation: agDominoFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards; }
+.antigravity-stagger-3 { animation: agDominoFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.25s backwards; }
+.antigravity-stagger-4 { animation: agDominoFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.35s backwards; }
+
+@keyframes agDominoFade {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96) rotateX(12deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+  }
+}
+
+/* 5. DEFCON Breathing Pulse */
+.antigravity-defcon-pulse {
+  animation: agDefconBreathe 2.4s infinite ease-in-out;
+}
+
+@keyframes agDefconBreathe {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0, 255, 170, 0.4), inset 0 0 4px rgba(0, 255, 170, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.8), inset 0 0 8px rgba(0, 255, 170, 0.5);
+  }
+}
+
+/* 6. Slash Command Pill Buttons */
+.antigravity-slash-pill {
+  background: rgba(0, 255, 170, 0.08) !important;
+  border: 1px solid rgba(0, 255, 170, 0.3) !important;
+  color: #00ffaa !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-out !important;
+}
+
+.antigravity-slash-pill:hover {
+  background: rgba(0, 255, 170, 0.22) !important;
+  border-color: #00ffaa !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 255, 170, 0.3) !important;
+}
+
+/* 7. Subagent Status Badges */
+.antigravity-subagent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(18, 22, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.antigravity-subagent-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ffaa;
+  box-shadow: 0 0 6px #00ffaa;
+}
