@@ -9,7 +9,13 @@
     { "source": "/mission-control", "destination": "/mission-control.html" },
     { "source": "/globe-lite", "destination": "/globe-lite.html" },
     { "source": "/architecture", "destination": "/architecture.html" },
-    { "source": "/api/tomtom/flow/(.*)", "destination": "/api/tomtom/flow" }
+    { "source": "/api/tomtom/flow/(.*)", "destination": "/api/tomtom/flow" },
+    { "source": "/api/cctv/frame/(.*)", "destination": "/api/cctv/frame?id=$1" },
+    { "source": "/api/cctv/media/(.*)", "destination": "/api/cctv/media?id=$1" },
+    { "source": "/api/cctv/stream/(.*)", "destination": "/api/cctv/stream?id=$1" },
+    { "source": "/api/celestrak/stations", "destination": "/api/celestrak/stations" },
+    { "source": "/api/celestrak/(.*)", "destination": "/api/celestrak?group=$1" },
+    { "source": "/api/radio/(.*)", "destination": "/api/radio" }
   ],
   "headers": [
     {
