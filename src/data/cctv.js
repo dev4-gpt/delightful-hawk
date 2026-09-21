@@ -1157,6 +1157,8 @@ function buildCatalogFromSources(rawSources) {
       sourceKind: String(source.sourceKind || source.kind || (source.url ? 'configured' : 'seed')).toLowerCase(),
       feedType,
       feedConfigured: typeof source.url === 'string' && !!source.url.trim(),
+      url: source.url || null,
+      snapshotUrl: source.snapshotUrl || null,
       lat,
       lon,
       headingDeg,
@@ -1496,6 +1498,9 @@ function frameUrlFor(camera, refreshMs = ACTIVE_FRAME_REFRESH_MS) {
  * @returns {string} Media URL.
  */
 function mediaUrlFor(camera) {
+  if (camera?.url && isVideoFeedType(camera.feedType)) {
+    return camera.url;
+  }
   return `${MEDIA_ENDPOINT}/${encodeURIComponent(camera.id)}?ts=${Math.floor(Date.now() / 15000)}`;
 }
 
@@ -3434,6 +3439,8 @@ function getPublicCameraState(record, activeId = null) {
     basePose: camera.basePose ? { ...camera.basePose } : null,
     frameUrl: frameUrlFor(camera, refreshMs),
     mediaUrl: mediaUrlFor(camera),
+    url: camera.url || null,
+    snapshotUrl: camera.snapshotUrl || null,
   };
 }
 

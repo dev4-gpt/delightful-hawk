@@ -6274,6 +6274,104 @@ body.cockpit-mode #intel-hud .hud-right-edge { right: 22px; }
   opacity: 1;
 }
 
+#cctv-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  object-fit: contain;
+  display: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  background: #000;
+}
+
+#cctv-video.active {
+  opacity: 1;
+}
+
+/* Tactical HUD Overlay for CCTV feed */
+.cctv-tactical-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 7px 9px;
+  box-sizing: border-box;
+  z-index: 4;
+}
+
+.cctv-overlay-top,
+.cctv-overlay-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+.cctv-rec-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff3344;
+  font-weight: 800;
+}
+
+.cctv-rec-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3344;
+  box-shadow: 0 0 8px #ff3344;
+  animation: cctv-rec-pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes cctv-rec-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(0.8); }
+}
+
+.cctv-clock {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.cctv-overlay-cam {
+  color: #00f0ff;
+  font-size: 8px;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cctv-overlay-fps {
+  color: #00ff88;
+  font-size: 8px;
+}
+
+.cctv-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
+  animation: cctv-scanline-sweep 4.5s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes cctv-scanline-sweep {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+
 #cctv-meta {
   font-family: var(--font-mono);
   font-size: 9px;

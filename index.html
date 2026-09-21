@@ -608,7 +608,19 @@
         <button class="panel-collapse-btn" data-collapse-target="cctv-panel" title="Collapse panel">+</button>
       </div>
       <div id="cctv-frame-wrap" class="cctv-frame-wrap">
+        <video id="cctv-video" playsinline autoplay muted loop preload="auto" style="display: none;"></video>
         <img id="cctv-frame" alt="CCTV feed frame" />
+        <div id="cctv-tactical-overlay" class="cctv-tactical-overlay">
+          <div class="cctv-overlay-top">
+            <span class="cctv-rec-indicator"><span class="cctv-rec-dot"></span> LIVE REC</span>
+            <span id="cctv-clock" class="cctv-clock">00:00:00 UTC</span>
+          </div>
+          <div class="cctv-scanline"></div>
+          <div class="cctv-overlay-bottom">
+            <span id="cctv-overlay-cam" class="cctv-overlay-cam">CAM // 01</span>
+            <span id="cctv-overlay-fps" class="cctv-overlay-fps">60 FPS</span>
+          </div>
+        </div>
       </div>
       <div id="cctv-source-badge" role="status" aria-live="polite">SOURCE · UNKNOWN</div>
       <div id="cctv-meta">Enable CCTV to load camera intersections</div>
