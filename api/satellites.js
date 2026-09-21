@@ -1,6 +1,16 @@
 const memoryCache = new Map();
 const TTL_MS = 60 * 60 * 1000;
 
+const FALLBACK_STATIONS_TLE = `ISS (ZARYA)             
+1 25544U 98067A   26263.78762384  .00007766  00000+0  14793-3 0  9996
+2 25544  51.6308 186.9475 0004819 163.3027 196.8121 15.49200337586572
+CSS (TIANHE)            
+1 48274U 21035A   26263.92234256  .00013769  00000+0  16837-3 0  9991
+2 48274  41.4679 100.7142 0002502 293.6963  66.3613 15.60143111308111
+POISK                   
+1 36086U 09060A   26263.78762384  .00007766  00000+0  14793-3 0  9994
+2 36086  51.6308 186.9475 0004819 163.3027 196.8121 15.49200337586946`;
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -16,7 +26,7 @@ export default async function handler(req, res) {
     return res.status(405).send('Method Not Allowed');
   }
 
-  const rawGroup = req.query.group || 'stations';
+  const rawGroup = req.query.group || (req.url || '').split('?')[0].replace(/^\/api\/celestrak\/?/, '');
   const group = String(rawGroup).replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || 'stations';
 
   const now = Date.now();
@@ -51,6 +61,10 @@ export default async function handler(req, res) {
     if (entry) {
       res.setHeader('x-tle-cache', 'STALE');
       return res.status(200).send(entry.body);
+    }
+    if (group === 'stations') {
+      res.setHeader('x-tle-cache', 'FALLBACK');
+      return res.status(200).send(FALLBACK_STATIONS_TLE);
     }
     res.setHeader('x-tle-cache', 'NONE');
     return res.status(502).send(`celestrak fetch failed for group ${group}`);

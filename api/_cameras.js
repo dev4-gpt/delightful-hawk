@@ -1,5 +1,6 @@
 /**
  * Shared CCTV camera catalog and helper utilities for Vercel serverless routes.
+ * (Prefixed with _ so Vercel does not count it as a serverless function)
  */
 
 export const CCTV_CATALOG = [
@@ -207,28 +208,6 @@ export const CCTV_CATALOG = [
     license: 'Caltrans Open Data',
     url: 'https://cwwp2.dot.ca.gov/data/d4/cctv/image/cctv1.jpg',
     snapshotUrl: 'https://cwwp2.dot.ca.gov/data/d4/cctv/image/cctv1.jpg',
-  },
-  {
-    id: 'sf-financial-core',
-    name: 'Financial Core / Transamerica',
-    city: 'San Francisco',
-    cityId: 'sf',
-    provider: 'Caltrans District 4',
-    lat: 37.7952,
-    lon: -122.4028,
-    headingDeg: 205,
-    headingConfidence: 'high',
-    pitchDeg: -25,
-    fovDeg: 72,
-    rangeM: 760,
-    mountHeightM: 24,
-    groundElevationM: 15,
-    feedType: 'image',
-    sourceKind: 'caltrans-open-data',
-    poseSource: 'catalog',
-    license: 'Caltrans Open Data',
-    url: 'https://cwwp2.dot.ca.gov/data/d4/cctv/image/cctv2.jpg',
-    snapshotUrl: 'https://cwwp2.dot.ca.gov/data/d4/cctv/image/cctv2.jpg',
   },
 
   // London, UK

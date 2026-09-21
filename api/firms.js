@@ -11,7 +11,61 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  const sub = req.query.sub || (req.url || '').split('?')[0].replace(/^\/api\/firms\/?/, '');
   const key = process.env.FIRMS_MAP_KEY;
+
+  // 1. /api/firms/status
+  if (sub === 'status') {
+    res.setHeader('Cache-Control', 'public, s-maxage=300');
+    if (!key) {
+      return res.status(200).json({
+        hasKey: false,
+        lastFetch: null,
+        count: null,
+        stale: false,
+        ttlMs: 3600000,
+        transactions: null,
+      });
+    }
+
+    try {
+      const url = `https://firms.modaps.eosdis.nasa.gov/mapserver/mapkey_status/?MAP_KEY=${encodeURIComponent(key)}`;
+      const upstream = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!upstream.ok) {
+        return res.status(200).json({
+          hasKey: true,
+          lastFetch: Date.now(),
+          count: 0,
+          stale: false,
+          ttlMs: 3600000,
+          transactions: null,
+        });
+      }
+      const data = await upstream.json();
+      return res.status(200).json({
+        hasKey: true,
+        lastFetch: Date.now(),
+        count: 0,
+        stale: false,
+        ttlMs: 3600000,
+        transactions: {
+          used: Number(data?.current_transactions || 0),
+          limit: Number(data?.transaction_limit || 5000),
+        },
+      });
+    } catch {
+      return res.status(200).json({
+        hasKey: true,
+        lastFetch: null,
+        count: null,
+        stale: false,
+        ttlMs: 3600000,
+        transactions: null,
+      });
+    }
+  }
+
+  // 2. /api/firms data query
   if (!key) {
     // Honest degradation contract (test B7)
     return res.status(503).json({ error: 'no_key' });
@@ -25,7 +79,6 @@ export default async function handler(req, res) {
     }
     const csv = await upstream.text();
     const lines = csv.trim().split('\n');
-    const header = lines[0]?.split(',') || [];
     const fires = [];
     for (let i = 1; i < lines.length; i++) {
       const parts = lines[i].split(',');
