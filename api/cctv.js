@@ -64,9 +64,9 @@ export default async function handler(req, res) {
     const rawId = req.query.id || sub.replace(/^media\/?/, '');
     const cameraId = decodeURIComponent(String(rawId).trim());
     const camera = getCameraById(cameraId);
-    const videoName = camera?.id?.includes('shibuya') || camera?.id?.includes('tokyo')
-      ? 'tokyo_shibuya.mp4'
-      : 'nyc_harbor.mp4';
+    const videoName = (typeof camera?.url === 'string' && camera.url.endsWith('.mp4'))
+      ? path.basename(camera.url)
+      : (camera?.id?.includes('shibuya') || camera?.id?.includes('tokyo') ? 'tokyo_shibuya.mp4' : 'nyc_harbor.mp4');
 
     const possiblePaths = [
       path.resolve(process.cwd(), 'public/cctv', videoName),
@@ -122,6 +122,8 @@ export default async function handler(req, res) {
   // 5a. Local snapshot
   const localSnapshotCandidates = [
     camera.snapshotUrl,
+    camera.url?.endsWith('.jpg') ? camera.url : null,
+    camera.url?.endsWith('.mp4') ? camera.url.replace(/\.mp4$/, '.jpg') : null,
     `/cctv/${camera.id.includes('shibuya') || camera.id.includes('tokyo') ? 'tokyo_shibuya.jpg' : 'nyc_harbor.jpg'}`,
   ].filter(Boolean);
 

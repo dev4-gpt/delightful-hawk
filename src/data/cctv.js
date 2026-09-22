@@ -4075,6 +4075,33 @@ function focusCamera(cameraId, duration = 2.2) {
 }
 
 /**
+ * Flies the Cesium viewer camera directly into the CCTV camera mount point,
+ * looking along its exact heading and pitch (First-Person CCTV Lens Mode).
+ * @param {Cesium.Viewer|null} viewer
+ * @param {Object|null} record
+ * @param {number} [duration=2.0]
+ */
+export function flyToCameraPov(viewer, record, duration = 2.0) {
+  if (!viewer || !record) return;
+  const { camera } = record;
+  const cameraPos = Cesium.Cartesian3.fromDegrees(
+    camera.lon,
+    camera.lat,
+    camera.absoluteHeightM
+  );
+  viewer.camera.flyTo({
+    destination: cameraPos,
+    orientation: {
+      heading: toRad(camera.headingDeg),
+      pitch: toRad(camera.pitchDeg || -15),
+      roll: 0.0,
+    },
+    duration: Math.max(0.2, duration),
+    easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
+  });
+}
+
+/**
  * Advances to the next camera if auto-hop is enabled and the hop interval
  * has elapsed. If the viewer has panned to a new region since the last hop,
  * snaps to the nearest camera instead of cycling sequentially.
@@ -4785,6 +4812,16 @@ const cctvLayer = {
    */
   focusCamera(cameraId, durationSec = 2.2) {
     return focusCamera(cameraId, durationSec);
+  },
+
+  /**
+   * Flies the viewer camera into the CCTV camera's vantage point.
+   * @param {string} cameraId
+   * @param {number} [durationSec=2.0]
+   */
+  flyToPov(cameraId, durationSec = 2.0) {
+    const record = _recordById.get(cameraId);
+    return flyToCameraPov(_viewer, record, durationSec);
   },
 
   /**

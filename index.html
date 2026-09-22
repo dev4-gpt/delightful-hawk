@@ -608,6 +608,7 @@
         <button class="panel-collapse-btn" data-collapse-target="cctv-panel" title="Collapse panel">+</button>
       </div>
       <div id="cctv-frame-wrap" class="cctv-frame-wrap">
+        <button id="cctv-expand-btn" class="cctv-expand-btn" title="Expand Surveillance Theater Monitor" aria-label="Expand CCTV">⛶</button>
         <video id="cctv-video" playsinline autoplay muted loop preload="auto" style="display: none;"></video>
         <img id="cctv-frame" alt="CCTV feed frame" />
         <div id="cctv-tactical-overlay" class="cctv-tactical-overlay">
@@ -635,10 +636,11 @@
       </div>
       <div class="cctv-controls">
         <button id="cctv-focus-btn" class="scene-btn">FOCUS</button>
+        <button id="cctv-pov-btn" class="scene-btn" title="First-Person CCTV Lens Vantage Point">POV VIEW</button>
         <button id="cctv-coverage-btn" class="scene-btn">COVERAGE OFF</button>
-        <button id="cctv-auto-hop-btn" class="scene-btn">AUTO HOP OFF</button>
       </div>
       <div class="cctv-controls">
+        <button id="cctv-auto-hop-btn" class="scene-btn">AUTO HOP OFF</button>
         <button id="cctv-projection-btn" class="scene-btn">PROJECTION ON</button>
         <span id="cctv-quality-chip">CAL · --</span>
       </div>
@@ -933,6 +935,45 @@
 
   <!-- Intelligence HUD Overlay -->
   <div id="intel-hud"></div>
+
+  <!-- CCTV Theater / Fullscreen Tactical Modal -->
+  <div id="cctv-theater-modal" class="cctv-theater-modal" style="display: none;" role="dialog" aria-modal="true" aria-label="Tactical Optical Surveillance Theater">
+    <div class="cctv-theater-backdrop" id="cctv-theater-backdrop"></div>
+    <div class="cctv-theater-content">
+      <div class="cctv-theater-header">
+        <div class="cctv-theater-title-group">
+          <span class="cctv-rec-indicator"><span class="cctv-rec-dot"></span> TACTICAL OPTICAL SURVEILLANCE</span>
+          <span id="cctv-theater-cam-title" class="cctv-theater-cam-title">CAM // ACQUIRING...</span>
+        </div>
+        <div class="cctv-theater-actions">
+          <span id="cctv-theater-clock" class="cctv-theater-clock">00:00:00 UTC</span>
+          <button id="cctv-theater-close" class="cctv-theater-close-btn" title="Close Theater View (ESC)">✕</button>
+        </div>
+      </div>
+      <div class="cctv-theater-viewport" id="cctv-theater-viewport">
+        <video id="cctv-theater-video" playsinline autoplay muted loop preload="auto" style="display: none;"></video>
+        <img id="cctv-theater-img" alt="Theater CCTV feed" style="display: none;" />
+        <div class="cctv-theater-hud-grid">
+          <div class="cctv-theater-crosshair"></div>
+          <div class="cctv-theater-scanline"></div>
+          <div class="cctv-theater-telemetry-left">
+            <div id="cctv-theater-coords">LAT: -- | LON: --</div>
+            <div id="cctv-theater-azimuth">HDG: -- | PITCH: -- | FOV: --</div>
+            <div id="cctv-theater-range">OPTICAL RANGE: -- M</div>
+          </div>
+          <div class="cctv-theater-telemetry-right">
+            <div id="cctv-theater-fps">FPS: 60.0 [ACTIVE LOCK]</div>
+            <div id="cctv-theater-status">ENCRYPTED // MIL-STD-188</div>
+            <div class="cctv-theater-zoom-chips">
+              <button type="button" class="cctv-zoom-btn active" data-zoom="1">1X</button>
+              <button type="button" class="cctv-zoom-btn" data-zoom="1.5">1.5X</button>
+              <button type="button" class="cctv-zoom-btn" data-zoom="2">2X</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Loading screen -->
   <div id="loading-screen">

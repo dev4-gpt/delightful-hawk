@@ -2336,6 +2336,7 @@ export class StyleManager {
     this._cctvNextBtn = document.getElementById('cctv-next-btn');
     this._cctvSelect = document.getElementById('cctv-camera-select');
     this._cctvFocusBtn = document.getElementById('cctv-focus-btn');
+    this._cctvPovBtn = document.getElementById('cctv-pov-btn');
     this._cctvCoverageBtn = document.getElementById('cctv-coverage-btn');
     this._cctvAutoHopBtn = document.getElementById('cctv-auto-hop-btn');
     this._cctvProjectionBtn = document.getElementById('cctv-projection-btn');
@@ -2352,6 +2353,20 @@ export class StyleManager {
     this._cctvTacticalOverlay = document.getElementById('cctv-tactical-overlay');
     this._cctvClockTimer = null;
     this._cctvFrameWrap = document.getElementById('cctv-frame-wrap');
+    this._cctvExpandBtn = document.getElementById('cctv-expand-btn');
+    this._cctvTheaterModal = document.getElementById('cctv-theater-modal');
+    this._cctvTheaterBackdrop = document.getElementById('cctv-theater-backdrop');
+    this._cctvTheaterClose = document.getElementById('cctv-theater-close');
+    this._cctvTheaterVideo = document.getElementById('cctv-theater-video');
+    this._cctvTheaterImg = document.getElementById('cctv-theater-img');
+    this._cctvTheaterCamTitle = document.getElementById('cctv-theater-cam-title');
+    this._cctvTheaterClock = document.getElementById('cctv-theater-clock');
+    this._cctvTheaterCoords = document.getElementById('cctv-theater-coords');
+    this._cctvTheaterAzimuth = document.getElementById('cctv-theater-azimuth');
+    this._cctvTheaterRange = document.getElementById('cctv-theater-range');
+    this._cctvTheaterStatus = document.getElementById('cctv-theater-status');
+    this._cctvTheaterFps = document.getElementById('cctv-theater-fps');
+    this._cctvTheaterZoom = 1;
     this._cctvFrameRequestToken = 0;
     this._cctvFramePreloader = null;
     this._cctvSourceBadge = document.getElementById('cctv-source-badge');
@@ -6183,6 +6198,63 @@ export class StyleManager {
       this._dataManager?.setLayerParams('cctv', { selectedCameraId: selected }, { origin: 'user' });
     });
 
+    this._cctvPovBtn?.addEventListener('click', async () => {
+      const selected = this._cctvState?.activeCameraId || this._cctvSelect?.value;
+      if (!selected) return;
+      if (!await this._toggleCctvEnabled(true)) return;
+      cctvLayer.flyToPov(selected, 2.0);
+      const cam = this._cctvState?.cameras?.find((c) => c.id === selected);
+      this._showToast(`POV VIEW // ${cam?.city?.toUpperCase() || 'CAMERA'} LENS LOCKED`);
+    });
+
+    const openTheater = () => {
+      if (!this._cctvTheaterModal) return;
+      this._cctvTheaterModal.style.display = 'flex';
+      this._syncCctvTheaterModal();
+    };
+
+    const closeTheater = () => {
+      if (!this._cctvTheaterModal) return;
+      this._cctvTheaterModal.style.display = 'none';
+      if (this._cctvTheaterVideo) {
+        this._cctvTheaterVideo.pause();
+      }
+    };
+
+    this._cctvExpandBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openTheater();
+    });
+
+    this._cctvFrameWrap?.addEventListener('click', (e) => {
+      if (e.target === this._cctvExpandBtn) return;
+      openTheater();
+    });
+
+    this._cctvTheaterClose?.addEventListener('click', () => {
+      closeTheater();
+    });
+
+    this._cctvTheaterBackdrop?.addEventListener('click', () => {
+      closeTheater();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this._cctvTheaterModal && this._cctvTheaterModal.style.display !== 'none') {
+        closeTheater();
+      }
+    });
+
+    this._cctvTheaterModal?.querySelectorAll('.cctv-zoom-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const zoom = parseFloat(btn.dataset.zoom || '1');
+        this._cctvTheaterZoom = zoom;
+        this._cctvTheaterModal.querySelectorAll('.cctv-zoom-btn').forEach((b) => b.classList.toggle('active', b === btn));
+        if (this._cctvTheaterVideo) this._cctvTheaterVideo.style.transform = `scale(${zoom})`;
+        if (this._cctvTheaterImg) this._cctvTheaterImg.style.transform = `scale(${zoom})`;
+      });
+    });
+
     this._cctvCoverageBtn?.addEventListener('click', () => {
       const current = this._cctvState?.coverageMode
         || (this._cctvState?.showCoverage ? 'on' : 'off');
@@ -6343,6 +6415,7 @@ export class StyleManager {
     this._cctvFrame.classList.add('active');
     this._cctvFrameWrap?.classList.add('has-frame');
     syncBadge();
+    this._syncCctvTheaterModal();
   }
 
   /**
@@ -6595,6 +6668,12 @@ export class StyleManager {
     if (this._cctvFocusBtn) {
       this._cctvFocusBtn.disabled = !enabled || cameras.length === 0 || !activeId;
     }
+    if (this._cctvPovBtn) {
+      this._cctvPovBtn.disabled = !enabled || cameras.length === 0 || !activeId;
+    }
+    if (this._cctvExpandBtn) {
+      this._cctvExpandBtn.disabled = !enabled || cameras.length === 0 || !activeId;
+    }
 
     if (this._cctvCoverageBtn) {
       // Tri-state (viewshed design §3b): off → on (wireframes) → viewshed
@@ -6666,8 +6745,12 @@ export class StyleManager {
 
     if (enabled && !this._cctvClockTimer) {
       const updateClock = () => {
+        const utcStr = new Date().toISOString().slice(11, 19) + ' UTC';
         if (this._cctvClock) {
-          this._cctvClock.textContent = new Date().toISOString().slice(11, 19) + ' UTC';
+          this._cctvClock.textContent = utcStr;
+        }
+        if (this._cctvTheaterClock) {
+          this._cctvTheaterClock.textContent = utcStr;
         }
       };
       updateClock();
@@ -6721,6 +6804,7 @@ export class StyleManager {
 
     this._syncCctvSourceBadge(activeCamera, enabled);
     this._typeCctvSummary(state?.summary || 'Enable CCTV to start camera-linked intelligence summaries.');
+    this._syncCctvTheaterModal();
   }
 
   /**
@@ -6749,6 +6833,83 @@ export class StyleManager {
       }
       this._cctvSummary.textContent = nextText.slice(0, idx);
     }, 20);
+  }
+
+  /**
+   * Synchronizes the full-viewport tactical optical surveillance modal with the active camera state.
+   * Mirrors high-definition video playback or static snapshots, computes spatial telemetry,
+   * and adjusts HUD readouts.
+   * @returns {void}
+   */
+  _syncCctvTheaterModal() {
+    if (!this._cctvTheaterModal || this._cctvTheaterModal.style.display === 'none') return;
+    const state = this._cctvState;
+    const enabled = !!state?.enabled && !!this._dataManager?.isEnabled('cctv');
+    const activeCamera = state?.activeCamera || null;
+
+    if (this._cctvTheaterCamTitle) {
+      this._cctvTheaterCamTitle.textContent = activeCamera
+        ? `${activeCamera.city?.toUpperCase() || 'OPTICAL'} // ${activeCamera.name?.toUpperCase() || 'CAM'}`
+        : 'OPTICAL SURVEILLANCE // STANDBY';
+    }
+
+    if (this._cctvTheaterCoords) {
+      this._cctvTheaterCoords.textContent = activeCamera
+        ? `LAT: ${activeCamera.lat.toFixed(4)}° | LON: ${activeCamera.lon.toFixed(4)}° | ELEV: ${Math.round(activeCamera.elevationM || 0)}M`
+        : 'LAT: -- | LON: --';
+    }
+
+    if (this._cctvTheaterAzimuth) {
+      this._cctvTheaterAzimuth.textContent = activeCamera
+        ? `HDG: ${Math.round(activeCamera.headingDeg)}° | PITCH: ${Math.round(activeCamera.pitchDeg || -15)}° | FOV: ${Math.round(activeCamera.fovDeg || 70)}°`
+        : 'HDG: -- | PITCH: -- | FOV: --';
+    }
+
+    if (this._cctvTheaterRange) {
+      this._cctvTheaterRange.textContent = activeCamera
+        ? `OPTICAL RANGE: ${Math.round(activeCamera.rangeM || 700)}M | SENSOR: ${activeCamera.provider?.toUpperCase() || 'OPTICAL'}`
+        : 'OPTICAL RANGE: -- M';
+    }
+
+    const isVideo = !!(enabled && activeCamera && (activeCamera.feedType === 'mp4' || activeCamera.feedType === 'webm' || activeCamera.feedType === 'hls'));
+
+    if (isVideo && this._cctvTheaterVideo) {
+      if (this._cctvTheaterImg) {
+        this._cctvTheaterImg.style.display = 'none';
+      }
+      this._cctvTheaterVideo.style.display = 'block';
+      const videoSrc = activeCamera.mediaUrl || activeCamera.url || '/cctv/nyc_harbor.mp4';
+      if (this._cctvTheaterVideo.dataset.currentSrc !== videoSrc) {
+        this._cctvTheaterVideo.dataset.currentSrc = videoSrc;
+        this._cctvTheaterVideo.src = videoSrc;
+        this._cctvTheaterVideo.play().catch(() => {});
+      }
+      if (this._cctvTheaterFps) {
+        this._cctvTheaterFps.textContent = 'FPS: 60.0 [ACTIVE 4K LOCK]';
+      }
+      if (this._cctvTheaterStatus) {
+        this._cctvTheaterStatus.textContent = 'FEED: LIVE HIGH-DEF STREAM';
+      }
+    } else {
+      if (this._cctvTheaterVideo) {
+        this._cctvTheaterVideo.pause();
+        this._cctvTheaterVideo.style.display = 'none';
+        this._cctvTheaterVideo.dataset.currentSrc = '';
+      }
+      if (this._cctvTheaterImg) {
+        this._cctvTheaterImg.style.display = 'block';
+        const imgSrc = this._cctvFrame?.src || activeCamera?.snapshotUrl || activeCamera?.frameUrl || activeCamera?.url || '';
+        if (imgSrc && this._cctvTheaterImg.src !== imgSrc) {
+          this._cctvTheaterImg.src = imgSrc;
+        }
+      }
+      if (this._cctvTheaterFps) {
+        this._cctvTheaterFps.textContent = 'REFRESH: 5.0S [MUNICIPAL INTERVAL]';
+      }
+      if (this._cctvTheaterStatus) {
+        this._cctvTheaterStatus.textContent = 'FEED: MUNICIPAL OPEN DATA SNAPSHOT';
+      }
+    }
   }
 
   /**
