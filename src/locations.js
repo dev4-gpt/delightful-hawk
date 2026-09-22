@@ -348,26 +348,68 @@ export const CANCELLED_SEARCH = Object.freeze({ cancelled: true });
  */
 export async function searchAndFlyTo(viewer, query, options = {}) {
   const apiKey = window.__GOOGLE_MAPS_API_KEY__ || import.meta.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) throw new Error('No Google Maps API key available for geocoding');
 
   const beforeFly = typeof options.beforeFly === 'function' ? options.beforeFly : null;
   const mayFly = () => beforeFly === null || beforeFly() !== false;
 
-  // Viewport-biased geocode — the same bias annotationResolver's geocodePlace uses:
-  // "Sixth Street" spoken over Austin must prefer the Sixth Street on screen, not a
-  // same-named road in another city (or the wrong end of town — the W 6th vs E 6th bug).
-  let url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
-  const bias = viewportBias(viewer);
-  if (bias) url += `&bounds=${bias}`;
-  const response = await fetch(url);
-  const data = await response.json();
+  let result = null;
+  let lat = null;
+  let lng = null;
+  let label = null;
+  let types = [];
+  let viewport = null;
 
-  const result = (data.status === 'OK' && data.results?.length) ? data.results[0] : null;
-  let lat = result?.geometry.location.lat;
-  let lng = result?.geometry.location.lng;
-  let label = result ? result.formatted_address : null;
-  let types = result?.types || [];
-  let viewport = result ? (result.geometry.bounds || result.geometry.viewport) : null;
+  if (apiKey) {
+    try {
+      // Viewport-biased geocode — the same bias annotationResolver's geocodePlace uses:
+      // "Sixth Street" spoken over Austin must prefer the Sixth Street on screen, not a
+      // same-named road in another city (or the wrong end of town — the W 6th vs E 6th bug).
+      let url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
+      const bias = viewportBias(viewer);
+      if (bias) url += `&bounds=${bias}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      result = (data.status === 'OK' && data.results?.length) ? data.results[0] : null;
+      lat = result?.geometry?.location?.lat;
+      lng = result?.geometry?.location?.lng;
+      label = result ? result.formatted_address : null;
+      types = result?.types || [];
+      viewport = result ? (result.geometry.bounds || result.geometry.viewport) : null;
+    } catch {
+      // Fall through to serverless geocoder
+    }
+  }
+
+  // Fallback to serverless /api/geocode or OSM if Google Maps is absent or returned no result
+  if (!result && typeof fetch === 'function') {
+    try {
+      const fallbackRes = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+      if (fallbackRes.ok) {
+        const fData = await fallbackRes.json();
+        if (fData && fData.status === 'success' && Number.isFinite(fData.lat) && Number.isFinite(fData.lon)) {
+          lat = fData.lat;
+          lng = fData.lon;
+          label = fData.label || query;
+          types = fData.types || ['locality'];
+          viewport = fData.bounds || null;
+          result = {
+            geometry: {
+              location: { lat, lng },
+              viewport: viewport || {
+                southwest: { lat: lat - 0.05, lng: lng - 0.05 },
+                northeast: { lat: lat + 0.05, lng: lng + 0.05 },
+              },
+            },
+            formatted_address: label,
+            types,
+          };
+        }
+      }
+    } catch {
+      // Fallback failed
+    }
+  }
 
   // Places-near-view recovery (annotationResolver's twin): a missed geocode, or one
   // that landed implausibly far from the view centre, snaps back to a view-biased

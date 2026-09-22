@@ -229,9 +229,44 @@ export class SpatialCopilot {
       }
     }
 
-    // 10. Direct Camera Fly-To Location
+    // 10. Direct Camera Fly-To Location (Strategic Presets)
     for (const [key, target] of Object.entries(STRATEGIC_TARGETS)) {
-      if (lower.includes(key) || lower.includes(`fly to ${key}`) || lower.includes(`go to ${key}`)) {
+      if (lower === key || lower.includes(`fly to ${key}`) || lower.includes(`go to ${key}`) || lower.includes(`goto ${key}`)) {
+        return {
+          type: 'FLY_TO_TARGET',
+          targetKey: key,
+          target,
+          query
+        };
+      }
+    }
+
+    // 10b. Universal Geocoded Navigation (e.g. "fly to gurgaon south city 2, india", "navigate to paris", "take me to eiffel tower")
+    const navMatch = lower.match(/(?:fly(?:\s+camera)?\s*(?:to)?|go\s+to|goto|navigate(?:\s+to)?|take\s+me\s+to|travel\s+to|jump\s+to|zoom\s+to|look\s+at|head\s+to|search\s+for|search|find|locate|view)\s+(.+)/i);
+    if (navMatch) {
+      const destination = navMatch[1].replace(/[?.!]+$/, '').trim();
+      if (destination.length > 1) {
+        for (const [key, target] of Object.entries(STRATEGIC_TARGETS)) {
+          if (destination.toLowerCase() === key || destination.toLowerCase().includes(key)) {
+            return {
+              type: 'FLY_TO_TARGET',
+              targetKey: key,
+              target,
+              query
+            };
+          }
+        }
+        return {
+          type: 'FLY_TO_SEARCH',
+          destination,
+          query
+        };
+      }
+    }
+
+    // Fallback: check if query contains any strategic target key anywhere
+    for (const [key, target] of Object.entries(STRATEGIC_TARGETS)) {
+      if (lower.includes(key)) {
         return {
           type: 'FLY_TO_TARGET',
           targetKey: key,
@@ -376,6 +411,43 @@ export class SpatialCopilot {
           targetName: t.name,
           coordinates: [t.lat, t.lon],
           message: `Camera flying to ${t.name} (Alt: ${t.alt}m, Pitch: ${t.pitch}°).`
+        };
+      }
+
+      case 'FLY_TO_SEARCH': {
+        const dest = intent.destination;
+        const geo = await this.resolveGeocode(dest);
+        if (!geo || !Number.isFinite(geo.lat) || !Number.isFinite(geo.lon)) {
+          return {
+            status: 'error',
+            action: 'GEOCODE_NOT_FOUND',
+            destination: dest,
+            message: `[NAV WARNING] Target "${dest}" could not be resolved on the global spatial grid. Check spelling or try a broader sector name.`,
+            speech: `Target ${dest} could not be resolved.`
+          };
+        }
+
+        const alt = geo.alt || (geo.bounds ? 4500 : 2500);
+        this.flyCamera(geo.lat, geo.lon, alt, -35, 0);
+
+        // Drop tactical waypoint marker on 3D globe
+        this.dropTacticalWaypoint(geo.lat, geo.lon, geo.label || dest);
+
+        // Update UI searched location label
+        if (typeof window !== 'undefined' && window.__godsEyeView?.ui) {
+          window.__godsEyeView.ui._searchedLocationLabel = geo.label || dest;
+          window.__godsEyeView.ui._updateLocationMiniStatus?.();
+        }
+
+        return {
+          status: 'success',
+          action: 'CAMERA_FLY_TO_SEARCH',
+          destination: dest,
+          label: geo.label || dest,
+          coordinates: [geo.lat, geo.lon],
+          source: geo.source || 'global-geocode',
+          message: `[NAV VECTOR ENGAGED] Flying to ${geo.label || dest} (${geo.lat.toFixed(4)}°, ${geo.lon.toFixed(4)}°). Tactical tracking locked.`,
+          speech: `Nav vector engaged. Flying to ${geo.label || dest}.`
         };
       }
 
@@ -557,6 +629,147 @@ export class SpatialCopilot {
       duration: 3.0,
       easingFunction: Cesium.EasingFunction.LINEAR
     });
+  }
+
+  dropTacticalWaypoint(lat, lon, label = 'Tactical Destination') {
+    if (!this.viewer) return;
+    const Cesium = (typeof window !== 'undefined' && window.Cesium) || null;
+    if (!Cesium) return;
+
+    try {
+      const entity = this.viewer.entities.add({
+        id: `waypoint_${Date.now()}`,
+        name: label,
+        position: Cesium.Cartesian3.fromDegrees(lon, lat, 20),
+        point: {
+          pixelSize: 12,
+          color: Cesium.Color.fromCssColorString('#00f0ff'),
+          outlineColor: Cesium.Color.fromCssColorString('#ffffff'),
+          outlineWidth: 2,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        },
+        label: {
+          text: `🎯 ${label.toUpperCase()}`,
+          font: '11px monospace',
+          fillColor: Cesium.Color.fromCssColorString('#00f0ff'),
+          outlineColor: Cesium.Color.fromCssColorString('#000000'),
+          outlineWidth: 3,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -22),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      });
+      this.tacticalEntities.add(entity);
+      this.viewer.scene?.requestRender?.();
+    } catch {
+      // Safe fallback
+    }
+  }
+
+  async resolveGeocode(query) {
+    const q = String(query || '').trim();
+    if (!q) return null;
+
+    // 1. Try serverless /api/geocode endpoint
+    try {
+      if (typeof fetch === 'function') {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.status === 'success' && Number.isFinite(data.lat) && Number.isFinite(data.lon)) {
+            return data;
+          }
+        }
+      }
+    } catch {
+      // Continue to client fallbacks
+    }
+
+    // 2. Client Google Maps Geocoding API if key is set
+    const apiKey = (typeof window !== 'undefined' && window.__GOOGLE_MAPS_API_KEY__) || null;
+    if (apiKey) {
+      try {
+        const gUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${apiKey}`;
+        const gRes = await fetch(gUrl);
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          if (gData.status === 'OK' && Array.isArray(gData.results) && gData.results.length > 0) {
+            const first = gData.results[0];
+            const loc = first.geometry?.location;
+            if (loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+              return {
+                status: 'success',
+                source: 'google-client',
+                lat: loc.lat,
+                lon: loc.lng,
+                label: first.formatted_address || q,
+                bounds: first.geometry?.viewport || first.geometry?.bounds || null
+              };
+            }
+          }
+        }
+      } catch {
+        // Continue
+      }
+    }
+
+    // 3. Client OpenStreetMap Photon (Komoot)
+    try {
+      if (typeof fetch === 'function') {
+        const pUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1`;
+        const pRes = await fetch(pUrl);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          const feat = pData?.features?.[0];
+          if (feat && Array.isArray(feat.geometry?.coordinates)) {
+            const [lon, lat] = feat.geometry.coordinates;
+            if (Number.isFinite(lat) && Number.isFinite(lon)) {
+              const props = feat.properties || {};
+              const labelParts = [props.name, props.street, props.district, props.city, props.state, props.country].filter(Boolean);
+              return {
+                status: 'success',
+                source: 'photon-client',
+                lat,
+                lon,
+                label: labelParts.length > 0 ? labelParts.join(', ') : q
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // Continue
+    }
+
+    // 4. Client OpenStreetMap Nominatim
+    try {
+      if (typeof fetch === 'function') {
+        const nUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
+        const nRes = await fetch(nUrl);
+        if (nRes.ok) {
+          const nData = await nRes.json();
+          if (Array.isArray(nData) && nData.length > 0) {
+            const hit = nData[0];
+            const lat = parseFloat(hit.lat);
+            const lon = parseFloat(hit.lon);
+            if (Number.isFinite(lat) && Number.isFinite(lon)) {
+              return {
+                status: 'success',
+                source: 'nominatim-client',
+                lat,
+                lon,
+                label: hit.display_name || q
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // All geocoders failed
+    }
+
+    return null;
   }
 
   drawTacticalGeofence(lat, lon, radiusKm, label = 'Tactical Exclusion Zone') {

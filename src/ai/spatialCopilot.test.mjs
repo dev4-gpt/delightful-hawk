@@ -194,4 +194,58 @@ test('SpatialCopilot: Antigravity C2 Slash Commands execute instantly', async ()
   assert.ok(resBench.message.includes('2,927 Simultaneous Live Spatial Vectors'));
 });
 
+test('SpatialCopilot: Universal Geocoded Navigation parses and executes arbitrary destinations', async () => {
+  const copilot = new SpatialCopilot();
+
+  // 1. Gurgaon South City 2, India (User's specific command)
+  const intentGurgaon = copilot.parseIntent('fly to gurgaon south city 2, india');
+  assert.strictEqual(intentGurgaon.type, 'FLY_TO_SEARCH');
+  assert.strictEqual(intentGurgaon.destination, 'gurgaon south city 2, india');
+
+  // 2. Navigation verb variations
+  const intentMumbai = copilot.parseIntent('navigate to Mumbai, India');
+  assert.strictEqual(intentMumbai.type, 'FLY_TO_SEARCH');
+  assert.strictEqual(intentMumbai.destination, 'mumbai, india');
+
+  const intentEiffel = copilot.parseIntent('take me to Eiffel Tower, Paris');
+  assert.strictEqual(intentEiffel.type, 'FLY_TO_SEARCH');
+  assert.strictEqual(intentEiffel.destination, 'eiffel tower, paris');
+
+  const intentSearch = copilot.parseIntent('search for Canary Wharf');
+  assert.strictEqual(intentSearch.type, 'FLY_TO_SEARCH');
+  assert.strictEqual(intentSearch.destination, 'canary wharf');
+
+  // 3. Strategic presets still resolve to FLY_TO_TARGET
+  const intentTokyo = copilot.parseIntent('fly to tokyo');
+  assert.strictEqual(intentTokyo.type, 'FLY_TO_TARGET');
+  assert.strictEqual(intentTokyo.targetKey, 'tokyo');
+
+  const intentAustin = copilot.parseIntent('go to austin');
+  assert.strictEqual(intentAustin.type, 'FLY_TO_TARGET');
+  assert.strictEqual(intentAustin.targetKey, 'austin');
+
+  // 4. Execution test with mock resolveGeocode
+  copilot.resolveGeocode = async (query) => {
+    if (query.includes('gurgaon')) {
+      return {
+        status: 'success',
+        source: 'mock-osm',
+        lat: 28.4138,
+        lon: 77.0583,
+        label: 'South City II, Sector 49, Gurgaon, Haryana, India'
+      };
+    }
+    return null;
+  };
+
+  const executed = await copilot.executeIntent(intentGurgaon);
+  assert.strictEqual(executed.status, 'success');
+  assert.strictEqual(executed.action, 'CAMERA_FLY_TO_SEARCH');
+  assert.strictEqual(executed.coordinates[0], 28.4138);
+  assert.strictEqual(executed.coordinates[1], 77.0583);
+  assert.ok(executed.message.includes('NAV VECTOR ENGAGED'));
+  assert.ok(executed.message.includes('South City II, Sector 49, Gurgaon'));
+});
+
+
 
