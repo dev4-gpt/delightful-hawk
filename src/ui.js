@@ -2347,6 +2347,7 @@ export class StyleManager {
     this._cctvCalibResetBtn = document.getElementById('cctv-calib-reset-btn');
     this._cctvFrame = document.getElementById('cctv-frame');
     this._cctvVideo = document.getElementById('cctv-video');
+    this._cctvIframe = document.getElementById('cctv-iframe');
     this._cctvClock = document.getElementById('cctv-clock');
     this._cctvOverlayCam = document.getElementById('cctv-overlay-cam');
     this._cctvOverlayFps = document.getElementById('cctv-overlay-fps');
@@ -2359,6 +2360,7 @@ export class StyleManager {
     this._cctvTheaterClose = document.getElementById('cctv-theater-close');
     this._cctvTheaterVideo = document.getElementById('cctv-theater-video');
     this._cctvTheaterImg = document.getElementById('cctv-theater-img');
+    this._cctvTheaterIframe = document.getElementById('cctv-theater-iframe');
     this._cctvTheaterCamTitle = document.getElementById('cctv-theater-cam-title');
     this._cctvTheaterClock = document.getElementById('cctv-theater-clock');
     this._cctvTheaterCoords = document.getElementById('cctv-theater-coords');
@@ -6219,6 +6221,10 @@ export class StyleManager {
       if (this._cctvTheaterVideo) {
         this._cctvTheaterVideo.pause();
       }
+      if (this._cctvTheaterIframe) {
+        this._cctvTheaterIframe.src = '';
+        this._cctvTheaterIframe.dataset.currentSrc = '';
+      }
     };
 
     this._cctvExpandBtn?.addEventListener('click', (e) => {
@@ -6252,6 +6258,7 @@ export class StyleManager {
         this._cctvTheaterModal.querySelectorAll('.cctv-zoom-btn').forEach((b) => b.classList.toggle('active', b === btn));
         if (this._cctvTheaterVideo) this._cctvTheaterVideo.style.transform = `scale(${zoom})`;
         if (this._cctvTheaterImg) this._cctvTheaterImg.style.transform = `scale(${zoom})`;
+        if (this._cctvTheaterIframe) this._cctvTheaterIframe.style.transform = `scale(${zoom})`;
       });
     });
 
@@ -6319,6 +6326,12 @@ export class StyleManager {
   _clearCctvFrame() {
     this._cctvFrameRequestToken += 1;
     this._cctvFramePreloader = null;
+    if (this._cctvIframe) {
+      this._cctvIframe.style.display = 'none';
+      this._cctvIframe.classList.remove('active');
+      this._cctvIframe.removeAttribute('src');
+      this._cctvIframe.dataset.currentSrc = '';
+    }
     if (this._cctvVideo) {
       this._cctvVideo.pause();
       this._cctvVideo.style.display = 'none';
@@ -6432,9 +6445,15 @@ export class StyleManager {
       this._cctvSourceBadge.dataset.frameState = 'idle';
       return;
     }
+    const isLiveStream = activeCamera.feedType === 'youtube' || Boolean(activeCamera.youtubeId) || activeCamera.sourceKind === 'live-stream';
+    if (isLiveStream) {
+      this._cctvSourceBadge.textContent = '🔴 24/7 LIVE STREAM';
+      this._cctvSourceBadge.dataset.frameState = 'ready';
+      return;
+    }
     const isVideo = activeCamera.feedType === 'mp4' || activeCamera.feedType === 'webm' || activeCamera.feedType === 'hls';
     if (isVideo) {
-      this._cctvSourceBadge.textContent = 'LIVE · 60FPS';
+      this._cctvSourceBadge.textContent = '⚪ SIMULATION · 60FPS';
       this._cctvSourceBadge.dataset.frameState = 'ready';
       return;
     }
@@ -6447,6 +6466,12 @@ export class StyleManager {
     if (this._cctvFrame?.dataset.error === 'true' && !hasDisplayedFrame) {
       this._cctvSourceBadge.textContent = 'FRAME · UNAVAILABLE';
       this._cctvSourceBadge.dataset.frameState = 'error';
+      return;
+    }
+    const isSnapshot = activeCamera.sourceKind === 'live-snapshot';
+    if (isSnapshot) {
+      this._cctvSourceBadge.textContent = '🟡 LIVE SNAPSHOT (5S)';
+      this._cctvSourceBadge.dataset.frameState = 'ready';
       return;
     }
     const kind = String(activeCamera.sourceKind || activeCamera.feedType || 'unknown').toUpperCase();
@@ -6646,10 +6671,15 @@ export class StyleManager {
         for (const camera of cameras) {
           const option = document.createElement('option');
           option.value = camera.id;
-          const isCamVideo = camera.feedType === 'mp4' || camera.feedType === 'webm' || camera.feedType === 'hls';
-          option.textContent = isCamVideo
-            ? `🔴 LIVE · ${camera.city} · ${camera.name}`
-            : `${camera.city} · ${camera.name}`;
+          const isCamLiveStream = camera.feedType === 'youtube' || Boolean(camera.youtubeId) || camera.sourceKind === 'live-stream';
+          const isCamSnapshot = camera.feedType === 'image' || camera.sourceKind === 'live-snapshot' || camera.sourceKind === 'configured';
+          let prefix = '⚪ SIMULATED';
+          if (isCamLiveStream) {
+            prefix = '🔴 24/7 LIVE';
+          } else if (isCamSnapshot) {
+            prefix = '🟡 LIVE SNAPSHOT';
+          }
+          option.textContent = `${prefix} · ${camera.city} · ${camera.name}`;
           this._cctvSelect.appendChild(option);
         }
       }
@@ -6734,13 +6764,14 @@ export class StyleManager {
       }
     }
 
-    const isVideo = !!(enabled && activeCamera && (activeCamera.feedType === 'mp4' || activeCamera.feedType === 'webm' || activeCamera.feedType === 'hls'));
+    const isLiveStream = !!(enabled && activeCamera && (activeCamera.feedType === 'youtube' || Boolean(activeCamera.youtubeId) || activeCamera.sourceKind === 'live-stream'));
+    const isVideo = !isLiveStream && !!(enabled && activeCamera && (activeCamera.feedType === 'mp4' || activeCamera.feedType === 'webm' || activeCamera.feedType === 'hls'));
 
     if (this._cctvOverlayCam) {
       this._cctvOverlayCam.textContent = activeCamera ? `${activeCamera.city?.toUpperCase() || 'CAM'} // ${activeCamera.name?.slice(0, 22) || ''}` : 'CAM // 01';
     }
     if (this._cctvOverlayFps) {
-      this._cctvOverlayFps.textContent = isVideo ? '60 FPS · LIVE' : 'REFRESH 5S';
+      this._cctvOverlayFps.textContent = isLiveStream ? '24/7 LIVE STREAM' : isVideo ? '60 FPS · SIMULATION' : 'REFRESH 5S · LIVE';
     }
 
     if (enabled && !this._cctvClockTimer) {
@@ -6760,7 +6791,34 @@ export class StyleManager {
       this._cctvClockTimer = null;
     }
 
-    if (isVideo && this._cctvVideo) {
+    if (isLiveStream && this._cctvIframe) {
+      if (this._cctvVideo) {
+        this._cctvVideo.pause();
+        this._cctvVideo.style.display = 'none';
+        this._cctvVideo.classList.remove('active');
+        this._cctvVideo.dataset.currentSrc = '';
+      }
+      if (this._cctvFrame) {
+        this._cctvFrame.style.display = 'none';
+        this._cctvFrame.classList.remove('active');
+      }
+      this._cctvIframe.style.display = 'block';
+      this._cctvIframe.classList.add('active');
+      this._cctvFrameWrap?.classList.add('has-frame');
+      this._cctvFrameWrap?.classList.remove('loading');
+
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${activeCamera.youtubeId}?autoplay=1&mute=1&playsinline=1&controls=0&modestbranding=1&rel=0`;
+      if (this._cctvIframe.dataset.currentSrc !== embedUrl) {
+        this._cctvIframe.dataset.currentSrc = embedUrl;
+        this._cctvIframe.src = embedUrl;
+      }
+    } else if (isVideo && this._cctvVideo) {
+      if (this._cctvIframe) {
+        this._cctvIframe.style.display = 'none';
+        this._cctvIframe.classList.remove('active');
+        this._cctvIframe.src = '';
+        this._cctvIframe.dataset.currentSrc = '';
+      }
       if (this._cctvFrame) {
         this._cctvFrame.style.display = 'none';
         this._cctvFrame.classList.remove('active');
@@ -6777,6 +6835,12 @@ export class StyleManager {
         this._cctvVideo.play().catch(() => {});
       }
     } else {
+      if (this._cctvIframe) {
+        this._cctvIframe.style.display = 'none';
+        this._cctvIframe.classList.remove('active');
+        this._cctvIframe.src = '';
+        this._cctvIframe.dataset.currentSrc = '';
+      }
       if (this._cctvVideo) {
         this._cctvVideo.pause();
         this._cctvVideo.style.display = 'none';
@@ -6871,9 +6935,38 @@ export class StyleManager {
         : 'OPTICAL RANGE: -- M';
     }
 
-    const isVideo = !!(enabled && activeCamera && (activeCamera.feedType === 'mp4' || activeCamera.feedType === 'webm' || activeCamera.feedType === 'hls'));
+    const isLiveStream = !!(enabled && activeCamera && (activeCamera.feedType === 'youtube' || Boolean(activeCamera.youtubeId) || activeCamera.sourceKind === 'live-stream'));
+    const isVideo = !isLiveStream && !!(enabled && activeCamera && (activeCamera.feedType === 'mp4' || activeCamera.feedType === 'webm' || activeCamera.feedType === 'hls'));
 
-    if (isVideo && this._cctvTheaterVideo) {
+    if (isLiveStream && this._cctvTheaterIframe) {
+      if (this._cctvTheaterVideo) {
+        this._cctvTheaterVideo.pause();
+        this._cctvTheaterVideo.style.display = 'none';
+        this._cctvTheaterVideo.dataset.currentSrc = '';
+      }
+      if (this._cctvTheaterImg) {
+        this._cctvTheaterImg.style.display = 'none';
+      }
+      this._cctvTheaterIframe.style.display = 'block';
+      this._cctvTheaterIframe.classList.add('active');
+
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${activeCamera.youtubeId}?autoplay=1&mute=1&playsinline=1&controls=1&modestbranding=1&rel=0`;
+      if (this._cctvTheaterIframe.dataset.currentSrc !== embedUrl) {
+        this._cctvTheaterIframe.dataset.currentSrc = embedUrl;
+        this._cctvTheaterIframe.src = embedUrl;
+      }
+      if (this._cctvTheaterFps) {
+        this._cctvTheaterFps.textContent = 'FPS: 24/7 REAL-TIME STREAM [LIVE BROADCAST]';
+      }
+      if (this._cctvTheaterStatus) {
+        this._cctvTheaterStatus.textContent = 'FEED: 24/7 OFFICIAL LIVE BROADCAST · ZERO DELAY';
+      }
+    } else if (isVideo && this._cctvTheaterVideo) {
+      if (this._cctvTheaterIframe) {
+        this._cctvTheaterIframe.style.display = 'none';
+        this._cctvTheaterIframe.src = '';
+        this._cctvTheaterIframe.dataset.currentSrc = '';
+      }
       if (this._cctvTheaterImg) {
         this._cctvTheaterImg.style.display = 'none';
       }
@@ -6885,12 +6978,17 @@ export class StyleManager {
         this._cctvTheaterVideo.play().catch(() => {});
       }
       if (this._cctvTheaterFps) {
-        this._cctvTheaterFps.textContent = 'FPS: 60.0 [ACTIVE 4K LOCK]';
+        this._cctvTheaterFps.textContent = 'FPS: 60.0 [SIMULATION PLAYBACK]';
       }
       if (this._cctvTheaterStatus) {
-        this._cctvTheaterStatus.textContent = 'FEED: LIVE HIGH-DEF STREAM';
+        this._cctvTheaterStatus.textContent = 'FEED: TACTICAL SIMULATION STREAM · 60 FPS';
       }
     } else {
+      if (this._cctvTheaterIframe) {
+        this._cctvTheaterIframe.style.display = 'none';
+        this._cctvTheaterIframe.src = '';
+        this._cctvTheaterIframe.dataset.currentSrc = '';
+      }
       if (this._cctvTheaterVideo) {
         this._cctvTheaterVideo.pause();
         this._cctvTheaterVideo.style.display = 'none';

@@ -15,3 +15,4 @@ output/
 pinokio/ENVIRONMENT
 pinokio/.installed
 .vercel
+.env*

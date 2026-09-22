@@ -30,14 +30,20 @@ export default async function handler(req, res) {
   if (sub === 'health') {
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
     const now = Date.now();
-    const cameras = CCTV_CATALOG.map((cam) => ({
-      id: cam.id,
-      status: 'ok',
-      sourceKind: cam.feedType === 'mp4' ? 'live' : 'snapshot',
-      label: cam.provider || 'Configured Feed',
-      message: cam.feedType === 'mp4' ? 'Live stream connected' : 'Snapshot feed active',
-      updatedAt: now,
-    }));
+    const cameras = CCTV_CATALOG.map((cam) => {
+      const isLiveStream = cam.feedType === 'youtube' || cam.sourceKind === 'live-stream';
+      const isSimulation = cam.feedType === 'mp4' || cam.sourceKind === 'simulation';
+      return {
+        id: cam.id,
+        status: 'ok',
+        sourceKind: isLiveStream ? 'live-stream' : (isSimulation ? 'simulation' : 'live-snapshot'),
+        label: cam.provider || 'Configured Feed',
+        message: isLiveStream
+          ? '24/7 Live Stream Online'
+          : (isSimulation ? 'Tactical Video Simulation' : 'Municipal Snapshot Feed'),
+        updatedAt: now,
+      };
+    });
     return res.status(200).json({ cameras });
   }
 
@@ -52,6 +58,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       id: cameraId,
       feedType,
+      youtubeId: camera?.youtubeId || null,
       mediaUrl: feedType === 'mp4' ? `/api/cctv/media/${encodeURIComponent(cameraId)}` : null,
       frameUrl: `/api/cctv/frame/${encodeURIComponent(cameraId)}`,
       provider: camera?.provider || 'Configured Feed',
