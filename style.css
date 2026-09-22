@@ -6412,7 +6412,7 @@ body.cockpit-mode #intel-hud .hud-right-edge { right: 22px; }
 .cctv-theater-modal {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 200000;
   display: flex;
   align-items: center;
   justify-content: center;
