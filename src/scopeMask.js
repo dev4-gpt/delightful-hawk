@@ -177,6 +177,20 @@ export function clampScopeTerminusPct(value) {
  * @returns {boolean} Whether this call repainted.
  */
 export function updateScopeTerminusForHeight(heightM) {
+  // Urban altitude dissolve: below 2,500m AGL, smoothly dissolve scope mask to 0 opacity
+  // so city buildings and streets are 100% full-bleed panoramic widescreen.
+  // Between 2,500m and 8,000m AGL, smoothly ramp opacity [0, 1].
+  // Above 8,000m AGL (space/orbital scale), restore signature circular aperture (opacity 1.0).
+  if (_canvas && _canvas.style && _enabled) {
+    const h = Number(heightM);
+    if (Number.isFinite(h)) {
+      const urbanOpacity = Math.max(0, Math.min(1, (h - 2500) / 5500));
+      _canvas.style.opacity = urbanOpacity.toFixed(3);
+    } else {
+      _canvas.style.opacity = '1';
+    }
+  }
+
   const target = quantizeScopeTerminusAlpha(
     _terminusOverride == null ? scopeTerminusAlpha(heightM) : _terminusOverride,
   );
@@ -407,6 +421,13 @@ export function installScopeMask(viewer) {
   // Seed from the live camera so the first paint is already correct for the
   // restored/initial altitude instead of flashing the globe-scale terminus.
   _terminusAlpha = currentTerminusTarget();
+  if (_canvas && _canvas.style) {
+    const h = currentCameraHeightM();
+    if (Number.isFinite(h)) {
+      const urbanOpacity = Math.max(0, Math.min(1, (h - 2500) / 5500));
+      _canvas.style.opacity = urbanOpacity.toFixed(3);
+    }
+  }
   draw();
 }
 
@@ -462,6 +483,9 @@ export function setScopeMaskEnabled(enabled) {
   const next = Boolean(enabled);
   const reEnabled = next && !_enabled;
   _enabled = next;
+  if (!next && _canvas && _canvas.style) {
+    _canvas.style.opacity = '0';
+  }
   if (reEnabled) {
     // The camera moved freely while the scope was off and nothing sampled it,
     // so the painted terminus can be a whole altitude band stale. Re-sync once
@@ -469,6 +493,15 @@ export function setScopeMaskEnabled(enabled) {
     // the next frame resume normal sampling.
     _lastTerminusSampleMs = -Infinity;
     _terminusAlpha = currentTerminusTarget();
+    if (_canvas && _canvas.style) {
+      const h = currentCameraHeightM();
+      if (Number.isFinite(h)) {
+        const urbanOpacity = Math.max(0, Math.min(1, (h - 2500) / 5500));
+        _canvas.style.opacity = urbanOpacity.toFixed(3);
+      } else {
+        _canvas.style.opacity = '1';
+      }
+    }
   }
   draw();
 }

@@ -14,7 +14,7 @@ import { detectCoverageKind } from '../data/meshCoverage.js';
 
 // Preset strategic points of interest (lat, lon, altitude, pitch, heading)
 export const STRATEGIC_TARGETS = {
-  'austin': { name: 'Austin, Texas (C2 Hub)', lat: 30.2672, lon: -97.7431, alt: 1200, pitch: -30, heading: 0 },
+  'austin': { name: 'Austin, Texas (C2 Hub)', lat: 30.2605, lon: -97.7431, alt: 680, pitch: -26, heading: 35 },
   'cape canaveral': { name: 'Cape Canaveral Space Force Station', lat: 28.5623, lon: -80.5774, alt: 4500, pitch: -35, heading: 45 },
   'vandenberg': { name: 'Vandenberg Space Force Base', lat: 34.7420, lon: -120.5724, alt: 4000, pitch: -30, heading: 270 },
   'shibuya': { name: 'Tokyo Shibuya Crossing', lat: 35.6595, lon: 139.7005, alt: 850, pitch: -35, heading: 30 },
@@ -112,6 +112,9 @@ export class SpatialCopilot {
         const radius = radiusMatch ? parseInt(radiusMatch[1], 10) : 50;
         const targetClean = arg.replace(/([0-9]+)\s*(km|m|miles)?/i, '').trim();
         return { type: 'DRAW_GEOFENCE', radiusKm: radius, targetKey: targetClean || 'austin', query };
+      }
+      if (cmd === 'cinema' || cmd === 'clean') {
+        return { type: 'TOGGLE_CINEMA', query };
       }
       if (cmd === 'sitrep') {
         return { type: 'SITREP', query };
@@ -246,11 +249,16 @@ export class SpatialCopilot {
     if (lower.match(/^(?:zoom\s+(?:in|close)|descend|street\s+level|close\s+up|dive|drop\s+down)$/i) ||
         lower.includes('zoom close') || lower.includes('street level') || lower.includes('descend camera') ||
         lower.includes('zoom in closer') || lower.includes('closer view')) {
-      return { type: 'ZOOM_CLOSE', targetAltitude: 450, query };
+      return { type: 'ZOOM_CLOSE', targetAltitude: 620, query };
     }
     if (lower.match(/^(?:zoom\s+out|ascend|overview|orbital\s+view|pull\s+back|climb)$/i) ||
         lower.includes('zoom out') || lower.includes('ascend camera') || lower.includes('wide view') || lower.includes('orbital view')) {
       return { type: 'ZOOM_OUT', targetAltitude: 8000, query };
+    }
+
+    // 10a-2. Cinema / Clean View Toggle
+    if (lower.includes('cinema mode') || lower.includes('clean view') || lower.includes('clean mode') || lower.includes('hide ui') || lower.includes('toggle cinema')) {
+      return { type: 'TOGGLE_CINEMA', query };
     }
 
     // 10b. Universal Geocoded Navigation (e.g. "fly to gurgaon south city 2, india", "navigate to paris", "take me to eiffel tower")
@@ -529,13 +537,14 @@ export class SpatialCopilot {
           const curLat = Cesium.Math.toDegrees(carto.latitude);
           const curLon = Cesium.Math.toDegrees(carto.longitude);
           const curAlt = carto.height;
-          const targetAlt = Math.max(250, Math.min(450, curAlt * 0.4));
+          // Calibrated photogrammetric sweet-spot: 620m AGL (clamped between 550m and 750m)
+          const targetAlt = Math.max(550, Math.min(750, curAlt > 850 ? curAlt * 0.45 : 620));
           
           camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(curLon, curLat, targetAlt),
             orientation: {
-              heading: camera.heading,
-              pitch: Cesium.Math.toRadians(-28),
+              heading: camera.heading || Cesium.Math.toRadians(35),
+              pitch: Cesium.Math.toRadians(-26),
               roll: 0.0
             },
             duration: 1.8,
@@ -546,14 +555,34 @@ export class SpatialCopilot {
             status: 'success',
             action: 'CAMERA_ZOOM_CLOSE',
             altitude: Math.round(targetAlt),
-            message: `[LOD REFINEMENT ACTIVE] Descended camera to ${Math.round(targetAlt)}m AGL. Sub-decimeter GSD (<0.17m/px) texture stream locked.`,
+            message: `[LOD REFINEMENT ACTIVE] Descended camera to ${Math.round(targetAlt)}m AGL. Sub-decimeter GSD (<0.17m/px) texture stream locked at oblique -26° angle.`,
             speech: `Descending camera to ${Math.round(targetAlt)} meters. Ultra high resolution texture stream locked.`
           };
         }
         return {
           status: 'success',
           action: 'CAMERA_ZOOM_CLOSE',
-          message: '[LOD REFINEMENT ACTIVE] Camera descent to 450m triggered.'
+          message: '[LOD REFINEMENT ACTIVE] Camera descent to 620m triggered.'
+        };
+      }
+
+      case 'TOGGLE_CINEMA': {
+        const sm = this.styleManager || (typeof window !== 'undefined' && window.__godsEyeView?.styleManager);
+        const isClean = typeof document !== 'undefined' && !!document.body?.classList?.contains('ui-clean-view');
+        if (sm?.toggleCleanView) {
+          sm.toggleCleanView(!isClean);
+        } else if (typeof document !== 'undefined' && document.body?.classList) {
+          document.body.classList.toggle('ui-clean-view');
+        }
+        const nextState = typeof document !== 'undefined' && !!document.body?.classList?.contains('ui-clean-view');
+        return {
+          status: 'success',
+          action: 'TOGGLE_CINEMA',
+          enabled: nextState,
+          message: nextState
+            ? '[CINEMA MODE ENGAGED] Panoramic full-bleed viewport unlocked. Tactical command panels collapsed.'
+            : '[CINEMA MODE DISENGAGED] Tactical command panels and telemetry restored.',
+          speech: nextState ? 'Cinema mode engaged. Tactical panels cleared.' : 'Tactical panels restored.'
         };
       }
 

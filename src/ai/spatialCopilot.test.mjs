@@ -325,5 +325,16 @@ test('SpatialCopilot: adaptive standoff altitude hierarchy', async () => {
   assert.strictEqual(resCountry.altitude, 28000);
 });
 
+test('SpatialCopilot: parseIntent & executeIntent cinema mode', async () => {
+  const copilot = new SpatialCopilot();
 
+  assert.strictEqual(copilot.parseIntent('/cinema').type, 'TOGGLE_CINEMA');
+  assert.strictEqual(copilot.parseIntent('/clean').type, 'TOGGLE_CINEMA');
+  assert.strictEqual(copilot.parseIntent('cinema mode').type, 'TOGGLE_CINEMA');
+  assert.strictEqual(copilot.parseIntent('clean view').type, 'TOGGLE_CINEMA');
 
+  const res = await copilot.executeIntent({ type: 'TOGGLE_CINEMA' });
+  assert.strictEqual(res.status, 'success');
+  assert.strictEqual(res.action, 'TOGGLE_CINEMA');
+  assert.ok(res.message.includes('CINEMA MODE'));
+});

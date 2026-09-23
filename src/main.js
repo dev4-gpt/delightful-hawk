@@ -163,13 +163,16 @@ async function init() {
     // clips through 3D tile buildings at close range.
     viewer.scene.globe.show = false;
 
-    // Keep a sky behind Google 3D Tiles, but soften Cesium's high-intensity
-    // default atmosphere. With the globe hidden its bright limb otherwise
-    // reads as a hard cyan seam where distant photoreal tiles meet the sky.
+    // Keep a sky behind Google 3D Tiles, with calibrated atmospheric light and subtle haze
     viewer.scene.skyAtmosphere.show = true;
-    viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
-    viewer.scene.skyAtmosphere.saturationShift = -0.12;
-    viewer.scene.skyAtmosphere.brightnessShift = -0.08;
+    viewer.scene.skyAtmosphere.atmosphereLightIntensity = 22;
+    viewer.scene.skyAtmosphere.saturationShift = -0.05;
+    viewer.scene.skyAtmosphere.brightnessShift = 0.02;
+
+    // Enable hardware Fast Approximate Anti-Aliasing (FXAA) to eliminate stair-stepping on building silhouettes
+    if (viewer.scene.postProcessStages?.fxaa) {
+      viewer.scene.postProcessStages.fxaa.enabled = true;
+    }
 
     loaderStatus.textContent = googleApiKey || cesiumToken
       ? 'Loading Google 3D Tiles...'
@@ -180,22 +183,19 @@ async function init() {
     });
     const tileset = photoreal.tileset;
     if (tileset) {
-      // Aggressive LOD refinement: lower SSE from default 16.0 to 2.0 for maximum texture resolution
-      tileset.maximumScreenSpaceError = 2.0;
-      tileset.dynamicScreenSpaceError = true;
-      tileset.dynamicScreenSpaceErrorDensity = 0.00278;
-      tileset.dynamicScreenSpaceErrorFactor = 4.0;
-      tileset.dynamicScreenSpaceErrorHeightFalloff = 0.25;
-      tileset.immediatelyLoadDesiredLevelOfDetail = false;
+      // Luxury LOD refinement: lower SSE to 1.0 for razor-sharp photogrammetry textures
+      tileset.maximumScreenSpaceError = 1.0;
+      tileset.dynamicScreenSpaceError = false; // Disable dynamic degradation so distant skyline maintains full fidelity
+      tileset.immediatelyLoadDesiredLevelOfDetail = true; // Instantly stream high-res leaf tiles without intermediate blur
       tileset.loadSiblings = true;
       if (typeof tileset.cacheBytes === 'number') {
-        tileset.cacheBytes = 1024 * 1024 * 1024; // 1GB texture memory budget
+        tileset.cacheBytes = 2048 * 1024 * 1024; // 2GB texture memory budget
       }
       viewer.scene.primitives.add(tileset);
       // NOTE: Cesium World Terrain intentionally disabled — conflicts with Google 3D Tiles at high zoom.
       // Google Photorealistic 3D Tiles provide their own terrain/elevation.
       viewer.scene.globe.show = false;
-      console.info(`[Init] Google 3D Tiles loaded via ${photoreal.route} (Retina 2x + SSE 2.0 Ultra-Sharp enabled).`);
+      console.info(`[Init] Google 3D Tiles loaded via ${photoreal.route} (Retina 2x + SSE 1.0 Ultra-Sharp + FXAA enabled).`);
     } else {
       if (photoreal.errors.length) {
         const tileError = photoreal.errors.at(-1);
