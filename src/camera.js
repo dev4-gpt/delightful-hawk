@@ -6,10 +6,10 @@ import * as Cesium from 'cesium';
  */
 export const CAMERA_PRESETS = {
   austin: {
-    destination: Cesium.Cartesian3.fromDegrees(-97.7445, 30.2635, 620),
+    destination: Cesium.Cartesian3.fromDegrees(-97.7403, 30.2825, 820),
     orientation: {
-      heading: Cesium.Math.toRadians(25),
-      pitch: Cesium.Math.toRadians(-22),
+      heading: Cesium.Math.toRadians(180),
+      pitch: Cesium.Math.toRadians(-35),
       roll: 0.0,
     },
   },
@@ -63,10 +63,10 @@ export function flyToAustin(viewer) {
   // Cinematic fly-in after a brief pause
   setTimeout(() => {
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(-97.7445, 30.2635, 620),
+      destination: Cesium.Cartesian3.fromDegrees(-97.7403, 30.2825, 820),
       orientation: {
-        heading: Cesium.Math.toRadians(25),
-        pitch: Cesium.Math.toRadians(-22),
+        heading: Cesium.Math.toRadians(180),
+        pitch: Cesium.Math.toRadians(-35),
         roll: 0.0,
       },
       duration: 4.0,

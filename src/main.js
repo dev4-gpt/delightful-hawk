@@ -183,10 +183,10 @@ async function init() {
     });
     const tileset = photoreal.tileset;
     if (tileset) {
-      // Luxury LOD refinement: lower SSE to 1.0 for razor-sharp photogrammetry textures
-      tileset.maximumScreenSpaceError = 1.0;
-      tileset.dynamicScreenSpaceError = false; // Disable dynamic degradation so distant skyline maintains full fidelity
-      tileset.immediatelyLoadDesiredLevelOfDetail = true; // Instantly stream high-res leaf tiles without intermediate blur
+      // Luxury LOD refinement: balanced SSE and progressive detail without blank stalls
+      tileset.maximumScreenSpaceError = 1.5;
+      tileset.dynamicScreenSpaceError = true;
+      tileset.immediatelyLoadDesiredLevelOfDetail = false; // Progressively stream tiles so parent geometry shows immediately
       tileset.loadSiblings = true;
       if (typeof tileset.cacheBytes === 'number') {
         tileset.cacheBytes = 2048 * 1024 * 1024; // 2GB texture memory budget
