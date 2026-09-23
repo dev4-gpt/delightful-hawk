@@ -148,6 +148,10 @@ async function init() {
     const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
     viewer.resolutionScale = Math.min(dpr, 2.0);
 
+    // Architectural Standoff Floor: Enforce minimum zoom distance so camera never penetrates below
+    // aerial photogrammetry resolution into melted vertical facades, preserving the elite Apple Flyover tier.
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 250;
+
     // Sharpen fallback base globe elevation & textures
     viewer.scene.globe.maximumScreenSpaceError = 1.33;
 
