@@ -243,8 +243,86 @@ test('SpatialCopilot: Universal Geocoded Navigation parses and executes arbitrar
   assert.strictEqual(executed.action, 'CAMERA_FLY_TO_SEARCH');
   assert.strictEqual(executed.coordinates[0], 28.4138);
   assert.strictEqual(executed.coordinates[1], 77.0583);
+  assert.strictEqual(executed.altitude, 950);
+  assert.strictEqual(executed.coverage.is3DMesh, false);
   assert.ok(executed.message.includes('NAV VECTOR ENGAGED'));
   assert.ok(executed.message.includes('South City II, Sector 49, Gurgaon'));
+  assert.ok(executed.message.includes('3D Elevation + Satellite Orthophoto'));
+});
+
+test('SpatialCopilot: parseIntent & executeIntent dynamic zoom controls', async () => {
+  const copilot = new SpatialCopilot();
+
+  // Zoom Close / Street Level variations
+  assert.strictEqual(copilot.parseIntent('zoom close').type, 'ZOOM_CLOSE');
+  assert.strictEqual(copilot.parseIntent('street level').type, 'ZOOM_CLOSE');
+  assert.strictEqual(copilot.parseIntent('descend camera').type, 'ZOOM_CLOSE');
+  assert.strictEqual(copilot.parseIntent('zoom in closer').type, 'ZOOM_CLOSE');
+
+  // Zoom Out / Overview variations
+  assert.strictEqual(copilot.parseIntent('zoom out').type, 'ZOOM_OUT');
+  assert.strictEqual(copilot.parseIntent('ascend camera').type, 'ZOOM_OUT');
+  assert.strictEqual(copilot.parseIntent('orbital view').type, 'ZOOM_OUT');
+
+  // Execution without viewer (fallback safe)
+  const closeRes = await copilot.executeIntent({ type: 'ZOOM_CLOSE' });
+  assert.strictEqual(closeRes.status, 'success');
+  assert.strictEqual(closeRes.action, 'CAMERA_ZOOM_CLOSE');
+
+  const outRes = await copilot.executeIntent({ type: 'ZOOM_OUT' });
+  assert.strictEqual(outRes.status, 'success');
+  assert.strictEqual(outRes.action, 'CAMERA_ZOOM_OUT');
+});
+
+test('SpatialCopilot: adaptive standoff altitude hierarchy', async () => {
+  const copilot = new SpatialCopilot();
+
+  // 1. Point of interest / street address -> 650m
+  copilot.resolveGeocode = async () => ({
+    status: 'success',
+    lat: 35.6595,
+    lon: 139.7005,
+    label: 'Shibuya Crossing Store, Tokyo',
+    types: ['premise', 'point_of_interest']
+  });
+  const resPoint = await copilot.executeIntent({ type: 'FLY_TO_SEARCH', destination: 'shibuya store' });
+  assert.strictEqual(resPoint.altitude, 650);
+  assert.strictEqual(resPoint.coverage.is3DMesh, true);
+  assert.ok(resPoint.message.includes('3D Mesh [Tokyo Metropolis]'));
+
+  // 2. Neighborhood / Sublocality -> 950m
+  copilot.resolveGeocode = async () => ({
+    status: 'success',
+    lat: 28.4138,
+    lon: 77.0583,
+    label: 'South City II, Gurgaon',
+    types: ['sublocality', 'neighborhood']
+  });
+  const resNeigh = await copilot.executeIntent({ type: 'FLY_TO_SEARCH', destination: 'south city 2' });
+  assert.strictEqual(resNeigh.altitude, 950);
+
+  // 3. Locality / City -> 2400m
+  copilot.resolveGeocode = async () => ({
+    status: 'success',
+    lat: 48.8566,
+    lon: 2.3522,
+    label: 'Paris, France',
+    types: ['locality', 'city']
+  });
+  const resCity = await copilot.executeIntent({ type: 'FLY_TO_SEARCH', destination: 'paris' });
+  assert.strictEqual(resCity.altitude, 2400);
+  assert.strictEqual(resCity.coverage.is3DMesh, true);
+
+  // 4. Country -> 28000m
+  copilot.resolveGeocode = async () => ({
+    status: 'success',
+    lat: 20.5937,
+    lon: 78.9629,
+    label: 'India',
+    types: ['country']
+  });
+  const resCountry = await copilot.executeIntent({ type: 'FLY_TO_SEARCH', destination: 'india' });
+  assert.strictEqual(resCountry.altitude, 28000);
 });
 
 

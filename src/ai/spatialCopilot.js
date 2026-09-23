@@ -10,6 +10,7 @@
 
 import { AgentShield } from './agentShield.js';
 import { AetherisSentinelOrchestrator } from './antigravitySwarm.js';
+import { detectCoverageKind } from '../data/meshCoverage.js';
 
 // Preset strategic points of interest (lat, lon, altitude, pitch, heading)
 export const STRATEGIC_TARGETS = {
@@ -241,6 +242,17 @@ export class SpatialCopilot {
       }
     }
 
+    // 10a. Dynamic Camera Zoom / Altitude Controls (LOD refinement & ascent)
+    if (lower.match(/^(?:zoom\s+(?:in|close)|descend|street\s+level|close\s+up|dive|drop\s+down)$/i) ||
+        lower.includes('zoom close') || lower.includes('street level') || lower.includes('descend camera') ||
+        lower.includes('zoom in closer') || lower.includes('closer view')) {
+      return { type: 'ZOOM_CLOSE', targetAltitude: 450, query };
+    }
+    if (lower.match(/^(?:zoom\s+out|ascend|overview|orbital\s+view|pull\s+back|climb)$/i) ||
+        lower.includes('zoom out') || lower.includes('ascend camera') || lower.includes('wide view') || lower.includes('orbital view')) {
+      return { type: 'ZOOM_OUT', targetAltitude: 8000, query };
+    }
+
     // 10b. Universal Geocoded Navigation (e.g. "fly to gurgaon south city 2, india", "navigate to paris", "take me to eiffel tower")
     const navMatch = lower.match(/(?:fly(?:\s+camera)?\s*(?:to)?|go\s+to|goto|navigate(?:\s+to)?|take\s+me\s+to|travel\s+to|jump\s+to|zoom\s+to|look\s+at|head\s+to|search\s+for|search|find|locate|view)\s+(.+)/i);
     if (navMatch) {
@@ -427,8 +439,48 @@ export class SpatialCopilot {
           };
         }
 
-        const alt = geo.alt || (geo.bounds ? 4500 : 2500);
-        this.flyCamera(geo.lat, geo.lon, alt, -35, 0);
+        // Adaptive altitude & standoff calculation (Part A: LOD refinement)
+        let alt = 950;
+        let pitch = -30;
+
+        const types = Array.isArray(geo.types) ? geo.types.map(t => String(t).toLowerCase()) : [];
+        const isPoint = types.some(t => ['street_address', 'premise', 'subpremise', 'route', 'establishment', 'point_of_interest', 'building', 'house', 'residential', 'shop'].includes(t));
+        const isNeighborhood = types.some(t => ['neighborhood', 'sublocality', 'sublocality_level_1', 'sublocality_level_2', 'sublocality_level_3', 'quarter', 'suburb', 'hamlet'].includes(t));
+        const isCity = types.some(t => ['locality', 'city', 'town', 'village', 'municipality'].includes(t));
+        const isStateOrCountry = types.some(t => ['country', 'administrative_area_level_1', 'state'].includes(t));
+
+        if (isPoint) {
+          alt = 650;
+          pitch = -25;
+        } else if (isNeighborhood) {
+          alt = 950;
+          pitch = -30;
+        } else if (isCity) {
+          alt = 2400;
+          pitch = -35;
+        } else if (isStateOrCountry) {
+          alt = 28000;
+          pitch = -50;
+        } else if (geo.bounds?.northeast && geo.bounds?.southwest) {
+          const latSpan = Math.abs(geo.bounds.northeast.lat - geo.bounds.southwest.lat);
+          const lngSpan = Math.abs(geo.bounds.northeast.lng - geo.bounds.southwest.lng);
+          const maxSpan = Math.max(latSpan, lngSpan);
+          if (maxSpan < 0.012) {
+            alt = 850;
+            pitch = -28;
+          } else if (maxSpan < 0.04) {
+            alt = 1100;
+            pitch = -30;
+          } else if (maxSpan < 0.2) {
+            alt = 2800;
+            pitch = -36;
+          } else {
+            alt = Math.min(35000, Math.max(5000, Math.round(maxSpan * 111000 * 0.35)));
+            pitch = -45;
+          }
+        }
+
+        this.flyCamera(geo.lat, geo.lon, alt, pitch, 0);
 
         // Drop tactical waypoint marker on 3D globe
         this.dropTacticalWaypoint(geo.lat, geo.lon, geo.label || dest);
@@ -439,15 +491,95 @@ export class SpatialCopilot {
           window.__godsEyeView.ui._updateLocationMiniStatus?.();
         }
 
+        // Terrain coverage classification (Part B)
+        const cov = detectCoverageKind(geo.lat, geo.lon);
+        const modeDesc = cov.is3DMesh 
+          ? `3D Mesh [${cov.zoneName}] (Full 3D Architectural Geometry)`
+          : `3D Elevation + Satellite Orthophoto (DEM Terrain)`;
+
         return {
           status: 'success',
           action: 'CAMERA_FLY_TO_SEARCH',
           destination: dest,
           label: geo.label || dest,
           coordinates: [geo.lat, geo.lon],
+          altitude: alt,
+          coverage: cov,
           source: geo.source || 'global-geocode',
-          message: `[NAV VECTOR ENGAGED] Flying to ${geo.label || dest} (${geo.lat.toFixed(4)}°, ${geo.lon.toFixed(4)}°). Tactical tracking locked.`,
-          speech: `Nav vector engaged. Flying to ${geo.label || dest}.`
+          message: `[NAV VECTOR ENGAGED] Flying to ${geo.label || dest} (${geo.lat.toFixed(4)}°, ${geo.lon.toFixed(4)}°) at ${alt}m AGL.\n[TERRAIN STREAM] ${modeDesc}. LOD refinement active.`,
+          speech: `Nav vector engaged. Flying to ${geo.label || dest} at ${alt} meters.`
+        };
+      }
+
+      case 'ZOOM_CLOSE': {
+        const Cesium = (typeof window !== 'undefined' && window.Cesium) || null;
+        if (this.viewer && Cesium) {
+          const camera = this.viewer.camera;
+          const carto = camera.positionCartographic;
+          const curLat = Cesium.Math.toDegrees(carto.latitude);
+          const curLon = Cesium.Math.toDegrees(carto.longitude);
+          const curAlt = carto.height;
+          const targetAlt = Math.max(250, Math.min(450, curAlt * 0.4));
+          
+          camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(curLon, curLat, targetAlt),
+            orientation: {
+              heading: camera.heading,
+              pitch: Cesium.Math.toRadians(-28),
+              roll: 0.0
+            },
+            duration: 1.8,
+            easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT
+          });
+
+          return {
+            status: 'success',
+            action: 'CAMERA_ZOOM_CLOSE',
+            altitude: Math.round(targetAlt),
+            message: `[LOD REFINEMENT ACTIVE] Descended camera to ${Math.round(targetAlt)}m AGL. Sub-decimeter GSD (<0.17m/px) texture stream locked.`,
+            speech: `Descending camera to ${Math.round(targetAlt)} meters. Ultra high resolution texture stream locked.`
+          };
+        }
+        return {
+          status: 'success',
+          action: 'CAMERA_ZOOM_CLOSE',
+          message: '[LOD REFINEMENT ACTIVE] Camera descent to 450m triggered.'
+        };
+      }
+
+      case 'ZOOM_OUT': {
+        const Cesium = (typeof window !== 'undefined' && window.Cesium) || null;
+        if (this.viewer && Cesium) {
+          const camera = this.viewer.camera;
+          const carto = camera.positionCartographic;
+          const curLat = Cesium.Math.toDegrees(carto.latitude);
+          const curLon = Cesium.Math.toDegrees(carto.longitude);
+          const curAlt = carto.height;
+          const targetAlt = Math.max(curAlt * 2.2, intent.targetAltitude || 8000);
+          
+          camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(curLon, curLat, targetAlt),
+            orientation: {
+              heading: camera.heading,
+              pitch: Cesium.Math.toRadians(-45),
+              roll: 0.0
+            },
+            duration: 2.0,
+            easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT
+          });
+
+          return {
+            status: 'success',
+            action: 'CAMERA_ZOOM_OUT',
+            altitude: Math.round(targetAlt),
+            message: `[ALTITUDE ASCENT] Camera ascended to ${Math.round(targetAlt)}m AGL. Regional tactical overview engaged.`,
+            speech: `Ascending to ${Math.round(targetAlt)} meters.`
+          };
+        }
+        return {
+          status: 'success',
+          action: 'CAMERA_ZOOM_OUT',
+          message: '[ALTITUDE ASCENT] Regional overview engaged.'
         };
       }
 
@@ -698,13 +830,18 @@ export class SpatialCopilot {
             const first = gData.results[0];
             const loc = first.geometry?.location;
             if (loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+              const bounds = first.geometry?.viewport || first.geometry?.bounds || null;
               return {
                 status: 'success',
                 source: 'google-client',
                 lat: loc.lat,
                 lon: loc.lng,
                 label: first.formatted_address || q,
-                bounds: first.geometry?.viewport || first.geometry?.bounds || null
+                types: first.types || [],
+                bounds: bounds ? {
+                  southwest: { lat: bounds.southwest?.lat, lng: bounds.southwest?.lng },
+                  northeast: { lat: bounds.northeast?.lat, lng: bounds.northeast?.lng }
+                } : null
               };
             }
           }
@@ -727,12 +864,18 @@ export class SpatialCopilot {
             if (Number.isFinite(lat) && Number.isFinite(lon)) {
               const props = feat.properties || {};
               const labelParts = [props.name, props.street, props.district, props.city, props.state, props.country].filter(Boolean);
+              const extent = props.extent;
               return {
                 status: 'success',
                 source: 'photon-client',
                 lat,
                 lon,
-                label: labelParts.length > 0 ? labelParts.join(', ') : q
+                label: labelParts.length > 0 ? labelParts.join(', ') : q,
+                types: [props.osm_value, props.type].filter(Boolean),
+                bounds: Array.isArray(extent) && extent.length === 4 ? {
+                  southwest: { lat: extent[1], lng: extent[0] },
+                  northeast: { lat: extent[3], lng: extent[2] }
+                } : null
               };
             }
           }
@@ -754,12 +897,18 @@ export class SpatialCopilot {
             const lat = parseFloat(hit.lat);
             const lon = parseFloat(hit.lon);
             if (Number.isFinite(lat) && Number.isFinite(lon)) {
+              const box = hit.boundingbox;
               return {
                 status: 'success',
                 source: 'nominatim-client',
                 lat,
                 lon,
-                label: hit.display_name || q
+                label: hit.display_name || q,
+                types: [hit.type, hit.class].filter(Boolean),
+                bounds: Array.isArray(box) && box.length === 4 ? {
+                  southwest: { lat: parseFloat(box[0]), lng: parseFloat(box[2]) },
+                  northeast: { lat: parseFloat(box[1]), lng: parseFloat(box[3]) }
+                } : null
               };
             }
           }

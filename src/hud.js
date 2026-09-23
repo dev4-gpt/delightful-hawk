@@ -20,6 +20,7 @@ import { composeLocalityTag } from './hudLocality.js';
 import { ellipsoidalToMslDisplayM, ensureGeoidReady, geoidHeight } from './data/geoid.js';
 import { getBasemapLabelContext } from './voice/gevActions.js';
 import { isHudSummaryUnconfigured } from './hudSummaryResponse.js';
+import { detectCoverageKind } from './data/meshCoverage.js';
 
 /** Color palettes keyed by shader mode; applied as CSS custom properties. */
 const HUD_COLORS = {
@@ -182,6 +183,7 @@ export class IntelHUD {
 
       <div class="hud-corner hud-bottom-right">
         <div class="hud-content" style="text-align:right">
+          <div id="hud-terrain-mesh" class="hud-terrain-mesh" style="color: #00f0ff; font-weight: 600; font-size: 10px; margin-bottom: 3px; letter-spacing: 0.05em;">TERRAIN: 3D PHOTOGRAMMETRIC MESH</div>
           <div id="hud-gsd">GSD: --m  NIIRS: --</div>
           <div id="hud-alt">ALT: --m   SUN: --° EL</div>
           <div id="hud-ais-vessel" class="hud-ais-vessel">AIS: --</div>
@@ -330,6 +332,14 @@ export class IntelHUD {
     const niirs = Math.max(0, Math.min(9, 10.25 - 3.32 * Math.log10(gsdInches)));
     const gsdEl = document.getElementById('hud-gsd');
     if (gsdEl) gsdEl.textContent = `GSD: ${gsd.toFixed(2)}m  NIIRS: ${niirs.toFixed(1)}`;
+
+    // 3D Mesh vs. Orthophoto terrain classification
+    const terrainEl = document.getElementById('hud-terrain-mesh');
+    if (terrainEl) {
+      const cov = detectCoverageKind(latDeg, lonDeg);
+      terrainEl.textContent = cov.badgeText;
+      terrainEl.style.color = cov.color;
+    }
 
     // Altitude — reported as height above MEAN SEA LEVEL. `altM` is the raw
     // ellipsoidal camera height, which reads far below zero wherever the geoid

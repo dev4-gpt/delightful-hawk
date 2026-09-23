@@ -144,6 +144,13 @@ async function init() {
     // 120 Hz hardware; a no-op on 60 Hz displays. (perf item 2)
     viewer.targetFrameRate = 60;
 
+    // Retina High-DPI Resolution: render at native device pixels (up to 2x) to eliminate upscaling blur
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+    viewer.resolutionScale = Math.min(dpr, 2.0);
+
+    // Sharpen fallback base globe elevation & textures
+    viewer.scene.globe.maximumScreenSpaceError = 1.33;
+
     // Register per-layer data attribution into the "Data attribution" popover.
     // Required by each source's license (ODbL, CC BY-NC-SA, NASA FIRMS, etc.);
     // strings are verbatim from DATA_SOURCES.md. Static + always-present in the
@@ -173,11 +180,22 @@ async function init() {
     });
     const tileset = photoreal.tileset;
     if (tileset) {
+      // Aggressive LOD refinement: lower SSE from default 16.0 to 2.0 for maximum texture resolution
+      tileset.maximumScreenSpaceError = 2.0;
+      tileset.dynamicScreenSpaceError = true;
+      tileset.dynamicScreenSpaceErrorDensity = 0.00278;
+      tileset.dynamicScreenSpaceErrorFactor = 4.0;
+      tileset.dynamicScreenSpaceErrorHeightFalloff = 0.25;
+      tileset.immediatelyLoadDesiredLevelOfDetail = false;
+      tileset.loadSiblings = true;
+      if (typeof tileset.cacheBytes === 'number') {
+        tileset.cacheBytes = 1024 * 1024 * 1024; // 1GB texture memory budget
+      }
       viewer.scene.primitives.add(tileset);
       // NOTE: Cesium World Terrain intentionally disabled — conflicts with Google 3D Tiles at high zoom.
       // Google Photorealistic 3D Tiles provide their own terrain/elevation.
       viewer.scene.globe.show = false;
-      console.info(`[Init] Google 3D Tiles loaded via ${photoreal.route}.`);
+      console.info(`[Init] Google 3D Tiles loaded via ${photoreal.route} (Retina 2x + SSE 2.0 Ultra-Sharp enabled).`);
     } else {
       if (photoreal.errors.length) {
         const tileError = photoreal.errors.at(-1);
