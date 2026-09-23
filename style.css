@@ -1424,10 +1424,15 @@ body.ui-clean-view #antigravity-copilot-container,
 body.ui-clean-view #aetheris-cartridge-panel,
 body.ui-clean-view #intel-hud,
 body.ui-clean-view .top-nav-pills,
-body.ui-clean-view #top-navigation-bar {
+body.ui-clean-view #top-navigation-bar,
+body.ui-clean-view #agent-tactical-drawer,
+body.ui-clean-view #cartridge-hud-chip,
+body.ui-clean-view #aetheris-portal-nav,
+body.ui-clean-view #view-switcher {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  transition: opacity 0.3s ease-out;
 }
 
 body.ui-clean-view #scene-runtime.active {

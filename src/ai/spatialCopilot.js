@@ -14,7 +14,7 @@ import { detectCoverageKind } from '../data/meshCoverage.js';
 
 // Preset strategic points of interest (lat, lon, altitude, pitch, heading)
 export const STRATEGIC_TARGETS = {
-  'austin': { name: 'Austin, Texas (C2 Hub)', lat: 30.2605, lon: -97.7431, alt: 680, pitch: -26, heading: 35 },
+  'austin': { name: 'Austin, Texas (C2 Hub)', lat: 30.2635, lon: -97.7445, alt: 620, pitch: -22, heading: 25 },
   'cape canaveral': { name: 'Cape Canaveral Space Force Station', lat: 28.5623, lon: -80.5774, alt: 4500, pitch: -35, heading: 45 },
   'vandenberg': { name: 'Vandenberg Space Force Base', lat: 34.7420, lon: -120.5724, alt: 4000, pitch: -30, heading: 270 },
   'shibuya': { name: 'Tokyo Shibuya Crossing', lat: 35.6595, lon: 139.7005, alt: 850, pitch: -35, heading: 30 },
