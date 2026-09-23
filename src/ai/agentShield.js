@@ -55,45 +55,116 @@ const AUTHORIZED_COMMAND_GRAMMARS = [
 ];
 
 /**
- * Universal fast SHA-256 computation (Node.js or synchronous fallback)
+ * FIPS 180-4 Standard SHA-256 implementation in pure JavaScript.
+ * Runs synchronously in both browser and Node.js environments with zero dependencies.
+ * Produces standard 256-bit cryptographic digest (64 hex characters).
  */
-function computeHash(message) {
+const SHA256_K = [
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+];
+
+export function computeHash(message) {
+  if (typeof message !== 'string') {
+    message = String(message || '');
+  }
+
+  // Node.js fast path when available
   if (typeof process !== 'undefined' && process.versions && process.versions.node) {
     try {
-      const crypto = globalThis.crypto || null;
-      // In Node.js environment
       const nodeCrypto = awaitNodeCrypto();
       if (nodeCrypto) {
         return nodeCrypto.createHash('sha256').update(message).digest('hex');
       }
     } catch (_) {}
   }
-  
-  // High-performance deterministic 64-character hash fallback
-  let h1 = 0xdeadbeef, h2 = 0x41c64e6d, h3 = 0x9e3779b9, h4 = 0x85ebca6b;
-  for (let i = 0; i < message.length; i++) {
-    const ch = message.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-    h3 = Math.imul(h3 ^ ch, 3812015801);
-    h4 = Math.imul(h4 ^ ch, 2246822507);
+
+  // Pure JavaScript FIPS 180-4 standard SHA-256
+  let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+  let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+
+  // UTF-8 encoding
+  const utf8 = unescape(encodeURIComponent(message));
+  const bytes = [];
+  for (let i = 0; i < utf8.length; i++) {
+    bytes.push(utf8.charCodeAt(i));
   }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
-  h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
-  h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  const p1 = (h1 >>> 0).toString(16).padStart(8, '0');
-  const p2 = (h2 >>> 0).toString(16).padStart(8, '0');
-  const p3 = (h3 >>> 0).toString(16).padStart(8, '0');
-  const p4 = (h4 >>> 0).toString(16).padStart(8, '0');
-  return (p1 + p2 + p3 + p4 + p4 + p3 + p2 + p1).slice(0, 64);
+
+  const bitLength = bytes.length * 8;
+  bytes.push(0x80);
+  while ((bytes.length % 64) !== 56) {
+    bytes.push(0);
+  }
+
+  // Append 64-bit length in big-endian format
+  bytes.push(0, 0, 0, 0);
+  bytes.push((bitLength >>> 24) & 0xff);
+  bytes.push((bitLength >>> 16) & 0xff);
+  bytes.push((bitLength >>> 8) & 0xff);
+  bytes.push(bitLength & 0xff);
+
+  const words = [];
+  for (let i = 0; i < bytes.length; i += 4) {
+    words.push((bytes[i] << 24) | (bytes[i + 1] << 16) | (bytes[i + 2] << 8) | bytes[i + 3]);
+  }
+
+  const w = new Int32Array(64);
+  const rotr = (n, x) => (x >>> n) | (x << (32 - n));
+
+  for (let i = 0; i < words.length; i += 16) {
+    for (let t = 0; t < 16; t++) {
+      w[t] = words[i + t];
+    }
+    for (let t = 16; t < 64; t++) {
+      const s0 = rotr(7, w[t - 15]) ^ rotr(18, w[t - 15]) ^ (w[t - 15] >>> 3);
+      const s1 = rotr(17, w[t - 2]) ^ rotr(19, w[t - 2]) ^ (w[t - 2] >>> 10);
+      w[t] = (w[t - 16] + s0 + w[t - 7] + s1) | 0;
+    }
+
+    let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+
+    for (let t = 0; t < 64; t++) {
+      const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e);
+      const ch = (e & f) ^ ((~e) & g);
+      const temp1 = (h + S1 + ch + SHA256_K[t] + w[t]) | 0;
+      const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const temp2 = (S0 + maj) | 0;
+
+      h = g;
+      g = f;
+      f = e;
+      e = (d + temp1) | 0;
+      d = c;
+      c = b;
+      b = a;
+      a = (temp1 + temp2) | 0;
+    }
+
+    h0 = (h0 + a) | 0;
+    h1 = (h1 + b) | 0;
+    h2 = (h2 + c) | 0;
+    h3 = (h3 + d) | 0;
+    h4 = (h4 + e) | 0;
+    h5 = (h5 + f) | 0;
+    h6 = (h6 + g) | 0;
+    h7 = (h7 + h) | 0;
+  }
+
+  const toHex = (n) => (n >>> 0).toString(16).padStart(8, '0');
+  return toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4) + toHex(h5) + toHex(h6) + toHex(h7);
 }
 
 let _nodeCrypto = null;
 function awaitNodeCrypto() {
   if (_nodeCrypto) return _nodeCrypto;
   try {
-    // Dynamic import cache for node crypto
     if (typeof require !== 'undefined') {
       _nodeCrypto = require('crypto');
       return _nodeCrypto;

@@ -1,6 +1,6 @@
 # Aetheris Spatial // Sovereign Air-Gapped SCIF Deployment Specification
 ## Document ID: AETH-SEC-SPEC-2026-V1
-## Classification: SENSITIVE COMPARTMENTED INFORMATION FACILITY (SCIF) COMPLIANCE READY
+## Target Security Profile: Conceptual SCIF / Air-Gapped Deployment Architecture (Aligned with NIST SP 800-53 Controls)
 
 ---
 
@@ -60,15 +60,15 @@ flowchart TD
 
 ---
 
-## 3. Compliance & Accreditation Mapping
+## 3. Security Control Mapping (Architectural Alignment)
 
-Aetheris Spatial's sovereign profile directly aligns with federal and critical infrastructure compliance frameworks:
+Aetheris Spatial's sovereign air-gap architecture is engineered to align with key control families from federal standards (such as NIST SP 800-53 Rev 5 and NERC CIP). Formal government accreditation (e.g. DoD IL6 Authorization to Operate / ATO) requires sponsor certification and dedicated SCIF hardware; this document outlines the application-level software controls implemented to support such deployments:
 
-| Standard / Framework | Requirement | Aetheris Spatial Implementation |
+| Standard / Framework | Target Control | Aetheris Spatial Architectural Control |
 | :--- | :--- | :--- |
-| **DoD Impact Level 6 (IL6)** | Classified National Security Systems & Secret data | Full air-gap operation; zero public cloud dependencies; SHA-256 immutable audit chain. |
+| **DoD Impact Level 6 (IL6)** | Air-Gapped Enclave Alignment | Full offline operation; zero external telemetry egress; local model inference support. |
 | **NIST SP 800-53 Rev 5** | SC-7 Boundary Protection & AC-3 Access Enforcement | Strict AST grammar whitelist; Two-Person Integrity (2PI) on high-impact state transitions. |
-| **NIST SP 800-53 Rev 5** | AU-2 Audit Events & AU-10 Non-Repudiation | Chained SHA-256 block hash audit log guaranteeing tamper-evident records. |
+| **NIST SP 800-53 Rev 5** | AU-2 Audit Events & AU-10 Non-Repudiation | Chained FIPS 180-4 SHA-256 block hash audit log guaranteeing tamper-evident records. |
 | **NERC CIP-005 / CIP-007** | Electronic Security Perimeter & Systems Management | Self-contained container appliance; zero inbound/outbound external telemetry ports. |
 
 ---

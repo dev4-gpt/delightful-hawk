@@ -2,10 +2,14 @@
   "name": "gods-eye-view",
   "private": true,
   "version": "0.1.1",
-  "description": "A real-time intelligence console for planet Earth — photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV, and hands-free voice control. Runs in a browser.",
+  "description": "A real-time geospatial intelligence & sovereign C2 platform for planet Earth — photorealistic 3D globe, live multi-sensor fusion, hands-free voice control, autonomous multi-agent swarm, and cryptographic prompt-injection defense. Base geospatial engine by Bilawal Sidhu; Aetheris Autonomous C2 Architecture by Aryaman Dev.",
   "type": "module",
   "license": "MIT",
-  "author": "Bilawal Sidhu",
+  "author": "Aryaman Dev (Aetheris Autonomous C2 Architecture) & Bilawal Sidhu (Upstream God's Eye View Base)",
+  "contributors": [
+    "Aryaman Dev (Aetheris Sovereign C2 Architecture, AgentShield, Autonomous Swarm, Enterprise Cartridges, Tactical HUD)",
+    "Bilawal Sidhu (God's Eye View Base Geospatial Engine)"
+  ],
   "homepage": "https://github.com/bilawalsidhu/gods-eye-view#readme",
   "repository": {
     "type": "git",
@@ -39,7 +43,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node scripts/run-unit-tests.mjs",
+    "test:aetheris": "node --test src/ai/*.test.mjs src/modules/*.test.mjs src/data/meshCoverage.test.mjs src/data/trafficFlowStyle.test.mjs",
     "test:track": "node scripts/track-regression.mjs",
+    "benchmark:spatial": "node scripts/benchmark-spatial-performance.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs"
   },
   "dependencies": {

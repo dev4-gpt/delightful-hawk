@@ -1,14 +1,17 @@
-# Aetheris Spatial // WebGL & Geodetic Performance Benchmark Report
-## Benchmark Date: 2026-09-19T19:13:18.485Z
-## Tested On: Apple Silicon M-Series (macOS Darwin) / Standard Browser Runtime Engine
+# Aetheris Spatial // Geodetic Arithmetic & Pipeline Benchmark Report
+## Benchmark Date: 2026-09-23T01:42:33.993Z
+## Tested On: Apple Silicon M-Series (macOS Darwin) / Standard V8 JavaScript Runtime
 
 ---
 
 ### Executive Performance Verdict
-- **Target Frame Rate**: **60.0 FPS** (Max allowable frame time: **16.667 ms**)
-- **Empirical Average Frame Delivery**: **0.19 ms** (Theoretical max throughput: **5169 FPS**)
-- **99th Percentile (P99) Worst-Case Frame**: **0.60 ms**
-- **Available Frame Budget Headroom**: **96.4%**
+- **Benchmark Type**: **Geodetic Mathematics & Coordinate Transformation Compute Benchmark (CPU / V8)**
+- **Stress Entity Volume**: **2,927 active spatial vectors** (1,420 aircraft, 840 orbital satellites, 620 vessels, 47 fire clusters)
+- **Empirical Average Batch Time**: **0.228 ms** (Compute capacity: **~4379 batches/sec**)
+- **Median (P50) Execution Time**: **0.179 ms**
+- **99th Percentile (P99) Latency**: **0.897 ms**
+- **CPU Time Headroom (< 16.66ms Display Budget)**: **94.6% remaining for WebGL rendering**
+- **WebGL Display Loop**: Render governor targets **60.0 FPS** with dynamic level-of-detail (LOD) tile streaming via Cesium.
 
 ---
 
@@ -24,19 +27,19 @@
 
 ---
 
-### Statistical Latency Percentiles
+### Statistical Latency Percentiles (CPU Mathematical Compute)
 
-| Percentile | Frame Time (ms) | Equivalent FPS | Frame Budget Status |
+| Percentile | Execution Time (ms) | Equivalent Batches/sec | Display Budget Margin |
 | :--- | :---: | :---: | :--- |
-| **Minimum** | 0.158 ms | 6336 FPS | **NOMINAL / SUB-MILLISECOND** |
-| **Median (P50)** | 0.182 ms | 5503 FPS | **NOMINAL / 60 FPS LOCKED** |
-| **P95** | 0.263 ms | 3802 FPS | **NOMINAL / 60 FPS LOCKED** |
-| **P99** | 0.600 ms | 1667 FPS | **NOMINAL / ZERO JANK** |
-| **Maximum Jitter** | 1.388 ms | 720 FPS | **WITHIN 16.66ms BUDGET** |
+| **Minimum** | 0.160 ms | 6260/s | **< 1% of 16.66ms frame budget** |
+| **Median (P50)** | 0.179 ms | 5581/s | **< 2% of 16.66ms frame budget** |
+| **P95** | 0.457 ms | 2186/s | **< 3% of 16.66ms frame budget** |
+| **P99** | 0.897 ms | 1115/s | **< 5% of 16.66ms frame budget** |
+| **Maximum Jitter** | 3.214 ms | 311/s | **Well within 16.66ms budget** |
 
 ---
 
-### Architectural Optimization Summary
-1. **Dynamic LOD Occlusion Culling**: Entities outside the camera frustum bypass screen-space projection while maintaining background state vector updates.
-2. **Batched WebGL Point Primitives**: Entity markers use instanced point rendering, reducing draw calls from thousands to under 12 draw calls per frame.
+### Pipeline Architecture
+1. **Separation of Compute & Display**: Mathematical entity advancement, Haversine proximity checks, and ECEF transforms execute in optimized JavaScript batches consuming < 1.0 ms total CPU time.
+2. **WebGL Render Governor**: Cesium WebGL rendering operates independently at 60 FPS, with instanced primitives and frustum-culling to avoid UI jank.
 3. **Double-Precision Coordinate Centering**: Uses RTC (Relative-To-Center) 32-bit floating point offsets to eliminate jitter while preserving millimeter geodetic accuracy on WGS84 ellipsoid.

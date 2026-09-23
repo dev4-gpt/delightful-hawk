@@ -11,6 +11,7 @@ import {
   GridReliabilitySubagent,
   RedTeamAuditSubagent
 } from './antigravitySwarm.js';
+import { computeHash } from './agentShield.js';
 
 test('Antigravity Swarm: OrbitalWatchstander propagates ephemeris and evaluates conjunctions', () => {
   const agent = new OrbitalWatchstanderSubagent();
@@ -58,6 +59,16 @@ test('Antigravity Swarm: RedTeamAuditAgent runs live AgentShield probes and vali
   assert.strictEqual(audit.evasionBlockRate, '100.0%');
   assert.strictEqual(audit.cryptographicChainValid, true);
   assert.ok(audit.latestAuditHash.length === 64);
+
+  // Authenticity verification: Ensure hash is authentic FIPS 180-4 and strictly non-palindromic
+  const isPalindrome = audit.latestAuditHash === audit.latestAuditHash.split('').reverse().join('');
+  assert.strictEqual(isPalindrome, false, 'Audit block hash must be non-palindromic cryptographic digest');
+
+  // Verify against standard NIST SHA-256 test vectors
+  const emptyHash = computeHash('');
+  assert.strictEqual(emptyHash, 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+  const abcHash = computeHash('abc');
+  assert.strictEqual(abcHash, 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
 });
 
 test('Antigravity Swarm: Root Orchestrator dispatches full multi-domain patrol', async () => {

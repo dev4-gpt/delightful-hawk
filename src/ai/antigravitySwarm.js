@@ -23,8 +23,13 @@ export class OrbitalWatchstanderSubagent {
     this.monitoredConstellations = ['ISS', 'Starlink', 'Cosmos', 'GPS-III'];
   }
 
-  evaluateSector(satellites = []) {
-    const activeSatellites = Array.isArray(satellites) ? satellites.length : 840;
+  evaluateSector(satellites = null) {
+    let activeSatellites = 840;
+    if (typeof satellites === 'number' && satellites > 0) {
+      activeSatellites = satellites;
+    } else if (Array.isArray(satellites) && satellites.length > 0) {
+      activeSatellites = satellites.length;
+    }
     const conjunctionAlerts = [];
 
     // Simulate SGP4 proximity checks
