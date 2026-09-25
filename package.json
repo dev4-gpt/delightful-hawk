@@ -43,7 +43,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node scripts/run-unit-tests.mjs",
-    "test:aetheris": "node --test src/ai/*.test.mjs src/modules/*.test.mjs src/data/meshCoverage.test.mjs src/data/trafficFlowStyle.test.mjs",
+    "test:aetheris": "node --test src/*.test.mjs src/ai/*.test.mjs src/modules/*.test.mjs src/data/meshCoverage.test.mjs src/data/trafficFlowStyle.test.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "benchmark:spatial": "node scripts/benchmark-spatial-performance.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs"

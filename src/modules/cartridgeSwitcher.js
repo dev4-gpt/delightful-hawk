@@ -7,14 +7,16 @@ const DOMAIN_ICONS = {
   'sentinel-mesh': '⚓',
   'orbital-ops': '🛰️',
   'grid-twin': '⚡',
-  'geo-risk': '🔥'
+  'geo-risk': '🔥',
+  'alpha-earth': '🌱'
 };
 
 const CARTRIDGE_THREATS = {
   'sentinel-mesh': { level: 'CRITICAL', color: '#ff3344', desc: 'Vessel Loitering over TAT-14' },
   'orbital-ops': { level: 'WARNING', color: '#ffaa00', desc: 'ISS Conjunction miss: 2.18km' },
   'grid-twin': { level: 'OVERLOAD', color: '#ff5533', desc: 'Loudoun Substation: 99.4% Load' },
-  'geo-risk': { level: 'ELEVATED', color: '#ffdd00', desc: 'Brushfire: 1443m to Substation' }
+  'geo-risk': { level: 'ELEVATED', color: '#ffdd00', desc: 'Brushfire: 1443m to Substation' },
+  'alpha-earth': { level: 'GROUND TRUTH', color: '#10b981', desc: '10x10m Foundation Model Active' }
 };
 
 /**
@@ -82,7 +84,8 @@ export function initCartridgeSwitcher(registry, viewer) {
     { id: 'sentinel-mesh', label: 'SentinelMesh' },
     { id: 'orbital-ops', label: 'OrbitalOps' },
     { id: 'grid-twin', label: 'GridTwin' },
-    { id: 'geo-risk', label: 'GeoRisk' }
+    { id: 'geo-risk', label: 'GeoRisk' },
+    { id: 'alpha-earth', label: 'AlphaEarth' }
   ];
 
   const buttonMap = new Map();

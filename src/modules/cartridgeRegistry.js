@@ -8,7 +8,8 @@ export const CARTRIDGE_IDS = {
   SENTINEL_MESH: 'sentinel-mesh',
   ORBITAL_OPS: 'orbital-ops',
   GRID_TWIN: 'grid-twin',
-  GEO_RISK: 'geo-risk'
+  GEO_RISK: 'geo-risk',
+  ALPHA_EARTH: 'alpha-earth'
 };
 
 class CartridgeRegistry {

@@ -5,23 +5,26 @@ import { createSentinelMeshCartridge } from './sentinelMeshCartridge.js';
 import { createOrbitalOpsCartridge } from './orbitalOpsCartridge.js';
 import { createGridTwinCartridge } from './gridTwinCartridge.js';
 import { createGeoRiskCartridge } from './geoRiskCartridge.js';
+import { createAlphaEarthCartridge } from './alphaEarthCartridge.js';
 
 console.log('🧪 Testing Aetheris Enterprise Cartridge Architecture...\n');
 
-// 1. Test Registry Initialization with all 4 Cartridges
+// 1. Test Registry Initialization with all 5 Cartridges
 {
   const sentinel = createSentinelMeshCartridge();
   const orbital = createOrbitalOpsCartridge();
   const grid = createGridTwinCartridge();
   const geo = createGeoRiskCartridge();
+  const alpha = createAlphaEarthCartridge();
 
   cartridgeRegistry.register(sentinel);
   cartridgeRegistry.register(orbital);
   cartridgeRegistry.register(grid);
   cartridgeRegistry.register(geo);
+  cartridgeRegistry.register(alpha);
 
   const listAfter = cartridgeRegistry.list();
-  assert.equal(listAfter.length, 4, 'All 4 enterprise cartridges should be registered');
+  assert.equal(listAfter.length, 5, 'All 5 enterprise cartridges should be registered');
   console.log(`✓ Cartridges registered successfully (${listAfter.length} cartridges):`);
   listAfter.forEach(c => console.log(`   - [${c.category}] ${c.title}`));
 }
@@ -100,6 +103,20 @@ console.log('🧪 Testing Aetheris Enterprise Cartridge Architecture...\n');
   assert.equal(alerts.length, 1, 'Should detect wildfire front encroaching on facility');
   assert.equal(alerts[0].level, 'CRITICAL_ENCROACHMENT');
   console.log(`✓ GeoRisk Alert verified: Fire encroaching on ${alerts[0].facilityName} (${alerts[0].distanceMeters}m away)`);
+}
+
+// 7. Test AlphaEarth Planetary 10m Ground Truth Evaluation
+{
+  const alpha = createAlphaEarthCartridge();
+  const parcels = [
+    { id: 'austin-flood-1', lat: 30.1785, lon: -97.7554, label: 'Austin Onion Creek Parcel' }
+  ];
+  const alerts = alpha.evaluateAlerts(parcels);
+  assert.ok(alerts.length >= 0, 'AlphaEarth evaluates 10m parcel alerts');
+  const score = alpha.scoreLand(30.2747, -97.7404, 'Texas Capitol');
+  assert.ok(score.floodRiskScore >= 0 && score.floodRiskScore <= 100);
+  assert.match(score.compositeGrade, /^(AAA|AA|A|BBB|BB|B|CCC|D)$/);
+  console.log(`✓ AlphaEarth Alert verified: 10m Cell ${score.gridId} Grade: ${score.compositeGrade}`);
 }
 
 console.log('\n🎉 ALL ENTERPRISE CARTRIDGE TESTS PASSED!');

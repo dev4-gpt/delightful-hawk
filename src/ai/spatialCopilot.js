@@ -11,6 +11,7 @@
 import { AgentShield } from './agentShield.js';
 import { AetherisSentinelOrchestrator } from './antigravitySwarm.js';
 import { detectCoverageKind } from '../data/meshCoverage.js';
+import { scoreLandParcel, analyzeAgCropStress, detectUnmappedFrontierAnomaly } from '../modules/alphaEarthCartridge.js';
 
 // Preset strategic points of interest (lat, lon, altitude, pitch, heading)
 export const STRATEGIC_TARGETS = {
@@ -119,6 +120,9 @@ export class SpatialCopilot {
       if (cmd === 'sitrep') {
         return { type: 'SITREP', query };
       }
+      if (cmd === 'alphaearth' || cmd === 'alpha-earth' || cmd === 'land') {
+        return { type: 'ALPHA_EARTH_QUERY', targetQuery: arg || 'austin', query };
+      }
       if (cmd === 'clear') {
         return { type: 'CLEAR_OVERLAYS', query };
       }
@@ -140,6 +144,15 @@ export class SpatialCopilot {
     // 3. Situation Report (SITREP)
     if (lower.includes('sitrep') || lower.includes('situation report') || lower.includes('threat assessment') || lower.includes('briefing') || lower.includes('status report')) {
       return { type: 'SITREP', query };
+    }
+
+    // 3b. DeepMind AlphaEarth 10x10m Foundation Model Queries
+    if (lower.startsWith('score land') || lower.includes('alpha earth') || lower.includes('alphaearth') || lower.includes('crop stress') || lower.includes('unmapped biome') || lower.includes('unmapped frontier') || lower.includes('soil health')) {
+      let mode = 'land_score';
+      if (lower.includes('crop') || lower.includes('farmer') || lower.includes('ag stress') || lower.includes('drought')) mode = 'crop_stress';
+      if (lower.includes('unmapped') || lower.includes('amazon') || lower.includes('antarctica')) mode = 'unmapped_frontier';
+      const cleanTarget = query.replace(/(score land|alpha earth|alphaearth|crop stress|unmapped biome|unmapped frontier|soil health|for|at|in)\s*/gi, '').trim();
+      return { type: 'ALPHA_EARTH_QUERY', mode, targetQuery: cleanTarget || 'austin', query };
     }
 
     // 4. Falcon 9 & Rocket Launch Focus
@@ -422,6 +435,90 @@ export class SpatialCopilot {
             `• Cesium WebGL Governor: Target 60.0 FPS (<16.67 ms/frame) with adaptive LOD\n` +
             `• UI Thread Status: Non-blocking asynchronous dispatch`
         };
+      }
+
+      case 'ALPHA_EARTH_QUERY': {
+        const dest = (intent.targetQuery || 'austin').toLowerCase().trim();
+        let targetLat = 30.2747;
+        let targetLon = -97.7404;
+        let targetName = 'Austin Downtown Core';
+
+        const foundKey = Object.keys(STRATEGIC_TARGETS).find(k => dest.includes(k));
+        if (foundKey) {
+          const t = STRATEGIC_TARGETS[foundKey];
+          targetLat = t.lat;
+          targetLon = t.lon;
+          targetName = t.name;
+        } else {
+          const geo = await this.resolveGeocode(dest);
+          if (geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lon)) {
+            targetLat = geo.lat;
+            targetLon = geo.lon;
+            targetName = geo.displayName || dest;
+          }
+        }
+
+        // Switch to AlphaEarth cartridge if registered
+        try {
+          if (window.__aetherisCartridges && typeof window.__aetherisCartridges.activate === 'function') {
+            window.__aetherisCartridges.activate('alpha-earth');
+          }
+        } catch {}
+
+        // Fly camera to 10m cell vantage (alt 450m, pitch -45)
+        this.flyCamera(targetLat, targetLon, 450, -45, 0);
+
+        if (intent.mode === 'crop_stress') {
+          const stress = analyzeAgCropStress(targetLat, targetLon, 'Agricultural Canopy');
+          return {
+            status: 'success',
+            action: 'ALPHAEARTH_CROP_STRESS',
+            targetName,
+            data: stress,
+            speech: `AlphaEarth Sentinel-1 SAR analysis complete. Root-zone moisture index ${stress.rootZoneMoistureIndex} percent.`,
+            message: `[🌱 GOOGLE DEEPMIND ALPHAEARTH // AG STRESS REPORT]\n` +
+              `• Target Sector: ${targetName} (${stress.gridId})\n` +
+              `• Cloud Penetration: 100% Sentinel-1 SAR Radar (All-Weather)\n` +
+              `• Root-Zone Moisture Index (RZMI): ${stress.rootZoneMoistureIndex}%\n` +
+              `• SAR Polarization Ratio: ${stress.sarPolarizationDb} dB\n` +
+              `• Optical Lead Advantage: ${stress.opticalLeadDays} days ahead of visible NDVI wilt\n` +
+              `• Stress Severity: ${stress.stressLevel}\n` +
+              `• Advisory: ${stress.advisory}`
+          };
+        } else if (intent.mode === 'unmapped_frontier') {
+          const frontier = detectUnmappedFrontierAnomaly(targetLat, targetLon, targetName);
+          return {
+            status: 'success',
+            action: 'ALPHAEARTH_UNMAPPED_FRONTIER',
+            targetName,
+            data: frontier,
+            speech: `AlphaEarth unmapped frontier analysis complete. Event type: ${frontier.eventType}.`,
+            message: `[🌱 GOOGLE DEEPMIND ALPHAEARTH // UNMAPPED FRONTIER]\n` +
+              `• Monitored Sector: ${targetName} (${frontier.gridId})\n` +
+              `• Event Classification: ${frontier.classification}\n` +
+              `• Latent Cosine Similarity: ${frontier.latentCosineDistance}\n` +
+              `• Sub-Canopy Ground Truth: ${frontier.details}\n` +
+              `• Sensor Mode: 64-D Multimodal Latent Space Foundation Model`
+          };
+        } else {
+          const score = scoreLandParcel(targetLat, targetLon, targetName);
+          return {
+            status: 'success',
+            action: 'ALPHAEARTH_LAND_SCORE',
+            targetName,
+            data: score,
+            speech: `AlphaEarth 10-meter land score for ${targetName}: Grade ${score.compositeGrade}. Flood risk ${score.floodRiskScore} percent, Wildfire risk ${score.wildfireRiskScore} percent.`,
+            message: `[🌱 GOOGLE DEEPMIND ALPHAEARTH // 10x10m LAND DUE DILIGENCE]\n` +
+              `• Target Parcel: ${targetName} (${score.gridId})\n` +
+              `• Composite Investment Grade: ${score.compositeGrade}\n` +
+              `• Flood Liability Risk: ${score.floodRiskScore}%\n` +
+              `• Wildfire Susceptibility: ${score.wildfireRiskScore}%\n` +
+              `• Soil Health Index: ${score.soilHealthIndex} / 100\n` +
+              `• 64-D Latent Signature: [${score.embeddingSample.slice(0, 4).join(', ')}...]\n` +
+              `• Valuation Advisory: ${score.valuationAdvisory}\n` +
+              `• Ground Truth Resolution: 10x10m Planetary Mesh`
+          };
+        }
       }
 
       case 'CLEAR_OVERLAYS':

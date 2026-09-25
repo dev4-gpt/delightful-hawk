@@ -338,3 +338,41 @@ test('SpatialCopilot: parseIntent & executeIntent cinema mode', async () => {
   assert.strictEqual(res.action, 'TOGGLE_CINEMA');
   assert.ok(res.message.includes('CINEMA MODE'));
 });
+
+test('SpatialCopilot: parseIntent & executeIntent AlphaEarth 10m planetary intelligence', async () => {
+  const copilot = new SpatialCopilot();
+
+  // Test slash command
+  const slashIntent = copilot.parseIntent('/alphaearth austin');
+  assert.strictEqual(slashIntent.type, 'ALPHA_EARTH_QUERY');
+  assert.strictEqual(slashIntent.targetQuery, 'austin');
+
+  // Test land score intent
+  const landIntent = copilot.parseIntent('score land in Austin');
+  assert.strictEqual(landIntent.type, 'ALPHA_EARTH_QUERY');
+  assert.strictEqual(landIntent.mode, 'land_score');
+
+  // Test crop stress intent
+  const cropIntent = copilot.parseIntent('analyze crop stress for farmers in California');
+  assert.strictEqual(cropIntent.type, 'ALPHA_EARTH_QUERY');
+  assert.strictEqual(cropIntent.mode, 'crop_stress');
+
+  // Test unmapped frontier intent
+  const frontierIntent = copilot.parseIntent('detect unmapped frontier anomaly in Amazon');
+  assert.strictEqual(frontierIntent.type, 'ALPHA_EARTH_QUERY');
+  assert.strictEqual(frontierIntent.mode, 'unmapped_frontier');
+
+  // Test execution of land score
+  const resLand = await copilot.executeIntent(landIntent);
+  assert.strictEqual(resLand.status, 'success');
+  assert.strictEqual(resLand.action, 'ALPHAEARTH_LAND_SCORE');
+  assert.ok(resLand.message.includes('ALPHAEARTH'));
+  assert.ok(resLand.data.floodRiskScore !== undefined);
+
+  // Test execution of crop stress
+  const resCrop = await copilot.executeIntent(cropIntent);
+  assert.strictEqual(resCrop.status, 'success');
+  assert.strictEqual(resCrop.action, 'ALPHAEARTH_CROP_STRESS');
+  assert.ok(resCrop.data.rootZoneMoistureIndex !== undefined);
+});
+

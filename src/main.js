@@ -41,13 +41,16 @@ import { createSubseaVisualizer } from "./modules/visualizers/subseaVisualizer.j
 import { createOrbitalVisualizer } from "./modules/visualizers/orbitalVisualizer.js";
 import { createGridTwinVisualizer } from "./modules/visualizers/gridTwinVisualizer.js";
 import { createGeoRiskVisualizer } from "./modules/visualizers/geoRiskVisualizer.js";
+import { createAlphaEarthVisualizer } from "./modules/visualizers/alphaEarthVisualizer.js";
 import { initAgentBridge } from "./modules/agentBridge.js";
 
 import { createSentinelMeshCartridge } from './modules/sentinelMeshCartridge.js';
 import { createOrbitalOpsCartridge } from './modules/orbitalOpsCartridge.js';
 import { createGridTwinCartridge } from './modules/gridTwinCartridge.js';
 import { createGeoRiskCartridge } from './modules/geoRiskCartridge.js';
+import { createAlphaEarthCartridge } from './modules/alphaEarthCartridge.js';
 import { initCartridgeSwitcher } from './modules/cartridgeSwitcher.js';
+import { initGaussianSplatLayer } from './modules/gaussianSplatLayer.js';
 
 initLogoGaze();
 
@@ -232,6 +235,8 @@ async function init() {
     const styleManager = new StyleManager(viewer, { mapStackController });
     // Initialize 3D photorealistic landmarks & urban architecture
     const landmarks3d = initLandmarks3D(viewer);
+    // Initialize Bespoke 3D Gaussian Splatting & Volumetric Ground Truth
+    const gaussianSplatLayer = initGaussianSplatLayer(viewer);
     // The previous multi-canvas weather compositor remains disabled. Cockpit
     // clouds use a separate, capped low-resolution GPU pass that never attaches
     // Cesium fog or post-process stages and is fully stopped in map mode.
@@ -369,6 +374,7 @@ async function init() {
       weatherEffects,
       cockpitCloudEffects,
       landmarks3d,
+      gaussianSplatLayer,
       getRenderGovernorDiagnostics,
       requestRender: governorRequestRender,
     };
@@ -379,16 +385,19 @@ async function init() {
     cartridgeRegistry.register(createOrbitalOpsCartridge());
     cartridgeRegistry.register(createGridTwinCartridge());
     cartridgeRegistry.register(createGeoRiskCartridge());
+    cartridgeRegistry.register(createAlphaEarthCartridge());
 
     const subseaVis = createSubseaVisualizer(viewer, Cesium);
     const orbitalVis = createOrbitalVisualizer(viewer, Cesium);
     const gridTwinVis = createGridTwinVisualizer(viewer, Cesium);
     const geoRiskVis = createGeoRiskVisualizer(viewer, Cesium);
+    const alphaEarthVis = createAlphaEarthVisualizer(viewer, Cesium);
 
     cartridgeRegistry.registerVisualizer('sentinel-mesh', subseaVis);
     cartridgeRegistry.registerVisualizer('orbital-ops', orbitalVis);
     cartridgeRegistry.registerVisualizer('grid-twin', gridTwinVis);
     cartridgeRegistry.registerVisualizer('geo-risk', geoRiskVis);
+    cartridgeRegistry.registerVisualizer('alpha-earth', alphaEarthVis);
 
     initAgentBridge(viewer);
 
