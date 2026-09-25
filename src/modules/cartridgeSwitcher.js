@@ -136,6 +136,7 @@ export function initCartridgeSwitcher(registry, viewer) {
   const container = createFloatingChip();
   
   const ui = document.createElement('div');
+  ui.id = 'cartridge-switcher-container';
   ui.className = 'aetheris-cartridge-switcher';
   ui.style.cssText = `
     background: rgba(10, 15, 25, 0.92);
@@ -203,7 +204,8 @@ export function initCartridgeSwitcher(registry, viewer) {
 
   cartridges.forEach(c => {
     const btn = document.createElement('button');
-    btn.className = `cs-tab-${c.id}`;
+    btn.id = `btn-${c.id}`;
+    btn.className = `cartridge-btn cs-tab-${c.id}`;
     btn.dataset.cartridgeId = c.id;
     btn.setAttribute('aria-label', c.label);
     const icon = DOMAIN_ICONS[c.id] || '⚡';
@@ -320,6 +322,9 @@ export function initCartridgeSwitcher(registry, viewer) {
    * Activates cartridge, ignites sensor layers, flies camera, and updates HUD
    */
   function switchCartridgeAndFly(cartridgeId) {
+    if (typeof window !== 'undefined') {
+      window.__switchCartridge = switchCartridgeAndFly;
+    }
     const dataManager = window.__godsEyeView?.dataManager;
     const context = {
       layerManager: dataManager,
@@ -441,6 +446,9 @@ export function initCartridgeSwitcher(registry, viewer) {
   const active = registry.getActiveCartridge();
   if (active) {
     updateActiveUI(active);
+  }
+  if (typeof window !== 'undefined') {
+    window.__switchCartridge = switchCartridgeAndFly;
   }
 }
 
