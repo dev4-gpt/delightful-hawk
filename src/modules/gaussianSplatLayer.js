@@ -65,7 +65,7 @@ export function initGaussianSplatLayer(viewer) {
 
   let pointCollection = null;
   let activeSiteKey = 'austin-capitol';
-  let isEnabled = true;
+  let isEnabled = false;
   let totalSplatsSpawned = 0;
 
   function createSplatCloud(siteKey) {
@@ -129,13 +129,16 @@ export function initGaussianSplatLayer(viewer) {
     totalSplatsSpawned = count;
   }
 
-  // Initial cloud generation
-  createSplatCloud(activeSiteKey);
+  // Gaussian splat layer defaults to dormant on startup to avoid cluttering 3D photoreal tiles
 
   return {
     enable: () => {
       isEnabled = true;
-      if (pointCollection) pointCollection.show = true;
+      if (!pointCollection) {
+        createSplatCloud(activeSiteKey);
+      } else {
+        pointCollection.show = true;
+      }
     },
     disable: () => {
       isEnabled = false;
@@ -144,7 +147,9 @@ export function initGaussianSplatLayer(viewer) {
     setSite: (siteKey) => {
       if (SPLAT_SITES[siteKey]) {
         activeSiteKey = siteKey;
-        createSplatCloud(siteKey);
+        if (isEnabled) {
+          createSplatCloud(siteKey);
+        }
       }
     },
     getActiveSite: () => activeSiteKey,

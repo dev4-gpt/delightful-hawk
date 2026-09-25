@@ -63,9 +63,10 @@ export const BUILDINGS = [
   // AUSTIN, TEXAS (C2 Hub & Capital District)
   // ==========================================
   // Texas State Capitol Rotunda & Legislative Complex (granite groundAlt ~158m)
-  { name: 'Texas State Capitol Central Rotunda', lon: -97.7404, lat: 30.2747, w: 72, d: 52, h: 54, groundAlt: 158, tex: TEXTURES.glassDark, repeat: [4, 4], architecturalType: 'capitol-rotunda' },
-  { name: 'Texas State Capitol East Wing (Senate)', lon: -97.7392, lat: 30.2747, w: 46, d: 38, h: 32, groundAlt: 158, tex: TEXTURES.glassDark, repeat: [3, 2] },
-  { name: 'Texas State Capitol West Wing (House)', lon: -97.7416, lat: 30.2747, w: 46, d: 38, h: 32, groundAlt: 158, tex: TEXTURES.glassDark, repeat: [3, 2] },
+  // Preserved for fallback/flat stacks; hidden on Google Photoreal 3D Tiles to prevent occlusion
+  { name: 'Texas State Capitol Central Rotunda', lon: -97.7404, lat: 30.2747, w: 72, d: 52, h: 54, groundAlt: 158, tex: TEXTURES.glassDark, repeat: [4, 4], architecturalType: 'capitol-rotunda', showOnPhotoreal: false },
+  { name: 'Texas State Capitol East Wing (Senate)', lon: -97.7392, lat: 30.2747, w: 46, d: 38, h: 32, groundAlt: 158, tex: TEXTURES.glassDark, repeat: [3, 2], showOnPhotoreal: false },
+  { name: 'Texas State Capitol West Wing (House)', lon: -97.7416, lat: 30.2747, w: 46, d: 38, h: 32, groundAlt: 158, tex: TEXTURES.glassDark, repeat: [3, 2], showOnPhotoreal: false },
 
   // Frost Bank Tower (157m folded glass crown pyramid)
   { name: 'Frost Bank Tower', lon: -97.7437, lat: 30.2673, w: 48, d: 42, h: 125, groundAlt: 148, tex: TEXTURES.glassBlue, repeat: [4, 11], architecturalType: 'frost-bank' },
@@ -227,9 +228,15 @@ export function initLandmarks3D(viewer) {
       const repeatX = b.repeat ? b.repeat[0] : 3;
       const repeatY = b.repeat ? b.repeat[1] : 10;
 
+      // When Google Photorealistic 3D Tiles are loaded (real 3D building mesh is streaming),
+      // omit/hide procedural replacement boxes and crowns that collide with the real landmark.
+      const isPhotorealActive = !viewer.scene?.globe?.show || window.__GEV_MAP_STACK__ === 'photoreal';
+      const entityShow = (b.showOnPhotoreal === false && isPhotorealActive) ? false : true;
+
       const entity = viewer.entities.add({
         id: 'gev-building-' + idx,
         name: b.name,
+        show: entityShow,
         position,
         box: {
           dimensions: new Cesium.Cartesian3(b.w, b.d, b.h),
@@ -248,6 +255,7 @@ export function initLandmarks3D(viewer) {
         const roofEntity = viewer.entities.add({
           id: 'gev-building-roof-' + idx,
           name: b.name + ' Helipad & Penthouse',
+          show: entityShow,
           position: roofPos,
           box: {
             dimensions: new Cesium.Cartesian3(b.w * 0.70, b.d * 0.70, 8.0),
@@ -267,6 +275,7 @@ export function initLandmarks3D(viewer) {
         const domeEntity = viewer.entities.add({
           id: 'gev-capitol-dome',
           name: 'Texas State Capitol Grand Granite Dome (94m)',
+          show: entityShow,
           position: domePos,
           ellipsoid: {
             radii: new Cesium.Cartesian3(18.0, 18.0, 20.0),
@@ -281,6 +290,7 @@ export function initLandmarks3D(viewer) {
         const spireEntity = viewer.entities.add({
           id: 'gev-capitol-spire',
           name: 'Goddess of Liberty & Capitol Lantern',
+          show: entityShow,
           position: spirePos,
           cylinder: {
             length: 16.0,
@@ -379,6 +389,25 @@ export function initLandmarks3D(viewer) {
 
   console.info('[Landmarks3D] Successfully initialized ' + landmarkEntities.length + ' core 3D landmarks and ' + buildingEntities.length + ' 3D architectural skyscrapers with PBR facade textures across Austin, SF, NYC, Tokyo, London, Paris, Dubai, and Gurgaon.');
 
+  // Dynamic sync when map stack changes (e.g. from Google 3D Tiles to flat Bing/Esri)
+  const updatePhotorealVisibility = () => {
+    const isPhotoreal = !viewer.scene?.globe?.show || window.__GEV_MAP_STACK__ === 'photoreal';
+    for (let idx = 0; idx < BUILDINGS.length; idx++) {
+      const b = BUILDINGS[idx];
+      if (b.showOnPhotoreal === false) {
+        const ent = viewer.entities.getById('gev-building-' + idx);
+        if (ent) ent.show = !isPhotoreal;
+        if (b.architecturalType === 'capitol-rotunda') {
+          const dome = viewer.entities.getById('gev-capitol-dome');
+          const spire = viewer.entities.getById('gev-capitol-spire');
+          if (dome) dome.show = !isPhotoreal;
+          if (spire) spire.show = !isPhotoreal;
+        }
+      }
+    }
+  };
+  window.addEventListener('gev:map-stack-changed', updatePhotorealVisibility);
+
   return {
     landmarkEntities,
     buildingEntities,
@@ -387,6 +416,7 @@ export function initLandmarks3D(viewer) {
       for (const e of buildingEntities) e.show = visible;
     },
     destroy: () => {
+      window.removeEventListener('gev:map-stack-changed', updatePhotorealVisibility);
       for (const e of landmarkEntities) viewer.entities.remove(e);
       for (const e of buildingEntities) viewer.entities.remove(e);
     }
