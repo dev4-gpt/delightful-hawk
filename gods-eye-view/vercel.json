@@ -1,0 +1,56 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "name": "aetheris",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/mission-control", "destination": "/mission-control.html" },
+    { "source": "/globe-lite", "destination": "/globe-lite.html" },
+    { "source": "/architecture", "destination": "/architecture.html" },
+
+    { "source": "/api/cctv/sources", "destination": "/api/cctv?sub=sources" },
+    { "source": "/api/cctv/health", "destination": "/api/cctv?sub=health" },
+    { "source": "/api/cctv/frame/(.*)", "destination": "/api/cctv?sub=frame&id=$1" },
+    { "source": "/api/cctv/media/(.*)", "destination": "/api/cctv?sub=media&id=$1" },
+    { "source": "/api/cctv/stream/(.*)", "destination": "/api/cctv?sub=stream&id=$1" },
+
+    { "source": "/api/celestrak/stations", "destination": "/api/satellites?group=stations" },
+    { "source": "/api/celestrak/(.*)", "destination": "/api/satellites?group=$1" },
+
+    { "source": "/api/firms/status", "destination": "/api/firms?sub=status" },
+
+    { "source": "/api/opensky", "destination": "/api/flights?mode=opensky" },
+    { "source": "/api/opensky/(.*)", "destination": "/api/flights?mode=opensky" },
+    { "source": "/api/adsblol/mil", "destination": "/api/flights?mode=mil" },
+    { "source": "/api/adsblol/mil/(.*)", "destination": "/api/flights?mode=mil" },
+
+    { "source": "/api/ais-live", "destination": "/api/maritime" },
+    { "source": "/api/ais-live/(.*)", "destination": "/api/maritime" },
+
+    { "source": "/api/radio/stations", "destination": "/api/spatial?sub=radio" },
+    { "source": "/api/radio/(.*)", "destination": "/api/spatial?sub=radio" },
+    { "source": "/api/terrain/heights", "destination": "/api/spatial?sub=terrain" },
+    { "source": "/api/overpass", "destination": "/api/spatial?sub=overpass" },
+    { "source": "/api/setup/status", "destination": "/api/spatial?sub=setup-status" },
+
+    { "source": "/api/tomtom/flow/(.*)", "destination": "/api/tomtom?sub=flow" },
+    { "source": "/api/tomtom/status", "destination": "/api/tomtom?sub=status" },
+    { "source": "/api/tomtom/incidents", "destination": "/api/tomtom?sub=incidents" },
+
+    { "source": "/api/openai/hud-summary", "destination": "/api/ai?sub=hud-summary" },
+    { "source": "/api/realtime/token", "destination": "/api/ai?sub=realtime-token" },
+    { "source": "/api/director-script", "destination": "/api/ai?sub=director-script" },
+    { "source": "/api/benchmark", "destination": "/api/ai?sub=benchmark" },
+    { "source": "/api/generate", "destination": "/api/ai?sub=generate" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}

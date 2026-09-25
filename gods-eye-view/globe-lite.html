@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aetheris 3D Globe</title>
+<style>
+/* ZERO CSS height tricks — JS handles all sizing */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: #040711;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #f1f5f9;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Canvas is sized purely by JS — inline style only */
+#cv { display: block; position: fixed; top: 0; left: 0; z-index: 0; background: #040711; }
+
+.hud { position: fixed; z-index: 20; pointer-events: none; }
+.ia  { pointer-events: auto; }
+.glass {
+  background: rgba(10,17,31,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #1e293b;
+  box-shadow: 0 12px 30px rgba(0,0,0,.7);
+}
+button { font-family: inherit; cursor: pointer; }
+.pulse { animation: pa 1.4s infinite ease-in-out; }
+@keyframes pa {
+  0%,100%{ border-color:rgba(239,68,68,.35); box-shadow:0 0 12px rgba(239,68,68,.2); }
+  50%    { border-color:rgba(239,68,68,1);   box-shadow:0 0 32px rgba(239,68,68,.6); }
+}
+.flir { filter: grayscale(100%) contrast(180%) brightness(90%); }
+.nvg  { filter: sepia(100%) hue-rotate(85deg) saturate(400%) contrast(145%) brightness(80%); }
+#scl {
+  background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.4) 50%);
+  background-size: 100% 4px;
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 10; display: none;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<canvas id="cv"></canvas>
+<div id="scl"></div>
+
+<!-- HEADER -->
+<header class="hud ia" style="top:0;left:0;right:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+  <div class="glass" style="border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;">
+    <div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🌐</div>
+    <div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.8px;">AETHERIS 3D GLOBE</span>
+        <span style="font-size:8px;padding:2px 5px;border-radius:99px;background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3);font-weight:700;">● LIVE</span>
+        <span style="font-size:8px;padding:2px 5px;border-radius:99px;background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3);font-weight:700;">AGENTSHIELD</span>
+      </div>
+      <div style="font-size:9px;color:#475569;">Photorealistic Spatial Intelligence · WGS84 · Zero Dependencies</div>
+    </div>
+  </div>
+  <!-- Global Portal Navigation -->
+  <div class="glass ia" style="border-radius:10px;padding:5px 8px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10px;">
+    <a href="/" style="color:#94a3b8;text-decoration:none;padding:3px 8px;border-radius:5px;">🌐 3D Globe</a>
+    <a href="/mission-control.html" style="color:#94a3b8;text-decoration:none;padding:3px 8px;border-radius:5px;">🎯 2D Radar C2</a>
+    <a href="/globe-lite.html" style="color:#38bdf8;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);font-weight:700;text-decoration:none;padding:3px 8px;border-radius:5px;">🗺️ 3D Lite</a>
+    <a href="/architecture.html" style="color:#94a3b8;text-decoration:none;padding:3px 8px;border-radius:5px;">🏛️ Architecture</a>
+  </div>
+  <div class="glass ia" style="border-radius:10px;padding:5px 8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+    <span style="color:#475569;font-size:9px;font-weight:700;">OPTICS:</span>
+    <button onclick="setOptics('natural')" id="on" style="padding:3px 8px;border-radius:5px;background:#2563eb;color:#fff;border:none;font-size:9px;font-weight:700;">Natural</button>
+    <button onclick="setOptics('flir')"    id="of" style="padding:3px 8px;border-radius:5px;background:transparent;color:#94a3b8;border:1px solid #334155;font-size:9px;">FLIR</button>
+    <button onclick="setOptics('nvg')"     id="ov" style="padding:3px 8px;border-radius:5px;background:transparent;color:#94a3b8;border:1px solid #334155;font-size:9px;">NVG</button>
+    <button onclick="toggleAudio()" id="oa" style="padding:3px 7px;border-radius:5px;background:transparent;color:#cbd5e1;border:1px solid #334155;font-size:9px;">🔊</button>
+  </div>
+</header>
+
+<!-- LEFT SIDEBAR -->
+<aside class="hud" style="top:62px;left:12px;bottom:12px;width:272px;display:flex;flex-direction:column;gap:9px;">
+  <div class="ia glass" style="border-radius:12px;padding:11px;display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:5px;">
+      <span style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.4px;">Watchstanders</span>
+      <span id="badge" style="font-size:8px;padding:2px 5px;border-radius:4px;background:rgba(56,189,248,.15);color:#38bdf8;border:1px solid rgba(56,189,248,.3);">SentinelMesh</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+      <button onclick="sc('sentinel-mesh')" id="cs" style="padding:7px;border-radius:7px;background:rgba(37,99,235,.3);border:1px solid #3b82f6;color:#fff;text-align:left;font-size:9px;font-weight:700;">🌊 SentinelMesh<br><span style="font-weight:400;color:#93c5fd;">Subsea Cables</span></button>
+      <button onclick="sc('orbital-ops')"   id="co" style="padding:7px;border-radius:7px;background:rgba(30,41,59,.4);border:1px solid #334155;color:#94a3b8;text-align:left;font-size:9px;">🛰️ OrbitalOps<br><span style="color:#475569;">LEO Conjunctions</span></button>
+      <button onclick="sc('grid-twin')"     id="cg" style="padding:7px;border-radius:7px;background:rgba(30,41,59,.4);border:1px solid #334155;color:#94a3b8;text-align:left;font-size:9px;">⚡ GridTwin<br><span style="color:#475569;">Datacenter Heat</span></button>
+      <button onclick="sc('geo-risk')"      id="cr" style="padding:7px;border-radius:7px;background:rgba(30,41,59,.4);border:1px solid #334155;color:#94a3b8;text-align:left;font-size:9px;">🔥 GeoRisk<br><span style="color:#475569;">NASA VIIRS Fires</span></button>
+    </div>
+    <p id="desc" style="font-size:9px;color:#cbd5e1;line-height:1.5;margin:0;">Correlating AIS vessel tracking with undersea cables to detect anchor drag.</p>
+    <div style="border-top:1px solid #1e293b;padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+      <button onclick="flyTo('atlantic')"   style="padding:5px 4px;border-radius:5px;background:#0f172a;border:1px solid #334155;color:#cbd5e1;font-size:8px;text-align:left;">🎯 Atlantic Cables</button>
+      <button onclick="flyTo('orbit')"      style="padding:5px 4px;border-radius:5px;background:#0f172a;border:1px solid #334155;color:#cbd5e1;font-size:8px;text-align:left;">🛰️ LEO Ring</button>
+      <button onclick="flyTo('ashburn')"    style="padding:5px 4px;border-radius:5px;background:#0f172a;border:1px solid #334155;color:#cbd5e1;font-size:8px;text-align:left;">⚡ Ashburn Grid</button>
+      <button onclick="flyTo('california')" style="padding:5px 4px;border-radius:5px;background:#0f172a;border:1px solid #334155;color:#cbd5e1;font-size:8px;text-align:left;">🔥 CA Firefront</button>
+    </div>
+    <button onclick="toggleThreat()" style="width:100%;padding:7px;border-radius:7px;background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.55);color:#fca5a5;font-weight:700;font-size:9px;">⚠️ <span id="tl">INJECT THREAT VECTOR // ANCHOR DRAG</span></button>
+  </div>
+  <div class="ia glass" style="border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;flex:1;overflow:hidden;min-height:0;">
+    <span style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;">Live Telemetry</span>
+    <div id="log" style="flex:1;overflow-y:auto;font-size:8px;color:#64748b;display:flex;flex-direction:column;gap:2px;"></div>
+  </div>
+</aside>
+
+<!-- ALERT -->
+<div id="albox" class="hud pulse" style="top:62px;left:50%;transform:translateX(-50%);width:420px;max-width:88%;padding:12px;border-radius:12px;background:rgba(69,10,10,.93);border:1px solid #ef4444;backdrop-filter:blur(12px);display:none;">
+  <div style="display:flex;align-items:flex-start;gap:10px;">
+    <span style="font-size:18px;">🚨</span>
+    <div style="flex:1;">
+      <div style="display:flex;justify-content:space-between;">
+        <span id="at" style="font-size:9px;font-weight:700;color:#fecaca;text-transform:uppercase;letter-spacing:.5px;">INCIDENT</span>
+        <span id="atime" style="font-size:8px;color:#f87171;"></span>
+      </div>
+      <p id="ab" style="font-size:9px;color:#fee2e2;margin:3px 0 0;line-height:1.4;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="hud ia glass" style="bottom:12px;right:12px;border-radius:8px;padding:5px 11px;font-size:8px;color:#475569;display:flex;gap:10px;">
+  <span>🖱️ <b style="color:#64748b;">Drag</b> Rotate</span>
+  <span>🔍 <b style="color:#64748b;">Scroll</b> Zoom</span>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+const S = {
+  cartridge:'sentinel-mesh', threat:false, audio:true, optics:'natural',
+  yaw:-0.45, pitch:0.35, zoom:1.0,
+  ty:-0.45, tp:0.35, tz:1.0,
+  drag:false, mx:0, my:0, t:0,
+  W:800, H:600
+};
+
+// ── SIZING — 100% JavaScript, zero CSS dependency ──────────────────────────
+function resize(){
+  // window.innerWidth/Height is correct in iframes and webviews
+  const w = Math.max(window.innerWidth  || 800, 200);
+  const h = Math.max(window.innerHeight || 600, 200);
+  if (w === S.W && h === S.H) return;
+  cv.width  = w; cv.height = h;
+  cv.style.width  = w + 'px';
+  cv.style.height = h + 'px';
+  S.W = w; S.H = h;
+}
+
+// Fire resize many times to guarantee we catch the final layout
+resize();
+[0, 50, 100, 200, 500, 1000, 2000].forEach(t => setTimeout(resize, t));
+window.addEventListener('resize', resize);
+if (window.ResizeObserver) {
+  new ResizeObserver(resize).observe(document.documentElement);
+}
+
+// ── AUDIO ──────────────────────────────────────────────────────────────────
+let AC = null;
+function beep(f,type,d){
+  if(!S.audio) return;
+  try{
+    if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||'sine'; o.frequency.value=f||880;
+    g.gain.setValueAtTime(0.09,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+(d||0.12));
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+(d||0.12));
+  }catch(_){}
+}
+function toggleAudio(){ S.audio=!S.audio; document.getElementById('oa').textContent=S.audio?'🔊':'🔇'; if(S.audio)beep(520,'sine',0.1); }
+window.toggleAudio=toggleAudio;
+
+// ── LOG ────────────────────────────────────────────────────────────────────
+function log(msg,warn){
+  const box=document.getElementById('log');
+  const d=document.createElement('div');
+  d.style.color=warn?'#f87171':'#94a3b8';
+  if(warn)d.style.fontWeight='bold';
+  d.textContent='['+new Date().toTimeString().slice(0,8)+'] '+msg;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+
+// ── 3D PROJECTION ──────────────────────────────────────────────────────────
+function proj(la,lo,ex){
+  const R=Math.min(S.W,S.H)*0.36*S.zoom+(ex||0);
+  const lat=la*Math.PI/180, lon=lo*Math.PI/180;
+  let x=R*Math.cos(lat)*Math.sin(lon), y=-R*Math.sin(lat), z=R*Math.cos(lat)*Math.cos(lon);
+  const cy2=Math.cos(S.yaw),sy2=Math.sin(S.yaw);
+  const x1=x*cy2+z*sy2, z1=-x*sy2+z*cy2;
+  const cp=Math.cos(S.pitch),sp=Math.sin(S.pitch);
+  const y2=y*cp-z1*sp, z2=y*sp+z1*cp;
+  return{x:S.W/2+x1, y:S.H/2+y2, z:z2, vis:z2>-R*.05, R};
+}
+
+// ── DATA ───────────────────────────────────────────────────────────────────
+const CONTS=[
+  // North America & Central America
+  [[71,-156],[70,-140],[68,-130],[58,-130],[54,-130],[48,-124],[45,-124],[38,-123],[32,-117],[28,-112],[23,-110],[24,-107],[20,-105],[16,-98],[14,-92],[15,-88],[18,-91],[19,-96],[22,-97],[26,-97],[29,-94],[29,-89],[30,-85],[25,-80],[28,-80],[32,-79],[35,-75],[39,-74],[41,-72],[44,-69],[47,-65],[46,-60],[51,-55],[55,-60],[60,-64],[62,-75],[55,-80],[52,-82],[56,-88],[60,-90],[64,-90],[68,-100],[70,-115],[72,-128],[71,-156]],
+  // South America
+  [[12,-72],[10,-75],[5,-77],[0,-80],[-5,-81],[-15,-75],[-20,-70],[-30,-71],[-40,-74],[-50,-75],[-55,-67],[-52,-68],[-45,-63],[-38,-57],[-34,-53],[-30,-50],[-23,-43],[-18,-39],[-13,-38],[-8,-35],[-3,-40],[-1,-48],[5,-52],[8,-60],[11,-65],[12,-72]],
+  // Europe
+  [[71,28],[68,16],[62,5],[58,6],[54,9],[50,2],[46,-1],[43,-9],[37,-9],[36,-5],[36,0],[40,15],[44,12],[45,14],[40,18],[38,24],[36,28],[42,28],[46,30],[46,38],[54,36],[60,30],[65,22],[70,25],[71,28]],
+  // British Isles
+  [[58,-5],[58,-2],[55,-1],[51,1],[50,-5],[52,-5],[54,-3],[58,-5]],
+  // Africa
+  [[37,10],[35,-5],[30,-10],[22,-17],[15,-17],[10,-14],[5,-5],[4,9],[4,12],[2,10],[-5,12],[-15,12],[-25,15],[-34,18],[-34,26],[-28,32],[-20,35],[-10,40],[0,42],[12,51],[12,44],[15,40],[22,38],[28,34],[32,32],[32,24],[36,12],[37,10]],
+  // Asia & Eurasia
+  [[73,70],[77,105],[72,130],[70,165],[65,178],[60,165],[55,160],[50,140],[40,130],[35,120],[30,122],[25,118],[22,114],[20,107],[10,105],[1,104],[8,98],[15,96],[22,89],[20,85],[15,80],[8,77],[15,74],[22,69],[25,60],[25,55],[15,50],[12,44],[20,40],[30,35],[37,36],[40,30],[42,40],[45,50],[50,55],[55,60],[65,60],[73,70]],
+  // Japan Archipelago
+  [[45,142],[43,145],[41,141],[35,140],[34,136],[35,133],[33,130],[35,135],[40,140],[45,142]],
+  // Australia & New Zealand
+  [[-12,132],[-15,136],[-12,142],[-20,148],[-28,153],[-37,150],[-38,144],[-35,138],[-35,117],[-30,115],[-22,114],[-18,122],[-15,124],[-12,132]]
+];
+const CABLES=[
+  [[40.71,-74],[43.5,-60],[46,-40],[48.5,-20],[50.7,-4.5]],
+  [[36.8,-76],[40,-55],[43,-35],[45.5,-15],[44.5,-1.2]],
+  [[34,-119],[38,-150],[40,-180],[38,160],[35,140]],
+  [[38,15],[32,30],[28,33],[18,40],[12,50],[8,78],[1.3,103]]
+];
+const DCS=[{n:'Ashburn AI',lat:39.04,lon:-77.48},{n:'Silicon Valley',lat:37.38,lon:-122.08},{n:'Dublin',lat:53.35,lon:-6.26},{n:'Tokyo',lat:35.68,lon:139.69}];
+const FIRES=[{n:'Porter Ranch',lat:34.28,lon:-118.55},{n:'Mediterranean',lat:37.98,lon:23.72}];
+const STARS=Array.from({length:200},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.5+0.3,tw:Math.random()*Math.PI*2}));
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function render(){
+  requestAnimationFrame(render);
+  S.t+=0.018;
+  S.yaw  +=(S.ty-S.yaw  )*.08;
+  S.pitch+=(S.tp-S.pitch)*.08;
+  S.zoom +=(S.tz-S.zoom )*.08;
+  if(!S.drag) S.ty+=0.0007;
+
+  const W=S.W,H=S.H,cx=W/2,cy=H/2;
+  const R=Math.min(W,H)*0.36*S.zoom;
+
+  // — solid background (most important line in the file) —
+  ctx.fillStyle='#040711'; ctx.fillRect(0,0,W,H);
+
+  // stars
+  for(const s of STARS){
+    const a=0.2+Math.sin(S.t*1.8+s.tw)*0.25;
+    ctx.fillStyle=`rgba(203,213,225,${a.toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(s.x*W,s.y*H,s.r,0,6.283); ctx.fill();
+  }
+
+  // atmosphere
+  const ag=ctx.createRadialGradient(cx,cy,R*.9,cx,cy,R*1.22);
+  ag.addColorStop(0,'rgba(56,189,248,.25)'); ag.addColorStop(.5,'rgba(59,130,246,.08)'); ag.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(cx,cy,R*1.24,0,6.283); ctx.fill();
+
+  // ocean
+  const og=ctx.createRadialGradient(cx-R*.35,cy-R*.35,R*.08,cx,cy,R);
+  if(S.optics==='flir'){og.addColorStop(0,'#111827');og.addColorStop(1,'#030712');}
+  else{og.addColorStop(0,'#0d2952');og.addColorStop(.55,'#071b3a');og.addColorStop(1,'#030c1d');}
+  ctx.fillStyle=og; ctx.beginPath(); ctx.arc(cx,cy,R,0,6.283); ctx.fill();
+  // specular
+  const sg=ctx.createRadialGradient(cx-R*.38,cy-R*.38,0,cx,cy,R);
+  sg.addColorStop(0,'rgba(255,255,255,.07)'); sg.addColorStop(.4,'rgba(255,255,255,.01)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(cx,cy,R,0,6.283); ctx.fill();
+  // ring
+  ctx.strokeStyle=S.threat?'rgba(239,68,68,.7)':'rgba(56,189,248,.4)';
+  ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(cx,cy,R,0,6.283); ctx.stroke();
+
+  // graticule
+  ctx.strokeStyle='rgba(56,189,248,.08)'; ctx.lineWidth=.7;
+  for(let la=-60;la<=60;la+=30){ctx.beginPath();let g=false;for(let lo=-180;lo<=180;lo+=5){const p=proj(la,lo);if(p.vis){if(!g){ctx.moveTo(p.x,p.y);g=true;}else ctx.lineTo(p.x,p.y);}else g=false;}ctx.stroke();}
+  for(let lo=-150;lo<=180;lo+=30){ctx.beginPath();let g=false;for(let la=-80;la<=80;la+=5){const p=proj(la,lo);if(p.vis){if(!g){ctx.moveTo(p.x,p.y);g=true;}else ctx.lineTo(p.x,p.y);}else g=false;}ctx.stroke();}
+
+  // continents
+  ctx.fillStyle=S.optics==='flir'?'rgba(230,232,240,.82)':'rgba(20,38,70,.95)';
+  ctx.strokeStyle=S.optics==='flir'?'#fff':'rgba(56,189,248,.85)'; ctx.lineWidth=1.1;
+  for(const p of CONTS){ctx.beginPath();let v=0;p.forEach((c,i)=>{const pt=proj(c[0],c[1]);if(pt.vis)v++;i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y);});ctx.closePath();if(v>p.length*.28){ctx.fill();ctx.stroke();}}
+
+  // cables
+  const cc=(S.threat&&S.cartridge==='sentinel-mesh')?'#ef4444':'rgba(6,182,212,.9)';
+  for(const cable of CABLES){ctx.beginPath();let g=false;for(const c of cable){const p=proj(c[0],c[1]);if(p.vis){if(!g){ctx.moveTo(p.x,p.y);g=true;}else ctx.lineTo(p.x,p.y);}else g=false;}ctx.strokeStyle=cc;ctx.lineWidth=2.2;ctx.shadowColor=cc;ctx.shadowBlur=7;ctx.stroke();ctx.shadowBlur=0;}
+
+  // vessel
+  const vp=proj(43.5,-50);
+  if(vp.vis){
+    const vc=S.threat?'#ef4444':'#f59e0b';
+    ctx.fillStyle=vc;ctx.shadowColor=vc;ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(vp.x,vp.y,S.threat?7:5,0,6.283);ctx.fill();ctx.shadowBlur=0;
+    if(S.threat){ctx.strokeStyle='rgba(239,68,68,.65)';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(vp.x,vp.y,14+Math.sin(S.t*6)*4,0,6.283);ctx.stroke();}
+    ctx.fillStyle='#fff';ctx.font='9px monospace';ctx.fillText('MMSI 888222',vp.x+9,vp.y+3);
+  }
+
+  // datacenters
+  for(const dc of DCS){
+    const p=proj(dc.lat,dc.lon);if(!p.vis)continue;
+    const dc_c=(S.threat&&S.cartridge==='grid-twin')?'#ef4444':'#a855f7';
+    ctx.strokeStyle=dc_c;ctx.shadowColor=dc_c;ctx.shadowBlur=8;ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x,p.y-26);ctx.stroke();
+    ctx.fillStyle=dc_c;ctx.beginPath();ctx.arc(p.x,p.y-26,3.5,0,6.283);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#e2e8f0';ctx.font='8px monospace';ctx.fillText(dc.n,p.x+6,p.y-17);
+  }
+
+  // wildfires
+  for(const f of FIRES){
+    const p=proj(f.lat,f.lon);if(!p.vis)continue;
+    const rp=5+Math.sin(S.t*8)*2.5;
+    ctx.fillStyle='rgba(239,68,68,.5)';ctx.shadowColor='#ef4444';ctx.shadowBlur=14;
+    ctx.beginPath();ctx.arc(p.x,p.y,rp,0,6.283);ctx.fill();
+    ctx.strokeStyle='#ef4444';ctx.lineWidth=1.2;ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle='#fca5a5';ctx.font='8px monospace';ctx.fillText('VIIRS: '+f.n,p.x+8,p.y+2);
+  }
+
+  // ISS
+  const sa=Math.min(W,H)*0.36*S.zoom*0.18;
+  const ia=S.t*.8;
+  const ip=proj(Math.sin(ia)*51.6,((ia*180/Math.PI*1.5)%360)-180,sa);
+  if(ip.vis){
+    ctx.fillStyle='#38bdf8';ctx.shadowColor='#38bdf8';ctx.shadowBlur=10;
+    ctx.fillRect(ip.x-3,ip.y-3,6,6);ctx.shadowBlur=0;
+    const dd=S.threat?12:36;
+    const dx=ip.x+Math.cos(S.t*3)*dd, dy=ip.y+Math.sin(S.t*3)*dd;
+    const dc2=S.threat?'#ef4444':'#f59e0b';
+    ctx.fillStyle=dc2;ctx.shadowColor=dc2;ctx.shadowBlur=7;
+    ctx.beginPath();ctx.arc(dx,dy,3,0,6.283);ctx.fill();ctx.shadowBlur=0;
+    if(S.threat&&S.cartridge==='orbital-ops'){ctx.strokeStyle='#ef4444';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(ip.x,ip.y);ctx.lineTo(dx,dy);ctx.stroke();}
+    ctx.fillStyle='#e2e8f0';ctx.font='9px monospace';ctx.fillText('ISS (420 km)',ip.x+8,ip.y-2);
+    ctx.fillStyle='#fca5a5';ctx.fillText('Cosmos 1408',dx+6,dy+8);
+  }
+}
+
+// ── INPUT ──────────────────────────────────────────────────────────────────
+cv.addEventListener('mousedown',e=>{S.drag=true;S.mx=e.clientX;S.my=e.clientY;});
+window.addEventListener('mousemove',e=>{if(!S.drag)return;S.ty+=(e.clientX-S.mx)*.005;S.tp+=(e.clientY-S.my)*.005;S.tp=Math.max(-1.1,Math.min(1.1,S.tp));S.mx=e.clientX;S.my=e.clientY;});
+window.addEventListener('mouseup',()=>S.drag=false);
+cv.addEventListener('wheel',e=>{e.preventDefault();S.tz=Math.max(.55,Math.min(3.2,S.tz-e.deltaY*.0014));},{passive:false});
+cv.addEventListener('touchstart',e=>{if(e.touches.length===1){S.drag=true;S.mx=e.touches[0].clientX;S.my=e.touches[0].clientY;}},{passive:true});
+window.addEventListener('touchmove',e=>{if(!S.drag||e.touches.length!==1)return;S.ty+=(e.touches[0].clientX-S.mx)*.005;S.tp+=(e.touches[0].clientY-S.my)*.005;S.tp=Math.max(-1.1,Math.min(1.1,S.tp));S.mx=e.touches[0].clientX;S.my=e.touches[0].clientY;},{passive:true});
+window.addEventListener('touchend',()=>S.drag=false);
+
+// ── FLYTHROUGHS ────────────────────────────────────────────────────────────
+const FLY={atlantic:{yaw:.85,pitch:.65,zoom:1.35},orbit:{yaw:-.2,pitch:.3,zoom:.85},ashburn:{yaw:1.35,pitch:.65,zoom:1.7},california:{yaw:2.05,pitch:.55,zoom:1.6}};
+function flyTo(loc){const f=FLY[loc];if(!f)return;S.ty=f.yaw;S.tp=f.pitch;S.tz=f.zoom;beep(640,'sine',.1);log('Camera → '+loc);}
+window.flyTo=flyTo;
+
+// ── CARTRIDGES ─────────────────────────────────────────────────────────────
+const CM={'sentinel-mesh':{el:'cs',badge:'SentinelMesh',desc:'Correlating AIS vessel tracking with undersea cables to detect anchor drag.',btn:'INJECT THREAT VECTOR // ANCHOR DRAG',loc:'atlantic'},'orbital-ops':{el:'co',badge:'OrbitalOps',desc:'Autonomous LEO debris close-approach conjunction assessment engine.',btn:'ACTIVE CONJUNCTION VECTOR // LEO',loc:'orbit'},'grid-twin':{el:'cg',badge:'GridTwin',desc:'AI cluster power draw vs heat domes — substation cascade prevention.',btn:'SIMULATE GRID CASCADE // HEAT DOME',loc:'ashburn'},'geo-risk':{el:'cr',badge:'GeoRisk',desc:'NASA VIIRS fire pixels correlated with critical facilities.',btn:'ACTIVE PERIMETER BREACH // WILDFIRE',loc:'california'}};
+function sc(id){
+  S.cartridge=id;S.threat=false;document.getElementById('albox').style.display='none';
+  ['cs','co','cg','cr'].forEach(k=>{const e=document.getElementById(k);e.style.background='rgba(30,41,59,.4)';e.style.borderColor='#334155';e.style.color='#94a3b8';});
+  const m=CM[id];const ae=document.getElementById(m.el);ae.style.background='rgba(37,99,235,.3)';ae.style.borderColor='#3b82f6';ae.style.color='#fff';
+  document.getElementById('badge').textContent=m.badge;document.getElementById('desc').textContent=m.desc;document.getElementById('tl').textContent=m.btn;
+  flyTo(m.loc);beep(440,'triangle',.1);log('Cartridge → '+m.badge);
+}
+window.sc=sc;
+
+// ── THREAT ─────────────────────────────────────────────────────────────────
+const AL={'sentinel-mesh':{t:'CRITICAL: SUBSEA CABLE ANCHOR-DRAG',b:'MMSI 888222 at 0.8 kts over Apollo South fiber. Advisory dispatched.',loc:'atlantic'},'orbital-ops':{t:'CRITICAL: LEO ORBITAL CONJUNCTION',b:'ISS/Cosmos 1408 miss distance 2.18 km. Avoidance burn recommended.',loc:'orbit'},'grid-twin':{t:'CRITICAL: SUBSTATION THERMAL OVERLOAD',b:'Loudoun 500kV at 99.4% load at 42°C. Compute shedding initiated.',loc:'ashburn'},'geo-risk':{t:'CRITICAL: WILDFIRE ENCROACHMENT',b:'VIIRS firefront within 980m of Porter Ranch. Evacuation broadcast.',loc:'california'}};
+function toggleThreat(){
+  S.threat=!S.threat;
+  const box=document.getElementById('albox');
+  if(S.threat){const a=AL[S.cartridge];document.getElementById('at').textContent=a.t;document.getElementById('ab').textContent=a.b;document.getElementById('atime').textContent=new Date().toTimeString().slice(0,8);box.style.display='block';flyTo(a.loc);beep(980,'sawtooth',.3);log('[ALERT] '+a.t,true);}
+  else{box.style.display='none';log('Threat cleared. Nominal.');beep(440,'sine',.1);}
+}
+window.toggleThreat=toggleThreat;
+
+// ── OPTICS ─────────────────────────────────────────────────────────────────
+function setOptics(m){
+  S.optics=m;
+  document.body.classList.remove('flir','nvg');
+  document.getElementById('scl').style.display='none';
+  [['on','#2563eb','#fff'],['of','transparent','#94a3b8'],['ov','transparent','#94a3b8']].forEach(([id,bg,c])=>{const b=document.getElementById(id);b.style.background=bg;b.style.color=c;b.style.border=bg==='transparent'?'1px solid #334155':'none';});
+  if(m==='flir'){document.body.classList.add('flir');const b=document.getElementById('of');b.style.background='#e2e8f0';b.style.color='#000';b.style.border='1px solid #e2e8f0';log('Optics: FLIR Thermal');}
+  else if(m==='nvg'){document.body.classList.add('nvg');document.getElementById('scl').style.display='block';const b=document.getElementById('ov');b.style.background='#10b981';b.style.color='#000';b.style.border='1px solid #10b981';log('Optics: NVG Night Vision');}
+  else log('Optics: Natural 3D');
+  beep(720,'sine',.07);
+}
+window.setOptics=setOptics;
+
+// ── BOOT ───────────────────────────────────────────────────────────────────
+log('[boot] 3D engine · WGS84 · AgentShield armed');
+render();
+setTimeout(()=>log('All systems nominal.'),300);
+
+}());
+</script>
+</body>
+</html>
