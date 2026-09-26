@@ -1,0 +1,4 @@
+OpenAlex Terms of Use Notification:
+Accessed at: https://developers.openalex.org/
+Recorded at: 2026-09-26T03:07:00Z
+Notice: Always check the license of individual papers retrieved by OpenAlex for any reuse or distribution restrictions.

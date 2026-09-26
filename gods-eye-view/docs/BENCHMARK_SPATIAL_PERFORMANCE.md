@@ -1,5 +1,5 @@
 # Aetheris Spatial // Geodetic Arithmetic & Pipeline Benchmark Report
-## Benchmark Date: 2026-09-23T01:42:33.993Z
+## Benchmark Date: 2026-09-26T03:01:40.514Z
 ## Tested On: Apple Silicon M-Series (macOS Darwin) / Standard V8 JavaScript Runtime
 
 ---
@@ -7,10 +7,10 @@
 ### Executive Performance Verdict
 - **Benchmark Type**: **Geodetic Mathematics & Coordinate Transformation Compute Benchmark (CPU / V8)**
 - **Stress Entity Volume**: **2,927 active spatial vectors** (1,420 aircraft, 840 orbital satellites, 620 vessels, 47 fire clusters)
-- **Empirical Average Batch Time**: **0.228 ms** (Compute capacity: **~4379 batches/sec**)
-- **Median (P50) Execution Time**: **0.179 ms**
-- **99th Percentile (P99) Latency**: **0.897 ms**
-- **CPU Time Headroom (< 16.66ms Display Budget)**: **94.6% remaining for WebGL rendering**
+- **Empirical Average Batch Time**: **0.327 ms** (Compute capacity: **~3057 batches/sec**)
+- **Median (P50) Execution Time**: **0.197 ms**
+- **99th Percentile (P99) Latency**: **2.639 ms**
+- **CPU Time Headroom (< 16.66ms Display Budget)**: **84.2% remaining for WebGL rendering**
 - **WebGL Display Loop**: Render governor targets **60.0 FPS** with dynamic level-of-detail (LOD) tile streaming via Cesium.
 
 ---
@@ -31,11 +31,11 @@
 
 | Percentile | Execution Time (ms) | Equivalent Batches/sec | Display Budget Margin |
 | :--- | :---: | :---: | :--- |
-| **Minimum** | 0.160 ms | 6260/s | **< 1% of 16.66ms frame budget** |
-| **Median (P50)** | 0.179 ms | 5581/s | **< 2% of 16.66ms frame budget** |
-| **P95** | 0.457 ms | 2186/s | **< 3% of 16.66ms frame budget** |
-| **P99** | 0.897 ms | 1115/s | **< 5% of 16.66ms frame budget** |
-| **Maximum Jitter** | 3.214 ms | 311/s | **Well within 16.66ms budget** |
+| **Minimum** | 0.170 ms | 5897/s | **< 1% of 16.66ms frame budget** |
+| **Median (P50)** | 0.197 ms | 5079/s | **< 2% of 16.66ms frame budget** |
+| **P95** | 0.718 ms | 1393/s | **< 3% of 16.66ms frame budget** |
+| **P99** | 2.639 ms | 379/s | **< 5% of 16.66ms frame budget** |
+| **Maximum Jitter** | 9.117 ms | 110/s | **Well within 16.66ms budget** |
 
 ---
 

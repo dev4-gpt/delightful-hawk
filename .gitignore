@@ -40,3 +40,5 @@ venv/
 .vercel/
 *.standalone_backup/
 *.bak/
+.gemini/
+
