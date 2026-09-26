@@ -57,6 +57,9 @@ All foundation legal and technical narratives are already authored and committed
 - [x] **Master Walkthrough Video**: 1080p 60fps video tracked in [`docs/media/aetheris_gtm_product_walkthrough.mp4`](file:///Users/aryamandev/Developer/delightful-hawking/docs/media/aetheris_gtm_product_walkthrough.mp4).
 - [x] **Social Preview Banner**: Generated and committed in [`docs/media/social_preview.jpg`](file:///Users/aryamandev/Developer/delightful-hawking/docs/media/social_preview.jpg).
 - [ ] **GitHub Public Verification**: Ensure `dev4-gpt/delightful-hawk` is set to **Public** in GitHub repository settings.
+- [x] **Full Academic Research Paper & Empirical Benchmark Suite**:
+  - Paper: [`WHITE_PAPER_AETHERIS_WORLD_ENGINE.md`](file:///Users/aryamandev/Developer/delightful-hawking/WHITE_PAPER_AETHERIS_WORLD_ENGINE.md) expanded to full publication-grade manuscript (358 lines, 11 sections, 3 empirical tables, KaTeX math, 16 verified peer-reviewed citations).
+  - Reproducible Benchmark Suite: [`scripts/run_empirical_paper_benchmarks.mjs`](file:///Users/aryamandev/Developer/delightful-hawking/scripts/run_empirical_paper_benchmarks.mjs) measuring real V8 hardware performance (spline latency, Plücker throughput, AgentShield defense rate).
 - [ ] **Upload arXiv / Hugging Face Preprint**:
   - File: [`WHITE_PAPER_AETHERIS_WORLD_ENGINE.md`](file:///Users/aryamandev/Developer/delightful-hawking/WHITE_PAPER_AETHERIS_WORLD_ENGINE.md)
   - Category: `cs.CV` (Computer Vision), `cs.AI` (Artificial Intelligence), `cs.GR` (Graphics).
