@@ -30,6 +30,14 @@ Photorealistic 3D globe. Live aircraft, ships, satellites, earthquakes, traffic,
 
 ---
 
+> [!TIP]
+> ### 🚀 AETHERIS SPATIAL — LIVE PRODUCTION DEPLOYMENT
+> **Live Web App**: [https://aetheris-spatial.vercel.app](https://aetheris-spatial.vercel.app)  
+> **Master Monorepo**: [dev4-gpt/delightful-hawk](https://github.com/dev4-gpt/delightful-hawk)  
+> **Architecture by Aryaman Dev**: Integrates Google DeepMind AlphaEarth 10m planetary intelligence, Antigravity Autonomous Subagent Swarm Mesh (`/patrol`, `/defcon`), and 5 interactive mission cartridges (`SentinelMesh`, `OrbitalOps`, `GridTwin`, `GeoRisk`, `AlphaEarth`).
+
+---
+
 <div align="center">
 
 **[Quick Start](#-quick-start) · [First Five Minutes](#-the-first-five-minutes) · [Talk to It](#-talk-to-it) · [What's Live](#-whats-on-the-globe) · [Under the Hood](#-under-the-hood) · [Keys & Costs](#-api-keys)**

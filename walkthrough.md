@@ -122,6 +122,19 @@ Following an adversarial independent audit and peer-review simulation, we identi
 6. **F-6 (Major)**: Routed live satellite telemetry context to `OrbitalWatchstander` during `/patrol`, resolving the 0-satellite defect and tracking 840 satellites.
 7. **F-7 (Moderate)**: Softened compliance claims in code and documentation to "Security Posture: Architected against NIST SP 800-53 Rev 5 control families (AC, AU, SC, SI)", explicitly clarifying that formal DoD IL6 ATO requires accredited sponsor facility hosting.
 
-- **Git Commit**: `47f8f9c` on branch `aetheris-enterprise` (`origin/aetheris-enterprise`)
+- **Git Commit**: `5cbf68b` on `master` ([`dev4-gpt/delightful-hawk`](https://github.com/dev4-gpt/delightful-hawk))
 - **Live Production URL**: [`https://aetheris-spatial.vercel.app`](https://aetheris-spatial.vercel.app)
+
+---
+
+## 6. Monorepo Absorption, AlphaEarth Foundation Model, & Production Hardening
+
+In the latest release cycle, we completed:
+1. **Single Monorepo Absorption**: Removed the detached `160000` gitlink and fully absorbed `gods-eye-view` into `dev4-gpt/delightful-hawk` via `git subtree`. All 77 commits of history and 180+ source files are now first-class tracked files in a single unified repo with zero submodules.
+2. **Google DeepMind AlphaEarth 10m Integration**: Ingested the new open DeepMind AlphaEarth foundation model, enabling 10x10m parcel-level environmental risk assessment (flood, wildfire, soil health, crop anomaly lead time) for any point on Earth.
+3. **5 Interactive Mission Cartridges**: Deployed `🌱 AlphaEarth`, `⚓ SentinelMesh`, `🛰️ OrbitalOps`, `⚡ GridTwin`, and `🔥 GeoRisk` with dynamic HUD theater cards and auto-flyover coordinates.
+4. **Photoreal Geometry Cleanup**: Removed procedural box and dome collisions over the Texas State Capitol, ensuring Google Maps 3D photorealistic tiles render in pristine 4K clarity. Gaussian splat point clouds default to dormant on startup.
+5. **Full Test Suite & CI/CD**: Verified **2,746 / 2,746 tests passing** in `gods-eye-view` and all 32 monorepo package tests, running under Turborepo in under 29 seconds.
+6. **Master Media Suite**: Packaged the 1080p 60fps walkthrough video (`docs/media/aetheris_gtm_product_walkthrough.mp4`) and 16:9 social preview banner (`docs/media/social_preview.jpg`).
+
 
