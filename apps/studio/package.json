@@ -4,7 +4,7 @@
   "description": "Production-grade open-source generative cinema and spatial world simulation studio",
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.js",
+    "test": "NODE_ENV=test node --test test/*.test.js",
     "build": "node scripts/build.js",
     "start": "node server.js"
   },
