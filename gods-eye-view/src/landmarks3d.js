@@ -176,10 +176,23 @@ export const BUILDINGS = [
   { name: 'Burj Al Arab (321m)', lon: 55.1852, lat: 25.1412, w: 60, d: 52, h: 321, groundAlt: 4, tex: TEXTURES.glassBlue, repeat: [4, 22] },
 
   // ==========================================
-  // GURGAON / NEW DELHI, INDIA (Cyber City Core)
+  // GURGAON / NEW DELHI, INDIA (Cyber City & South City 2 Hub)
   // ==========================================
+  // Cyber City Core
   { name: 'DLF Cyber City Horizon Twin Towers', lon: 77.0932, lat: 28.4950, w: 62, d: 44, h: 135, groundAlt: 225, tex: TEXTURES.glassBlue, repeat: [4, 10] },
   { name: 'Gateway Tower (Ship Building)', lon: 77.0880, lat: 28.4925, w: 48, d: 36, h: 65, groundAlt: 225, tex: TEXTURES.glassDark, repeat: [3, 5] },
+
+  // South City 2 & Sector 49 / Sohna Road Tech Corridor
+  { name: 'Unitech Fresco Tower A (Sector 50 / South City 2)', lon: 77.0515, lat: 28.4132, w: 38, d: 34, h: 68, groundAlt: 220, tex: TEXTURES.glassBlue, repeat: [3, 8] },
+  { name: 'Unitech Fresco Tower B (South City 2)', lon: 77.0505, lat: 28.4140, w: 38, d: 34, h: 68, groundAlt: 220, tex: TEXTURES.glassBlue, repeat: [3, 8] },
+  { name: 'Unitech Fresco Tower C (South City 2)', lon: 77.0495, lat: 28.4148, w: 38, d: 34, h: 68, groundAlt: 220, tex: TEXTURES.glassBlue, repeat: [3, 8] },
+  { name: 'Arcadia Corporate Plaza (South City 2)', lon: 77.0552, lat: 28.4168, w: 58, d: 46, h: 36, groundAlt: 222, tex: TEXTURES.glassDark, repeat: [4, 3] },
+  { name: 'Park Hospital Gurugram Complex', lon: 77.0495, lat: 28.4230, w: 52, d: 42, h: 48, groundAlt: 222, tex: TEXTURES.glassDark, repeat: [4, 4] },
+  { name: 'Vatika Business Park Tower 1 (Sohna Rd)', lon: 77.0425, lat: 28.4155, w: 48, d: 42, h: 82, groundAlt: 224, tex: TEXTURES.glassBlue, repeat: [4, 9] },
+  { name: 'Vatika Business Park Tower 2 (Sohna Rd)', lon: 77.0415, lat: 28.4148, w: 48, d: 42, h: 82, groundAlt: 224, tex: TEXTURES.glassBlue, repeat: [4, 9] },
+  { name: 'Spaze I-Tech Park Tower A', lon: 77.0392, lat: 28.4142, w: 54, d: 46, h: 76, groundAlt: 224, tex: TEXTURES.glassDark, repeat: [4, 8] },
+  { name: 'Universal Trade Tower', lon: 77.0438, lat: 28.4185, w: 46, d: 38, h: 62, groundAlt: 223, tex: TEXTURES.glassBlue, repeat: [3, 6] },
+  { name: 'Eros City Square Complex', lon: 77.0610, lat: 28.4215, w: 60, d: 48, h: 52, groundAlt: 220, tex: TEXTURES.glassDark, repeat: [4, 5] },
 ];
 
 export function initLandmarks3D(viewer) {
