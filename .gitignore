@@ -42,3 +42,12 @@ venv/
 *.bak/
 .gemini/
 
+# LaTeX Auxiliaries
+*.aux
+*.blg
+*.brf
+*.toc
+*.out
+*.synctex.gz
+
+

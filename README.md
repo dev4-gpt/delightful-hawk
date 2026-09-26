@@ -178,7 +178,9 @@ pnpm test
 
 ## 📜 Documentation & Strategic Publications
 
-* [`WHITE_PAPER_AETHERIS_WORLD_ENGINE.md`](WHITE_PAPER_AETHERIS_WORLD_ENGINE.md): Official technical whitepaper on physics-grounded generative world models.
+* [`WHITE_PAPER_AETHERIS_WORLD_ENGINE.md`](WHITE_PAPER_AETHERIS_WORLD_ENGINE.md): Full markdown whitepaper with KaTeX formulas, empirical tables, and diagrams.
+* [**`paper/aetheris_world_engine_whitepaper.pdf`**](paper/aetheris_world_engine_whitepaper.pdf): Compiled 7-page camera-ready PDF (IEEE/CVPR two-column format).
+* [`paper/main.tex`](paper/main.tex) & [`paper/references.bib`](paper/references.bib): Complete LaTeX source and BibTeX database formatted for arXiv (`cs.CV`, `cs.AI`, `cs.GR`).
 * [`O1_AI_BUSINESS_BLUEPRINT.md`](O1_AI_BUSINESS_BLUEPRINT.md): Legal and technical evidentiary matrix for U.S. O-1A / EB-1A extraordinary ability qualification.
 * [`NSF_SBIR_PHASE_I_PROPOSAL.md`](NSF_SBIR_PHASE_I_PROPOSAL.md): $275k National Science Foundation Phase I SBIR proposal for resilient infrastructure.
 * [`GTM_LAUNCH_PLAYBOOK.md`](GTM_LAUNCH_PLAYBOOK.md): Complete 7-part viral social launch thread and PR distribution plan.
