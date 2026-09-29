@@ -35,6 +35,7 @@ import { initFirstRunExperience } from './firstRunExperience.js';
 import { initKeySetup } from './keySetup.js';
 import { loadPhotorealisticTileset } from './mapStartup.js';
 import { initLandmarks3D } from './landmarks3d.js';
+import { initOpenBuildings3D } from './openBuildings3D.js';
 
 import cartridgeRegistry from './modules/cartridgeRegistry.js';
 import { createSubseaVisualizer } from "./modules/visualizers/subseaVisualizer.js";
@@ -237,6 +238,8 @@ async function init() {
     const landmarks3d = initLandmarks3D(viewer);
     // Initialize Bespoke 3D Gaussian Splatting & Volumetric Ground Truth
     const gaussianSplatLayer = initGaussianSplatLayer(viewer);
+    // Initialize Global Open 3D Buildings (OSM & Overture Foundation)
+    const openBuildings3D = initOpenBuildings3D(viewer);
     // The previous multi-canvas weather compositor remains disabled. Cockpit
     // clouds use a separate, capped low-resolution GPU pass that never attaches
     // Cesium fog or post-process stages and is fully stopped in map mode.
@@ -375,10 +378,28 @@ async function init() {
       cockpitCloudEffects,
       landmarks3d,
       gaussianSplatLayer,
+      openBuildings3D,
       getRenderGovernorDiagnostics,
       requestRender: governorRequestRender,
     };
     window.__godsEyeView.voiceCommands = initGevVoiceCommands({ viewer, styleManager, dataManager, sceneDirector, annotations });
+
+    // Wire Open 3D Buildings UI Button
+    const toggleBuildingsBtn = document.getElementById('btn-toggle-osm-buildings');
+    if (toggleBuildingsBtn) {
+      toggleBuildingsBtn.addEventListener('click', async () => {
+        const isNowEnabled = await openBuildings3D.toggle({ forceMapStack: true });
+        toggleBuildingsBtn.style.color = isNowEnabled ? '#00f0ff' : '#8ba3c7';
+        toggleBuildingsBtn.style.borderColor = isNowEnabled ? 'rgba(0, 240, 255, 0.6)' : 'rgba(139, 163, 199, 0.3)';
+        toggleBuildingsBtn.style.background = isNowEnabled ? 'rgba(0, 240, 255, 0.15)' : 'transparent';
+      });
+      window.addEventListener('gev:osm-buildings-changed', (e) => {
+        const isEnabled = e.detail?.enabled;
+        toggleBuildingsBtn.style.color = isEnabled ? '#00f0ff' : '#8ba3c7';
+        toggleBuildingsBtn.style.borderColor = isEnabled ? 'rgba(0, 240, 255, 0.6)' : 'rgba(139, 163, 199, 0.3)';
+        toggleBuildingsBtn.style.background = isEnabled ? 'rgba(0, 240, 255, 0.15)' : 'transparent';
+      });
+    }
 
     // Cartridge initialization
     cartridgeRegistry.register(createSentinelMeshCartridge());

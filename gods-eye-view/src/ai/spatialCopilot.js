@@ -123,6 +123,10 @@ export class SpatialCopilot {
       if (cmd === 'alphaearth' || cmd === 'alpha-earth' || cmd === 'land') {
         return { type: 'ALPHA_EARTH_QUERY', targetQuery: arg || 'austin', query };
       }
+      if (cmd === 'buildings' || cmd === 'osm3d' || cmd === 'overture') {
+        const toggleAction = arg.toLowerCase().includes('off') ? 'disable' : (arg.toLowerCase().includes('on') ? 'enable' : 'toggle');
+        return { type: 'TOGGLE_3D_BUILDINGS', action: toggleAction, query };
+      }
       if (cmd === 'clear') {
         return { type: 'CLEAR_OVERLAYS', query };
       }
@@ -272,6 +276,12 @@ export class SpatialCopilot {
     // 10a-2. Cinema / Clean View Toggle
     if (lower.includes('cinema mode') || lower.includes('clean view') || lower.includes('clean mode') || lower.includes('hide ui') || lower.includes('toggle cinema')) {
       return { type: 'TOGGLE_CINEMA', query };
+    }
+
+    // 10a-3. Open 3D Buildings / OSM & Overture Extrusion Toggle
+    if (lower.includes('3d building') || lower.includes('osm building') || lower.includes('overture') || lower.includes('open building') || lower.includes('open 3d') || lower === '3d buildings') {
+      const toggleAction = lower.includes('hide') || lower.includes('disable') || lower.includes('off') ? 'disable' : (lower.includes('show') || lower.includes('enable') || lower.includes('on') ? 'enable' : 'toggle');
+      return { type: 'TOGGLE_3D_BUILDINGS', action: toggleAction, query };
     }
 
     // 10b. Universal Geocoded Navigation (e.g. "fly to gurgaon south city 2, india", "navigate to paris", "take me to eiffel tower")
@@ -611,6 +621,9 @@ export class SpatialCopilot {
         const modeDesc = cov.is3DMesh 
           ? `3D Mesh [${cov.zoneName}] (Full 3D Architectural Geometry)`
           : `3D Elevation + Satellite Orthophoto (DEM Terrain)`;
+        const meshNote = cov.is3DMesh
+          ? ''
+          : `\n[GEO-INTELLIGENCE] Defense airspace restrictions in sector (0% foreign aerial photogrammetry mesh). Open 3D Buildings (350M+ OSM/Overture footprints) streamable via [🏢 3D OPEN BUILDINGS] or > /buildings on.`;
 
         return {
           status: 'success',
@@ -621,7 +634,7 @@ export class SpatialCopilot {
           altitude: alt,
           coverage: cov,
           source: geo.source || 'global-geocode',
-          message: `[NAV VECTOR ENGAGED] Flying to ${geo.label || dest} (${geo.lat.toFixed(4)}°, ${geo.lon.toFixed(4)}°) at ${alt}m AGL.\n[TERRAIN STREAM] ${modeDesc}. LOD refinement active.`,
+          message: `[NAV VECTOR ENGAGED] Flying to ${geo.label || dest} (${geo.lat.toFixed(4)}°, ${geo.lon.toFixed(4)}°) at ${alt}m AGL.\n[TERRAIN STREAM] ${modeDesc}. LOD refinement active.${meshNote}`,
           speech: `Nav vector engaged. Flying to ${geo.label || dest} at ${alt} meters.`
         };
       }
@@ -831,6 +844,34 @@ export class SpatialCopilot {
           action: 'SITREP',
           sitrep,
           message: sitrep.summary
+        };
+      }
+
+      case 'TOGGLE_3D_BUILDINGS': {
+        const openBuildings = (typeof window !== 'undefined' && (window.__godsEyeView?.openBuildings3D || window.__gevOpenBuildings)) || null;
+        if (!openBuildings) {
+          return {
+            status: 'error',
+            action: 'TOGGLE_3D_BUILDINGS',
+            message: '[3D BUILDINGS] Open 3D Buildings controller not active in current viewport context.'
+          };
+        }
+        let enabled = false;
+        if (intent.action === 'enable') {
+          enabled = await openBuildings.enable({ forceMapStack: true });
+        } else if (intent.action === 'disable') {
+          enabled = openBuildings.disable();
+        } else {
+          enabled = await openBuildings.toggle({ forceMapStack: true });
+        }
+        return {
+          status: 'success',
+          action: 'TOGGLE_3D_BUILDINGS',
+          enabled,
+          message: enabled
+            ? '[3D BUILDINGS] OpenStreetMap & Overture 3D Buildings ACTIVE. 350M+ volumetric building footprints streaming.'
+            : '[3D BUILDINGS] Open 3D Buildings layer deactivated.',
+          speech: enabled ? 'Open 3D buildings enabled.' : 'Open 3D buildings disabled.'
         };
       }
 
