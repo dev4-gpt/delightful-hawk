@@ -1,4 +1,5 @@
 import * as Cesium from 'cesium';
+import { getSouthCity2Buildings } from './data/southCity2Buildings.js';
 
 /**
  * Photorealistic 3D Landmark & Urban Architecture Layer
@@ -183,16 +184,13 @@ export const BUILDINGS = [
   { name: 'Gateway Tower (Ship Building)', lon: 77.0880, lat: 28.4925, w: 48, d: 36, h: 65, groundAlt: 225, tex: TEXTURES.glassDark, repeat: [3, 5] },
 
   // South City 2 & Sector 49 / Sohna Road Tech Corridor
-  { name: 'Unitech Fresco Tower A (Sector 50 / South City 2)', lon: 77.0515, lat: 28.4132, w: 38, d: 34, h: 68, groundAlt: 220, tex: TEXTURES.glassBlue, repeat: [3, 8] },
-  { name: 'Unitech Fresco Tower B (South City 2)', lon: 77.0505, lat: 28.4140, w: 38, d: 34, h: 68, groundAlt: 220, tex: TEXTURES.glassBlue, repeat: [3, 8] },
-  { name: 'Unitech Fresco Tower C (South City 2)', lon: 77.0495, lat: 28.4148, w: 38, d: 34, h: 68, groundAlt: 220, tex: TEXTURES.glassBlue, repeat: [3, 8] },
-  { name: 'Arcadia Corporate Plaza (South City 2)', lon: 77.0552, lat: 28.4168, w: 58, d: 46, h: 36, groundAlt: 222, tex: TEXTURES.glassDark, repeat: [4, 3] },
   { name: 'Park Hospital Gurugram Complex', lon: 77.0495, lat: 28.4230, w: 52, d: 42, h: 48, groundAlt: 222, tex: TEXTURES.glassDark, repeat: [4, 4] },
   { name: 'Vatika Business Park Tower 1 (Sohna Rd)', lon: 77.0425, lat: 28.4155, w: 48, d: 42, h: 82, groundAlt: 224, tex: TEXTURES.glassBlue, repeat: [4, 9] },
   { name: 'Vatika Business Park Tower 2 (Sohna Rd)', lon: 77.0415, lat: 28.4148, w: 48, d: 42, h: 82, groundAlt: 224, tex: TEXTURES.glassBlue, repeat: [4, 9] },
   { name: 'Spaze I-Tech Park Tower A', lon: 77.0392, lat: 28.4142, w: 54, d: 46, h: 76, groundAlt: 224, tex: TEXTURES.glassDark, repeat: [4, 8] },
   { name: 'Universal Trade Tower', lon: 77.0438, lat: 28.4185, w: 46, d: 38, h: 62, groundAlt: 223, tex: TEXTURES.glassBlue, repeat: [3, 6] },
   { name: 'Eros City Square Complex', lon: 77.0610, lat: 28.4215, w: 60, d: 48, h: 52, groundAlt: 220, tex: TEXTURES.glassDark, repeat: [4, 5] },
+  ...getSouthCity2Buildings(),
 ];
 
 export function initLandmarks3D(viewer) {
@@ -246,6 +244,25 @@ export function initLandmarks3D(viewer) {
       const isPhotorealActive = !viewer.scene?.globe?.show || window.__GEV_MAP_STACK__ === 'photoreal';
       const entityShow = (b.showOnPhotoreal === false && isPhotorealActive) ? false : true;
 
+      // Distinct architectural styling for residential buildings (villas & builder floors)
+      const isResidential = b.architecturalType === 'residential-villa' || b.architecturalType === 'builder-floor';
+      let material;
+      let outline = false;
+      let outlineColor = undefined;
+
+      if (isResidential) {
+        const colorPalette = ['#f8fafc', '#fef3c7', '#e2e8f0'];
+        const chosenColor = colorPalette[idx % colorPalette.length];
+        material = Cesium.Color.fromCssColorString(chosenColor);
+        outline = true;
+        outlineColor = Cesium.Color.fromCssColorString('#64748b');
+      } else {
+        material = new Cesium.ImageMaterialProperty({
+          image: b.tex,
+          repeat: new Cesium.Cartesian2(repeatX, repeatY),
+        });
+      }
+
       const entity = viewer.entities.add({
         id: 'gev-building-' + idx,
         name: b.name,
@@ -253,10 +270,9 @@ export function initLandmarks3D(viewer) {
         position,
         box: {
           dimensions: new Cesium.Cartesian3(b.w, b.d, b.h),
-          material: new Cesium.ImageMaterialProperty({
-            image: b.tex,
-            repeat: new Cesium.Cartesian2(repeatX, repeatY),
-          }),
+          material,
+          outline,
+          outlineColor,
         },
       });
       buildingEntities.push(entity);
@@ -278,6 +294,30 @@ export function initLandmarks3D(viewer) {
           },
         });
         buildingEntities.push(roofEntity);
+      }
+
+      // Add rooftop stairhead / mumty / terrace pergola for residential builder floors and villas
+      if (b.roofMumty) {
+        const mumtyAlt = baseGround + b.h + 1.4;
+        const mumtyPos = Cesium.Cartesian3.fromDegrees(b.lon, b.lat, mumtyAlt);
+        const mumtyMaterial = isResidential 
+          ? Cesium.Color.fromCssColorString('#475569') // Slate charcoal mumty
+          : new Cesium.ImageMaterialProperty({
+              image: b.tex,
+              repeat: new Cesium.Cartesian2(1, 1),
+            });
+
+        const mumtyEntity = viewer.entities.add({
+          id: 'gev-building-mumty-' + idx,
+          name: b.name + ' Rooftop Mumty & Terrace',
+          show: entityShow,
+          position: mumtyPos,
+          box: {
+            dimensions: new Cesium.Cartesian3(Math.max(b.w * 0.40, 4.0), Math.max(b.d * 0.35, 4.0), 2.8),
+            material: mumtyMaterial,
+          },
+        });
+        buildingEntities.push(mumtyEntity);
       }
 
       // Specialized Architectural Crowns, Spires, and Domes
@@ -410,6 +450,8 @@ export function initLandmarks3D(viewer) {
       if (b.showOnPhotoreal === false) {
         const ent = viewer.entities.getById('gev-building-' + idx);
         if (ent) ent.show = !isPhotoreal;
+        const mumty = viewer.entities.getById('gev-building-mumty-' + idx);
+        if (mumty) mumty.show = !isPhotoreal;
         if (b.architecturalType === 'capitol-rotunda') {
           const dome = viewer.entities.getById('gev-capitol-dome');
           const spire = viewer.entities.getById('gev-capitol-spire');

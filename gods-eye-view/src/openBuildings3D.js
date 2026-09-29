@@ -114,8 +114,9 @@ async function ensureTilesetLoaded() {
     } catch (err) {
       _loading = false;
       _loadPromise = null;
-      console.error('[OpenBuildings3D] Failed to load OSM 3D buildings:', err);
-      throw err;
+      console.warn('[OpenBuildings3D] Global OSM 3D Buildings streaming from Ion unavailable (401/Network):', err?.message || err);
+      // Return null rather than throwing, local high-fidelity 3D architecture handles the sector
+      return null;
     }
   })();
 
@@ -129,7 +130,12 @@ async function ensureTilesetLoaded() {
  */
 export async function enable({ forceMapStack = false } = {}) {
   _enabled = true;
-  const tileset = await ensureTilesetLoaded();
+  let tileset = null;
+  try {
+    tileset = await ensureTilesetLoaded();
+  } catch (err) {
+    console.warn('[OpenBuildings3D] Stream load notice:', err?.message || err);
+  }
   if (tileset) {
     tileset.show = true;
   }

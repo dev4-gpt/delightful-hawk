@@ -52,6 +52,9 @@ test('landmarks3d: verifies high-fidelity 3D PBR buildings across all major metr
   const gurgaon = BUILDINGS.find(b => b.name.includes('DLF Cyber City'));
   assert.ok(gurgaon, 'Gurgaon Cyber City must exist');
   assert.equal(gurgaon.groundAlt, 225);
+
+  const southCity2 = BUILDINGS.filter(b => b.name.includes('South City II') || b.name.includes('Unitech Fresco') || b.name.includes('Nirvana'));
+  assert.ok(southCity2.length >= 240, `Expected >= 240 South City II & sector buildings, got ${southCity2.length}`);
 });
 
 test('landmarks3d: all buildings have valid coordinates, dimensions, and groundAlt', () => {
