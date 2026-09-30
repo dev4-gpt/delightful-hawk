@@ -3,23 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aetheris BIM Studio — 3D Architecture, Zoning Envelope & Defense Hardening Twin</title>
+  <title>Aetheris Defense Twin — Military Base C2, Counter-UAS & Low-Cost Interceptor Shield</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090e17;
-      --card-bg: rgba(13, 22, 38, 0.88);
+      --bg: #050811;
+      --card-bg: rgba(9, 14, 26, 0.92);
       --border: rgba(0, 240, 255, 0.25);
       --accent: #00f0ff;
-      --accent-glow: rgba(0, 240, 255, 0.4);
+      --danger: #ff2255;
       --warning: #ffaa00;
-      --danger: #ff3366;
       --success: #00ff88;
     }
     body {
@@ -37,7 +35,7 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .slider-accent {
       accent-color: var(--accent);
@@ -47,50 +45,56 @@
       height: 4px;
     }
     ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.25);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(0, 240, 255, 0.3);
+      background: rgba(0, 240, 255, 0.35);
       border-radius: 4px;
+    }
+    .pulse-danger {
+      animation: pulseRed 2s infinite ease-in-out;
+    }
+    @keyframes pulseRed {
+      0%, 100% { opacity: 0.9; filter: drop-shadow(0 0 6px rgba(255, 34, 85, 0.6)); }
+      50% { opacity: 0.4; filter: drop-shadow(0 0 1px rgba(255, 34, 85, 0.2)); }
     }
   </style>
 </head>
 <body class="w-screen h-screen flex flex-col antialiased">
 
-  <!-- Top Navigation & Header Bar -->
-  <header class="h-14 border-b border-cyan-500/20 px-5 flex items-center justify-between bg-[#080e1a]/95 backdrop-blur-md z-50">
+  <!-- Top Tactical Command Header Bar -->
+  <header class="h-14 border-b border-cyan-500/25 px-5 flex items-center justify-between bg-[#060a14]/95 backdrop-blur-md z-50">
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-rose-600 via-red-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-rose-600/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-sm font-semibold tracking-wide text-white">AETHERIS <span class="text-cyan-400">BIM STUDIO</span></h1>
-          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">AEC & DEFENSE TWIN</span>
-          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">PBR 3D SHADER ENGINE</span>
+          <h1 class="text-sm font-semibold tracking-wide text-white">AETHERIS <span class="text-rose-400">DEFENSE TWIN</span></h1>
+          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-rose-500/15 text-rose-300 border border-rose-500/40">DoD C-UAS BASE C2</span>
+          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">YC RFS COMPLIANT</span>
+          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">DEFCON 2 ARMED</span>
         </div>
       </div>
     </div>
 
     <!-- Multi-Domain Console Switcher -->
-    <nav class="flex items-center gap-1 bg-[#050811] border border-cyan-500/30 rounded-full px-2 py-1 text-xs mono">
+    <nav class="flex items-center gap-1 bg-[#04060e] border border-cyan-500/30 rounded-full px-2 py-1 text-xs mono">
       <a href="/" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">🌐 3D GLOBE</a>
       <a href="/mission-control.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">🎯 2D RADAR C2</a>
       <a href="/globe-lite.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">🗺️ 3D LITE</a>
-      <a href="/architecture.html" class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/40">🏛️ BIM STUDIO</a>
+      <a href="/architecture.html" class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/50">🛡️ BASE DEFENSE</a>
       <a href="/system-architecture.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">⚡ SYSTEM IR</a>
     </nav>
 
-    <!-- Top Action Toolbar -->
+    <!-- Defense Alert Status & Mode -->
     <div class="flex items-center gap-2 text-xs mono">
-      <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 flex items-center gap-1.5 transition-all">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-        <span>IMPORT BIM / GLTF</span>
-        <input type="file" id="file-input" accept=".gltf,.glb,.obj,.ifc" class="hidden">
-      </label>
-      <button id="btn-export-cad" onclick="alert('Exporting Architectural & Zoning Report (PDF/CAD DXF)...')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 flex items-center gap-1.5 transition-all">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <span>REPORT</span>
+      <div class="px-3 py-1.5 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 flex items-center gap-2">
+        <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></div>
+        <span>LOW-COST INTERCEPTOR READY</span>
+      </div>
+      <button id="btn-sound-alarm" onclick="toggleDefenseAlarm()" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition-all shadow-md shadow-red-600/30">
+        ALARM
       </button>
     </div>
   </header>
@@ -98,149 +102,146 @@
   <!-- Main Viewport and Split Panes -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- Left Tool Panel: Architectural Controls & Zoning Generator -->
-    <aside class="w-80 border-r border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-3.5 overflow-y-auto z-20 text-xs">
+    <!-- Left Tool Panel: Installation Context & Threat Intervisibility -->
+    <aside class="w-84 border-r border-cyan-500/20 bg-[#060a14]/95 p-4 flex flex-col gap-3.5 overflow-y-auto z-20 text-xs">
       
-      <!-- Architectural Presets -->
-      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
-        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-            ARCHITECTURAL DESIGN PRESETS
+      <!-- Defense Installation Archetypes -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5 border-rose-500/30">
+        <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
+          <span class="font-semibold text-rose-300 tracking-wide flex items-center gap-1.5 mono">
+            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            DEFENSE INSTALLATION TYPE
           </span>
+          <span class="mono text-[10px] text-rose-400">DoD ASSET</span>
         </div>
         <div class="grid grid-cols-2 gap-2 mono">
-          <button id="preset-residence" class="px-2.5 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-cyan-200 text-left hover:bg-cyan-500/30 transition-all">
-            🏡 Villa Horizon
+          <button id="preset-airbase" class="px-2.5 py-2 rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-200 text-left hover:bg-rose-500/30 transition-all">
+            🦅 Forward Airbase
           </button>
-          <button id="preset-tower" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
-            🏢 42-St Tower
+          <button id="preset-port" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-200 transition-all">
+            ⚓ Naval Shipyard
           </button>
-          <button id="preset-defense" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
-            🛡️ C-UAS Base
+          <button id="preset-substation" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-200 transition-all">
+            ⚡ 500kV Energy Grid
           </button>
-          <button id="preset-factory" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
-            🏭 Gigafactory
+          <button id="preset-factory" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-200 transition-all">
+            🏭 Drone Munitions
           </button>
         </div>
       </div>
 
-      <!-- Zoning Envelope & FAR Generator -->
+      <!-- 3D Radar Intervisibility & Terrain Masking -->
       <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3">
         <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
-            ZONING ENVELOPE (FAR)
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5 mono">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a10 10 0 0114.142 0M1.393 9.322a15 15 0 0121.214 0"/></svg>
+            RADAR LINE-OF-SIGHT (LOS)
           </span>
           <label class="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" id="toggle-zoning-envelope" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0">
-            <span class="mono text-[10px] text-cyan-400">BOUNDS</span>
+            <input type="checkbox" id="toggle-radar-los" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0">
+            <span class="mono text-[10px] text-cyan-400">ACTIVE</span>
           </label>
         </div>
         
         <div class="flex flex-col gap-2 mono">
           <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Lot Dimensions:</span>
-            <span id="val-lot-dim" class="text-white font-medium">36m × 48m (1,728m²)</span>
+            <span class="text-slate-400">AESA Radar Altitude:</span>
+            <span id="val-radar-alt" class="text-white font-medium">18 m AGL</span>
           </div>
-          <input type="range" id="slider-lot-width" min="25" max="80" value="36" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-radar-alt" min="5" max="50" value="18" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
           
           <div class="flex justify-between items-center text-[11px] mt-1">
-            <span class="text-slate-400">Floor Area Ratio (FAR):</span>
-            <span id="val-far" class="text-cyan-300 font-semibold">3.8 FAR</span>
+            <span class="text-slate-400">Target Ingress Height:</span>
+            <span id="val-ingress-alt" class="text-rose-300 font-semibold">15 m (Terrain Nap)</span>
           </div>
-          <input type="range" id="slider-far" min="1.0" max="12.0" step="0.2" value="3.8" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-ingress-alt" min="5" max="150" value="15" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
           <div class="flex justify-between items-center text-[11px] mt-1">
-            <span class="text-slate-400">Max Height Envelope:</span>
-            <span id="val-max-height" class="text-white font-medium">24 m</span>
+            <span class="text-slate-400">Radar Dead Zone (Masked):</span>
+            <span id="val-dead-zone" class="text-amber-400 font-bold">14.8% BLIND</span>
           </div>
-          <input type="range" id="slider-height" min="12" max="180" value="24" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
-
-          <div class="flex justify-between items-center text-[11px] mt-1">
-            <span class="text-slate-400">Setbacks (Front/Side):</span>
-            <span id="val-setbacks" class="text-white font-medium">4m / 2.5m</span>
-          </div>
-          <input type="range" id="slider-setback" min="1" max="10" value="4" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
         </div>
 
         <div class="mt-1 pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[10px] mono">
           <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
-            <div class="text-slate-400">MAX ALLOWED GFA</div>
-            <div id="stat-max-gfa" class="text-cyan-300 font-bold text-xs mt-0.5">6,566 m²</div>
+            <div class="text-slate-400">RADAR HORIZON</div>
+            <div class="text-cyan-300 font-bold text-xs mt-0.5">3.2 km Radar</div>
           </div>
           <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
-            <div class="text-slate-400">MAX STORIES</div>
-            <div id="stat-max-stories" class="text-white font-bold text-xs mt-0.5">6 Floors</div>
+            <div class="text-slate-400">WARNING BUFFER</div>
+            <div class="text-white font-bold text-xs mt-0.5">42 Seconds</div>
           </div>
         </div>
       </div>
 
-      <!-- Solar Daylight & Shadow Study -->
+      <!-- Blast Vulnerability & Stand-Off Analysis (UFC 4-010-01) -->
       <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
         <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            SOLAR & SHADOW STUDY
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5 mono">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            BLAST VULNERABILITY (UFC)
           </span>
-          <span id="val-solar-time" class="mono text-[10px] text-amber-300 font-semibold">14:00</span>
+          <span class="mono text-[10px] text-amber-300">UFC 4-010-01</span>
         </div>
 
         <div class="flex flex-col gap-2 mono">
           <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Sun Position (Hour):</span>
-            <span class="text-amber-200">06:00 → 18:00</span>
+            <span class="text-slate-400">Threat Warhead Weight:</span>
+            <span id="val-warhead-weight" class="text-amber-300 font-semibold">50 kg TNT (Shahed)</span>
           </div>
-          <input type="range" id="slider-solar-time" min="6.0" max="18.0" step="0.25" value="14.0" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-warhead" min="10" max="500" step="10" value="50" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
           <div class="flex justify-between items-center text-[11px] mt-1">
-            <span class="text-slate-400">Season / Solstice:</span>
-            <span id="val-season" class="text-white font-medium">Summer Solstice (Jun)</span>
+            <span class="text-slate-400">Perimeter Stand-Off Buffer:</span>
+            <span id="val-standoff-dist" class="text-white font-medium">45 meters</span>
           </div>
-          <input type="range" id="slider-season" min="1" max="12" value="6" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-standoff" min="15" max="120" value="45" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
         </div>
 
         <div class="mt-1 bg-slate-900/60 p-2 rounded border border-slate-800 text-[10px] mono flex items-center justify-between">
-          <span class="text-slate-400">Direct Facade Lux:</span>
-          <span class="text-emerald-400 font-semibold">82,400 Lux (Optimal)</span>
+          <span class="text-slate-400">Structural Hardening:</span>
+          <span class="text-emerald-400 font-semibold">SURVIVABLE (C50/60 RC)</span>
         </div>
       </div>
 
-      <!-- Floorplate Slicer (Section Clipping) -->
-      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
-        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/></svg>
-            FLOORPLATE SLICER
-          </span>
-          <label class="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" id="toggle-slicer" class="rounded border-slate-700 text-cyan-500 focus:ring-0">
-            <span class="mono text-[10px] text-cyan-400">CUT</span>
-          </label>
+      <!-- Low-Cost Effector Inventory & Battery Status -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2 mono text-[11px]">
+        <div class="flex justify-between text-slate-300 border-b border-slate-800 pb-1.5">
+          <span class="font-semibold text-rose-300">EFFECTOR BATTERY</span>
+          <span class="text-emerald-400">16 / 16 READY</span>
         </div>
-        <div class="flex flex-col gap-1.5 mono">
-          <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Floor Level:</span>
-            <span id="val-slicer-height" class="text-cyan-300 font-medium">Full Building (Open)</span>
-          </div>
-          <input type="range" id="slider-slicer" min="1" max="100" value="100" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+        <div class="flex justify-between text-slate-400">
+          <span>POD A (Alpha Sector):</span>
+          <span class="text-white font-medium">4 × Kinetic Ram Drone</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>POD B (Bravo Sector):</span>
+          <span class="text-white font-medium">4 × Kinetic Ram Drone</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>POD C (Charlie Sector):</span>
+          <span class="text-white font-medium">4 × Kinetic Ram Drone</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>POD D (Delta Sector):</span>
+          <span class="text-white font-medium">4 × Kinetic Ram Drone</span>
         </div>
       </div>
 
     </aside>
 
     <!-- Center 3D WebGL Viewport -->
-    <main class="flex-1 relative flex flex-col bg-[#070c16]">
+    <main class="flex-1 relative flex flex-col bg-[#050912]">
       <!-- 3D Canvas Container -->
       <div id="three-container" class="w-full h-full"></div>
 
-      <!-- Viewport Holographic HUD Overlay -->
+      <!-- Viewport Tactical Overlay HUD -->
       <div class="absolute top-4 left-4 z-10 pointer-events-none flex flex-col gap-2">
-        <div class="glass-panel rounded-lg px-3.5 py-2 flex items-center gap-3 border-cyan-500/30">
-          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+        <div class="glass-panel rounded-lg px-3.5 py-2 flex items-center gap-3 border-rose-500/40">
+          <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></div>
           <div class="mono text-xs">
-            <span class="text-slate-400">BIM ARCHITECTURE ENGINE:</span>
-            <span id="active-scene-title" class="text-cyan-300 font-semibold ml-1">VILLA HORIZON (MULTI-TIER RESIDENCE)</span>
+            <span class="text-slate-400">COMMON OPERATIONAL PICTURE:</span>
+            <span id="active-scene-title" class="text-rose-300 font-bold ml-1">EXPEDITIONARY AIRFIELD ALPHA (AGILE COMBAT EMPLOYMENT)</span>
           </div>
           <div class="h-3 w-[1px] bg-slate-700"></div>
           <div class="mono text-xs text-slate-300">
@@ -249,15 +250,15 @@
         </div>
 
         <!-- Selected Element Holographic Inspector Pill -->
-        <div id="inspector-pill" class="glass-panel rounded-lg px-3.5 py-2.5 flex flex-col gap-1 border-cyan-500/40 text-xs mono max-w-sm">
+        <div id="inspector-pill" class="glass-panel rounded-lg px-3.5 py-2.5 flex flex-col gap-1 border-rose-500/40 text-xs mono max-w-sm">
           <div class="flex items-center justify-between">
-            <span class="text-cyan-400 font-bold" id="ins-element-name">IfcCurtainWall (Floor-to-Ceiling Glazing)</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">SELECTED</span>
+            <span class="text-rose-400 font-bold" id="ins-element-name">Hardened Aircraft Shelter (HAS-01)</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">MILITARY SPEC</span>
           </div>
-          <div class="text-[11px] text-slate-300" id="ins-element-desc">Triple-glazed Low-E insulated glass with dark bronze aluminum mullions (U=1.05 W/m²K).</div>
+          <div class="text-[11px] text-slate-300" id="ins-element-desc">Corrugated reinforced concrete arch rated for direct 250kg GBU blast and drone frag.</div>
           <div class="grid grid-cols-2 gap-2 mt-1 text-[10px] text-slate-400 pt-1 border-t border-slate-800">
-            <div>DIM: <span class="text-white" id="ins-dim">14.0m × 3.6m</span></div>
-            <div>COST: <span class="text-emerald-400 font-semibold" id="ins-cost">$18,400 est.</span></div>
+            <div>HARDENING: <span class="text-emerald-400" id="ins-dim">STANAG 4569 L4</span></div>
+            <div>STATUS: <span class="text-cyan-300 font-semibold" id="ins-cost">100% OPERATIONAL</span></div>
           </div>
         </div>
       </div>
@@ -265,126 +266,108 @@
       <!-- Viewport Control Floating Action Bar -->
       <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 flex items-center gap-2 glass-panel rounded-full px-4 py-2 border-cyan-500/40 text-xs mono">
         <button id="btn-camera-perspective" class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/30 transition-all">
-          PERSPECTIVE
+          ISOMETRIC COP
         </button>
         <button id="btn-camera-top" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all">
-          TOP PLAN
+          SATELLITE NADIR
         </button>
         <button id="btn-camera-elevation" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all">
-          SOUTH ELEVATION
+          RADAR ELEVATION
         </button>
         <button id="btn-camera-pedestrian" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all" title="1.7m Human Eye Level Walk">
-          🚶 EYE LEVEL (1.7m)
+          🚶 PERIMETER WALK (1.7m)
         </button>
         <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
-        <button id="btn-toggle-daylight" class="px-3 py-1 rounded-full text-amber-300 bg-slate-800/80 transition-all" title="Toggle Daylight Sky vs Night Tactical">
-          ☀️ SKY ILLUMINATION
+        <button id="btn-toggle-daylight" class="px-3 py-1 rounded-full text-cyan-300 bg-slate-800/80 transition-all">
+          ☀️ NIGHT/DAY FLIR
         </button>
       </div>
     </main>
 
-    <!-- Right Panel: Defense Hardening, Counter-UAS & Building Code Engine -->
-    <aside class="w-84 border-l border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-3.5 overflow-y-auto z-20 text-xs">
+    <!-- Right Panel: Sensor-to-Shooter & Low-Cost Interceptor Fire Control (YC RFS) -->
+    <aside class="w-88 border-l border-cyan-500/20 bg-[#060a14]/95 p-4 flex flex-col gap-3.5 overflow-y-auto z-20 text-xs">
       
-      <!-- Dual-Use Defense C-UAS Module (YC RFS Alignment) -->
-      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3 border-rose-500/40">
-        <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
-          <span class="font-semibold text-rose-300 tracking-wide flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-            COUNTER-UAS DEFENSE TWIN
+      <!-- Asymmetric Cost Per Kill Calculator (YC RFS Defense Thesis) -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5 border-emerald-500/40">
+        <div class="flex items-center justify-between border-b border-emerald-500/30 pb-2">
+          <span class="font-semibold text-emerald-400 tracking-wide flex items-center gap-1.5 mono">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            ASYMMETRIC COST PER KILL
           </span>
-          <span class="mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">YC RFS</span>
+          <span class="mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">YC RFS</span>
         </div>
 
-        <div class="flex flex-col gap-2 mono">
-          <label class="flex items-center justify-between cursor-pointer">
-            <span class="text-slate-300 font-medium">3D Radar Coverage Dome</span>
-            <input type="checkbox" id="toggle-cuas-dome" checked class="rounded border-slate-700 text-rose-500 focus:ring-0">
-          </label>
-          <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Detection Radius:</span>
-            <span id="val-cuas-range" class="text-rose-300 font-semibold">1,200 m</span>
+        <div class="flex flex-col gap-1.5 mono text-[11px]">
+          <div class="flex justify-between text-slate-400">
+            <span>Legacy Interceptor (Patriot PAC-3):</span>
+            <span class="text-rose-400 font-bold">$3,400,000</span>
           </div>
-          <input type="range" id="slider-cuas-range" min="300" max="3000" step="100" value="1200" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
-
-          <label class="flex items-center justify-between cursor-pointer mt-1">
-            <span class="text-slate-300 font-medium">Terrain & Urban Masking LOS</span>
-            <input type="checkbox" id="toggle-cuas-los" checked class="rounded border-slate-700 text-rose-500 focus:ring-0">
-          </label>
-
-          <label class="flex items-center justify-between cursor-pointer mt-1">
-            <span class="text-slate-300 font-medium">Low-Cost Interceptor Pods</span>
-            <input type="checkbox" id="toggle-cuas-interceptors" checked class="rounded border-slate-700 text-rose-500 focus:ring-0">
-          </label>
-        </div>
-
-        <div class="p-2.5 rounded-lg bg-rose-950/30 border border-rose-500/30 flex flex-col gap-1 text-[10px] mono">
-          <div class="flex justify-between">
-            <span class="text-slate-400">ADVERSARY THREAT:</span>
-            <span class="text-rose-400 font-bold">SHAHEED-136 / FPV SWARM</span>
+          <div class="flex justify-between text-slate-400">
+            <span>Incoming Threat (Shahed-136):</span>
+            <span class="text-amber-400 font-bold">$22,000</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">COST PER KILL:</span>
+          <div class="flex justify-between text-slate-400 pt-1 border-t border-slate-800">
+            <span>Aetheris Kinetic Interceptor:</span>
             <span class="text-emerald-400 font-bold">$4,800 (ATTRITABLE)</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">LINE-OF-SIGHT DEAD ZONE:</span>
-            <span class="text-amber-400 font-bold">12.4% BLIND CONE</span>
+          <div class="flex justify-between text-slate-400">
+            <span>Cost Advantage per Engagement:</span>
+            <span class="text-cyan-300 font-bold">99.85% SAVINGS</span>
           </div>
         </div>
-
-        <button id="btn-simulate-intercept" class="w-full py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold mono text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          SIMULATE LOW-COST INTERCEPT
-        </button>
       </div>
 
-      <!-- Building Code & Occupancy Load Engine (IBC Compliance) -->
-      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
-        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            CODE & COMPLIANCE (IBC)
+      <!-- Autonomous Sensor-to-Shooter Fire Control -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3 border-rose-500/40">
+        <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
+          <span class="font-semibold text-rose-300 tracking-wide flex items-center gap-1.5 mono">
+            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            SENSOR-TO-SHOOTER FIRE CONTROL
           </span>
-          <span class="mono text-[10px] text-cyan-400">IBC 2024</span>
+          <span class="mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">AUTO TRACK</span>
         </div>
 
         <div class="flex flex-col gap-2 mono text-[11px]">
           <div class="flex justify-between">
-            <span class="text-slate-400">Occupancy Group:</span>
-            <span id="ibc-occ-group" class="text-white font-medium">Residential (R-2)</span>
+            <span class="text-slate-400">Target Track ID:</span>
+            <span class="text-rose-400 font-bold">TRK-UAS-0842</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Construction Type:</span>
-            <span class="text-cyan-300 font-medium">Type II-A (Protected)</span>
+            <span class="text-slate-400">Speed / Ingress Angle:</span>
+            <span class="text-white font-medium">185 km/h · Azimuth 048°</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Calculated Occupant Load:</span>
-            <span id="stat-occupancy-load" class="text-white font-bold">120 Persons</span>
+            <span class="text-slate-400">Altitude AGL:</span>
+            <span class="text-amber-400 font-medium">18 m (Terrain Masked)</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Required Exit Stairs:</span>
-            <span class="text-emerald-400 font-bold">2 Stairwells (36 in min)</span>
+            <span class="text-slate-400">Time to Base Impact:</span>
+            <span class="text-rose-400 font-bold text-xs">T - 18.4 SECONDS</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Plumbing Fixtures (Ch.29):</span>
-            <span class="text-white font-medium">6 W.C. / 4 Lavatories</span>
+            <span class="text-slate-400">Assigned Effector:</span>
+            <span class="text-emerald-400 font-bold">POD A · RAM DRONE #2</span>
           </div>
         </div>
+
+        <button id="btn-fire-intercept" onclick="triggerTacticalIntercept()" class="w-full py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold mono text-xs shadow-lg shadow-rose-600/40 transition-all flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          EXECUTE AUTONOMOUS INTERCEPT
+        </button>
       </div>
 
-      <!-- Live BIM Spatial Hierarchy Tree -->
+      <!-- Military Facility Asset Hierarchy (USACE & MIL-STD) -->
       <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2 flex-1">
         <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5 mono">
             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-            BIM ELEMENT HIERARCHY
+            FACILITY ASSET INVENTORY
           </span>
-          <span class="mono text-[10px] text-slate-400">IFC 4.3</span>
+          <span class="mono text-[10px] text-slate-400">USACE C2</span>
         </div>
 
-        <div id="bim-tree-list" class="flex-1 overflow-y-auto mono text-[11px] flex flex-col gap-1 pr-1">
-          <!-- Filled dynamically by active preset -->
+        <div id="defense-tree-list" class="flex-1 overflow-y-auto mono text-[11px] flex flex-col gap-1 pr-1">
+          <!-- Filled dynamically -->
         </div>
       </div>
 
@@ -392,16 +375,16 @@
 
   </div>
 
-  <!-- Three.js 3D Architectural Engine Script -->
+  <!-- Three.js 3D Defense Tactical Engine Script -->
   <script>
     // Initialize Three.js Scene, Camera, and Renderer
     const container = document.getElementById('three-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0c1524);
-    scene.fog = new THREE.FogExp2(0x0c1524, 0.003);
+    scene.background = new THREE.Color(0x060a14);
+    scene.fog = new THREE.FogExp2(0x060a14, 0.0035);
 
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
-    camera.position.set(45, 28, 55);
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 3000);
+    camera.position.set(65, 45, 80);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -409,28 +392,28 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.25;
     container.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.01; // Never clip under ground
-    controls.minDistance = 1.7; // 1.7m Human eye-level walk!
-    controls.target.set(0, 4, 0);
+    controls.maxPolarAngle = Math.PI / 2 - 0.01;
+    controls.minDistance = 1.7; // 1.7m Human Eye Level Walk
+    controls.target.set(0, 5, 0);
 
-    // Dynamic Lighting Pipeline
-    const hemiLight = new THREE.HemisphereLight(0xecf5ff, 0x182438, 0.6);
+    // Tactical Lighting Pipeline
+    const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x111c2e, 0.7);
     scene.add(hemiLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfffaed, 2.2);
-    sunLight.position.set(40, 60, 35);
+    const sunLight = new THREE.DirectionalLight(0xfff5ea, 2.2);
+    sunLight.position.set(50, 80, 45);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 5;
-    sunLight.shadow.camera.far = 300;
-    const d = 50;
+    sunLight.shadow.camera.far = 400;
+    const d = 90;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
@@ -438,79 +421,57 @@
     sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
-    // Warm Interior Point Light (visible through glass)
-    const interiorLight = new THREE.PointLight(0xffd599, 1.5, 30);
-    interiorLight.position.set(0, 5, 0);
-    scene.add(interiorLight);
-
-    // Ground Plane & Architectural Site Landscaping
+    // Ground Plane with Airfield Runways & Tactical Hardstand
     const siteGroup = new THREE.Group();
     scene.add(siteGroup);
 
-    // Main Site Ground (Dark Architectural Slate)
-    const groundGeo = new THREE.PlaneGeometry(240, 240);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f1726, roughness: 0.9, metalness: 0.1 });
+    // Tactical Airfield Tarmac & Desert/Island Terrain
+    const groundGeo = new THREE.PlaneGeometry(350, 350);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x121722, roughness: 0.9, metalness: 0.05 });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
     siteGroup.add(groundMesh);
 
-    // Emerald Green Lawn Plinth (for Villa & Campus)
-    const lawnGeo = new THREE.BoxGeometry(50, 0.3, 40);
-    const lawnMat = new THREE.MeshStandardMaterial({ color: 0x1f382b, roughness: 0.85, metalness: 0.05 });
-    const lawnMesh = new THREE.Mesh(lawnGeo, lawnMat);
-    lawnMesh.position.set(0, 0.15, 0);
-    lawnMesh.receiveShadow = true;
-    siteGroup.add(lawnMesh);
+    // Concrete Runway Apron
+    const runwayGeo = new THREE.BoxGeometry(180, 0.2, 34);
+    const runwayMat = new THREE.MeshStandardMaterial({ color: 0x222938, roughness: 0.7, metalness: 0.1 });
+    const runwayMesh = new THREE.Mesh(runwayGeo, runwayMat);
+    runwayMesh.position.set(0, 0.1, 0);
+    runwayMesh.receiveShadow = true;
+    siteGroup.add(runwayMesh);
 
-    // Paved Stone Driveway & Terrace
-    const terraceGeo = new THREE.BoxGeometry(32, 0.35, 26);
-    const terraceMat = new THREE.MeshStandardMaterial({ color: 0x273142, roughness: 0.65, metalness: 0.1 });
-    const terraceMesh = new THREE.Mesh(terraceGeo, terraceMat);
-    terraceMesh.position.set(0, 0.2, 0);
-    terraceMesh.receiveShadow = true;
-    siteGroup.add(terraceMesh);
+    // Runway Centerline Striping
+    for (let x = -80; x <= 80; x += 16) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(8, 0.22, 1.2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      stripe.position.set(x, 0.11, 0);
+      siteGroup.add(stripe);
+    }
 
-    // Infinity Pool / Water Feature
-    const poolGeo = new THREE.BoxGeometry(14, 0.38, 5);
-    const poolMat = new THREE.MeshPhysicalMaterial({ color: 0x00d4ff, transmission: 0.8, roughness: 0.05, opacity: 0.9, transparent: true });
-    const poolMesh = new THREE.Mesh(poolGeo, poolMat);
-    poolMesh.position.set(5, 0.22, 12);
-    poolMesh.receiveShadow = true;
-    siteGroup.add(poolMesh);
-
-    // Subtle CAD Grid
-    const gridHelper = new THREE.GridHelper(160, 40, 0x00f0ff, 0x1c2b44);
-    gridHelper.position.y = 0.01;
+    // Grid Coordinates
+    const gridHelper = new THREE.GridHelper(300, 60, 0x00f0ff, 0x152238);
+    gridHelper.position.y = 0.02;
     scene.add(gridHelper);
 
-    // Global Interactive Groups
-    const buildingGroup = new THREE.Group();
-    scene.add(buildingGroup);
+    // Global Tactical Object Groups
+    const facilityGroup = new THREE.Group();
+    scene.add(facilityGroup);
 
-    const zoningGroup = new THREE.Group();
-    scene.add(zoningGroup);
+    const radarGroup = new THREE.Group();
+    scene.add(radarGroup);
 
-    const defenseGroup = new THREE.Group();
-    scene.add(defenseGroup);
+    const threatGroup = new THREE.Group();
+    scene.add(threatGroup);
 
-    // Advanced Materials Palette
-    const concreteWallMat = new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.75, metalness: 0.05 });
-    const darkZincMat = new THREE.MeshStandardMaterial({ color: 0x1e2530, roughness: 0.4, metalness: 0.6 });
-    const teakWoodMat = new THREE.MeshStandardMaterial({ color: 0x8a4e2a, roughness: 0.55, metalness: 0.0 });
-    const architecturalGlassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x99ddff,
-      metalness: 0.1,
-      roughness: 0.05,
-      transmission: 0.85,
-      transparent: true,
-      opacity: 0.7,
-      reflectivity: 0.9
-    });
-    const mullionMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.3, metalness: 0.8 });
-    const solarPanelMat = new THREE.MeshStandardMaterial({ color: 0x0e1c38, roughness: 0.2, metalness: 0.8 });
+    // Military Materials Palette
+    const concreteBunkerMat = new THREE.MeshStandardMaterial({ color: 0x6e7682, roughness: 0.85, metalness: 0.1 });
+    const blastShieldMat = new THREE.MeshStandardMaterial({ color: 0x3a424e, roughness: 0.6, metalness: 0.4 });
+    const camouArmorMat = new THREE.MeshStandardMaterial({ color: 0x4a5445, roughness: 0.7, metalness: 0.2 });
+    const steelPodMat = new THREE.MeshStandardMaterial({ color: 0x1c2430, roughness: 0.3, metalness: 0.8 });
+    const radarDishMat = new THREE.MeshStandardMaterial({ color: 0xeef2f7, roughness: 0.25, metalness: 0.5 });
+    const radarBeamMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.25 });
 
-    // Click Raycaster for BIM Property Inspection
+    // Interactive Raycaster for Tactical Asset Inspection
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const inspectPill = document.getElementById('inspector-pill');
@@ -525,22 +486,21 @@
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(buildingGroup.children, true);
+      const intersects = raycaster.intersectObjects(facilityGroup.children, true);
 
       if (intersects.length > 0) {
         const hit = intersects[0].object;
-        if (hit.userData && hit.userData.bimName) {
-          insName.textContent = hit.userData.bimName;
-          insDesc.textContent = hit.userData.bimDesc || "BIM Architectural Component (IFC 4.3)";
-          insDim.textContent = hit.userData.bimDim || "Standard Dimension";
-          insCost.textContent = hit.userData.bimCost || "$12,500 est.";
-          inspectPill.style.borderColor = "rgba(0, 240, 255, 0.8)";
+        if (hit.userData && hit.userData.milName) {
+          insName.textContent = hit.userData.milName;
+          insDesc.textContent = hit.userData.milDesc || "USACE Hardened Defense Asset";
+          insDim.textContent = hit.userData.milSpec || "STANAG Level 4";
+          insCost.textContent = hit.userData.milStatus || "READY";
+          inspectPill.style.borderColor = "rgba(255, 34, 85, 0.8)";
         }
       }
     });
 
-    // Helper: Register a BIM mesh with clickable metadata
-    function createBimMesh(geo, mat, metadata) {
+    function createMilMesh(geo, mat, metadata) {
       const mesh = new THREE.Mesh(geo, mat);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
@@ -549,323 +509,185 @@
     }
 
     // ==========================================
-    // 1. PRESET: VILLA HORIZON (LUXURY RESIDENCE)
+    // 1. FORWARD OPERATING AIRBASE (ACE ARCHETYPE)
     // ==========================================
-    function buildVilla() {
-      clearGroup(buildingGroup);
-      siteGroup.visible = true;
-      document.getElementById('active-scene-title').textContent = "VILLA HORIZON (MULTI-TIER MODERN RESIDENCE)";
-      document.getElementById('ibc-occ-group').textContent = "Residential (R-2)";
+    let rotatingRadarMesh = null;
 
-      // Level 1: Main Living Pavilion with Glass Curtain Wall & Mullions
-      const l1Glass = createBimMesh(new THREE.BoxGeometry(16, 3.8, 10), architecturalGlassMat, {
-        bimName: "IfcCurtainWall (Level 1 Glazed Pavilion)",
-        bimDesc: "Floor-to-ceiling triple low-E argon double-pane curtain wall system.",
-        bimDim: "16.0m × 3.8m (60.8 m²)",
-        bimCost: "$32,000"
-      });
-      l1Glass.position.set(0, 2.2, 0);
-      buildingGroup.add(l1Glass);
+    function buildAirbase() {
+      clearGroup(facilityGroup);
+      document.getElementById('active-scene-title').textContent = "EXPEDITIONARY AIRFIELD ALPHA (AGILE COMBAT EMPLOYMENT)";
 
-      // Level 1 Mullion Grid (Frames every 2 meters)
-      for (let x = -8; x <= 8; x += 2) {
-        const mullion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.8, 10.1), mullionMat);
-        mullion.position.set(x, 2.2, 0);
-        buildingGroup.add(mullion);
-      }
-
-      // Ground Floor Solid Timber Dining Wing
-      const woodWing = createBimMesh(new THREE.BoxGeometry(8, 3.8, 8), teakWoodMat, {
-        bimName: "IfcWall (Cedar Timber Clad Dining Wing)",
-        bimDesc: "Thermally treated cedar slat rainscreen over insulated structural backing.",
-        bimDim: "8.0m × 3.8m × 8.0m",
-        bimCost: "$16,500"
-      });
-      woodWing.position.set(-10, 2.2, -2);
-      buildingGroup.add(woodWing);
-
-      // Level 2: Interlocking Cantilevered Master Suite in Board-Formed Concrete
-      const l2Concrete = createBimMesh(new THREE.BoxGeometry(18, 3.6, 9), concreteWallMat, {
-        bimName: "IfcWall (Level 2 Cantilevered Suite)",
-        bimDesc: "Reinforced architectural concrete with board-formed timber grain texture.",
-        bimDim: "18.0m × 3.6m × 9.0m",
-        bimCost: "$44,000"
-      });
-      l2Concrete.position.set(3, 5.8, -1);
-      buildingGroup.add(l2Concrete);
-
-      // Level 2 Corner Window Glazing
-      const l2Glass = createBimMesh(new THREE.BoxGeometry(8, 3.2, 0.2), architecturalGlassMat, {
-        bimName: "IfcWindow (Master Bedroom Panoramic Pane)",
-        bimDesc: "Acoustically laminated solar-control window pane.",
-        bimDim: "8.0m × 3.2m",
-        bimCost: "$11,200"
-      });
-      l2Glass.position.set(4, 5.8, 3.6);
-      buildingGroup.add(l2Glass);
-
-      // Level 2 Walk-Out Roof Balcony with Glass Railing
-      const balconySlab = createBimMesh(new THREE.BoxGeometry(8, 0.3, 7), teakWoodMat, {
-        bimName: "IfcSlab (Level 2 Outdoor Teak Terrace)",
-        bimDesc: "Elevated outdoor living terrace with integrated drainage.",
-        bimDim: "8.0m × 7.0m (56 m²)",
-        bimCost: "$9,800"
-      });
-      balconySlab.position.set(-8, 4.0, 0);
-      buildingGroup.add(balconySlab);
-
-      const glassRailing = createBimMesh(new THREE.BoxGeometry(8, 1.1, 0.1), architecturalGlassMat, {
-        bimName: "IfcRailing (Tempered Glass Balustrade)",
-        bimDesc: "Frameless 15mm toughened structural laminated glass railing.",
-        bimDim: "8.0m × 1.1m (Code Compliant 42\")",
-        bimCost: "$4,200"
-      });
-      glassRailing.position.set(-8, 4.6, 3.5);
-      buildingGroup.add(glassRailing);
-
-      // Rooftop Photovoltaic (PV) Solar Array
-      for (let i = -1; i <= 3; i++) {
-        const pv = createBimMesh(new THREE.BoxGeometry(3, 0.1, 1.8), solarPanelMat, {
-          bimName: "IfcEnergyConversionDevice (High-Efficiency Solar PV Panel)",
-          bimDesc: "Monocrystalline 450W solar module producing renewable microgrid power.",
-          bimDim: "3.0m × 1.8m",
-          bimCost: "$1,850 each"
+      // Hardened Aircraft Shelters (HAS) Revetments
+      for (let x of [-35, 35]) {
+        // Concrete Arch Shelter
+        const has = createMilMesh(new THREE.CylinderGeometry(12, 12, 28, 24, 1, false, 0, Math.PI), concreteBunkerMat, {
+          milName: `Hardened Aircraft Shelter (${x < 0 ? 'HAS-01' : 'HAS-02'})`,
+          milDesc: "Blast-reinforced hardened aircraft revetment sheltering F-35A / MQ-9 Reaper aircraft.",
+          milSpec: "Direct 250kg Blast Rated",
+          milStatus: "100% OPERATIONAL"
         });
-        pv.position.set(i * 3.4, 7.7, -1);
-        pv.rotation.x = -0.15; // Tilted toward south sun
-        buildingGroup.add(pv);
+        has.position.set(x, 0.2, -30);
+        has.rotation.z = Math.PI / 2;
+        has.rotation.y = Math.PI / 2;
+        facilityGroup.add(has);
+
+        // Heavy Blast Doors
+        const door = createMilMesh(new THREE.BoxGeometry(22, 11, 1.4), blastShieldMat, {
+          milName: "HAS Blast Resistance Sliding Shield Door",
+          milDesc: "Heavy steel-armored blast doors with interlocked hydraulic locks.",
+          milSpec: "Overpressure 30 PSI Rated",
+          milStatus: "ARMED & SEALED"
+        });
+        door.position.set(x, 5.7, -16.5);
+        facilityGroup.add(door);
       }
 
-      // Update Tree List
-      populateBimTree([
-        { icon: "🏛️", name: "IfcCurtainWall [Level 1 Glazing]", meta: "60.8 m² · Triple Low-E" },
-        { icon: "🧱", name: "IfcWall [Timber Dining Wing]", meta: "Cedar Rainscreen" },
-        { icon: "🏗️", name: "IfcWall [Level 2 Concrete]", meta: "Board-Formed C30/37" },
-        { icon: "🪟", name: "IfcWindow [Panoramic Corner]", meta: "Acoustic Solar Control" },
-        { icon: "🪵", name: "IfcSlab [Teak Roof Balcony]", meta: "56 m² · Teak Deck" },
-        { icon: "⚡", name: "IfcSolarDevice [PV Panels × 5]", meta: "2.25 kW Peak Array" }
-      ]);
-    }
-
-    // ==========================================
-    // 2. PRESET: 42-STORY COMMERCIAL TOWER
-    // ==========================================
-    function buildSkyscraper() {
-      clearGroup(buildingGroup);
-      siteGroup.visible = false;
-      document.getElementById('active-scene-title').textContent = "AETHERIS SPIRE (42-STORY COMMERCIAL TOWER)";
-      document.getElementById('ibc-occ-group').textContent = "Business (Group B)";
-
-      // Grand Entrance Lobby (Level 1-3)
-      const lobby = createBimMesh(new THREE.BoxGeometry(28, 10, 28), architecturalGlassMat, {
-        bimName: "IfcSpace (Triple-Height Grand Lobby)",
-        bimDesc: "Public civic atrium with revolving doors, reception desks, and turnstile security.",
-        bimDim: "28m × 28m × 10m",
-        bimCost: "$1,800,000"
+      // Hardened Command Bunker (C2 Headquarters)
+      const bunker = createMilMesh(new THREE.BoxGeometry(26, 6.5, 20), concreteBunkerMat, {
+        milName: "Tactical Air Operations Center (TAOC Bunker)",
+        milDesc: "Underground-connected C2 hub hosting satellite uplinks and autonomous swarm fire control.",
+        milSpec: "MIL-HDBK-1008C Certified",
+        milStatus: "ONLINE (DEFCON 2)"
       });
-      lobby.position.y = 5;
-      buildingGroup.add(lobby);
+      bunker.position.set(0, 3.3, 30);
+      facilityGroup.add(bunker);
 
-      // Lobby Perimeter Columns
-      for (let x of [-13, 13]) {
-        for (let z of [-13, 13]) {
-          const col = createBimMesh(new THREE.CylinderGeometry(0.8, 0.8, 10), darkZincMat, {
-            bimName: "IfcColumn (Structural Steel Mega-Column)",
-            bimDesc: "Composite concrete-filled steel tube resisting seismic and wind overturning.",
-            bimDim: "Ø 1.6m × 10m",
-            bimCost: "$45,000"
-          });
-          col.position.set(x, 5, z);
-          buildingGroup.add(col);
+      // Rotating 3D AESA Radar Sensor Node
+      const radarStand = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 12), blastShieldMat);
+      radarStand.position.set(-50, 6, 25);
+      facilityGroup.add(radarStand);
+
+      const dishGeo = new THREE.CylinderGeometry(4.5, 0.5, 1.2, 32);
+      rotatingRadarMesh = createMilMesh(dishGeo, radarDishMat, {
+        milName: "Ku-Band 3D AESA Counter-Drone Radar Array",
+        milDesc: "Multi-mission phased array radar generating track files on micro-UAS down to 0.01m² RCS.",
+        milSpec: "3.2km Track Envelope",
+        milStatus: "TRANSMITTING"
+      });
+      rotatingRadarMesh.position.set(-50, 12.6, 25);
+      rotatingRadarMesh.rotation.x = Math.PI / 2.3;
+      facilityGroup.add(rotatingRadarMesh);
+
+      // Low-Cost Attritable Interceptor Quad-Canisters (4 Batteries)
+      const podPositions = [[-25, 25], [25, 25], [-25, -5], [25, -5]];
+      podPositions.forEach((pos, idx) => {
+        const pod = createMilMesh(new THREE.BoxGeometry(2.8, 3.6, 2.8), steelPodMat, {
+          milName: `Low-Cost Interceptor Battery [POD ${String.fromCharCode(65 + idx)}]`,
+          milDesc: "Automated quad launcher housing $4,800 attritable kinetic ram-drones.",
+          milSpec: "4 Ready-to-Launch Interceptors",
+          milStatus: "4/4 INVENTORY"
+        });
+        pod.position.set(pos[0], 1.8, pos[1]);
+        pod.rotation.x = 0.35; // Angled launch elevation
+        facilityGroup.add(pod);
+
+        // Visible missile tips in canister
+        for (let mx of [-0.6, 0.6]) {
+          for (let mz of [-0.6, 0.6]) {
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.8, 8), new THREE.MeshStandardMaterial({ color: 0x00ff88 }));
+            tip.position.set(pos[0] + mx, 3.2, pos[1] + mz);
+            tip.rotation.x = 0.35;
+            facilityGroup.add(tip);
+          }
         }
+      });
+
+      // Perimeter Hesco Blast Berm Wall
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x4a443b, roughness: 0.95 });
+      for (let side of [-70, 70]) {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.2, 130), wallMat);
+        wall.position.set(side, 1.6, 0);
+        wall.castShadow = true;
+        facilityGroup.add(wall);
       }
 
-      // Tier 1 Tower Body (Floors 4-20)
-      const t1 = createBimMesh(new THREE.BoxGeometry(24, 40, 24), architecturalGlassMat, {
-        bimName: "IfcCurtainWall (Floors 4-20 Lower Office Tier)",
-        bimDesc: "Unitized double-skin curtain wall with automated solar blinds.",
-        bimDim: "24m × 24m × 40m",
-        bimCost: "$8,500,000"
-      });
-      t1.position.y = 30;
-      buildingGroup.add(t1);
-
-      // Tier 1 Spandrel Bands
-      for (let y = 14; y <= 48; y += 4) {
-        const band = new THREE.Mesh(new THREE.BoxGeometry(24.2, 0.8, 24.2), darkZincMat);
-        band.position.y = y;
-        buildingGroup.add(band);
-      }
-
-      // Tier 2 Tower Body (Floors 21-34, Setback)
-      const t2 = createBimMesh(new THREE.BoxGeometry(20, 35, 20), architecturalGlassMat, {
-        bimName: "IfcCurtainWall (Floors 21-34 Upper Office Tier)",
-        bimDesc: "High-performance spectrally selective curtain wall.",
-        bimDim: "20m × 20m × 35m",
-        bimCost: "$6,200,000"
-      });
-      t2.position.y = 67.5;
-      buildingGroup.add(t2);
-
-      // Tier 3 Executive Penthouse (Floors 35-42, Setback)
-      const t3 = createBimMesh(new THREE.BoxGeometry(16, 22, 16), architecturalGlassMat, {
-        bimName: "IfcCurtainWall (Floors 35-42 Executive Penthouse)",
-        bimDesc: "Clear low-iron executive glazing with panoramic city views.",
-        bimDim: "16m × 16m × 22m",
-        bimCost: "$4,100,000"
-      });
-      t3.position.y = 96;
-      buildingGroup.add(t3);
-
-      // Architectural Crown & Telecommunications Spire
-      const crown = createBimMesh(new THREE.CylinderGeometry(0.2, 4, 18, 4), darkZincMat, {
-        bimName: "IfcBuildingElementProxy (Architectural Spire)",
-        bimDesc: "Aero-dynamic perforated steel crown spire with FAA warning beacon.",
-        bimDim: "18m Height Spire",
-        bimCost: "$350,000"
-      });
-      crown.position.y = 116;
-      crown.rotation.y = Math.PI / 4;
-      buildingGroup.add(crown);
-
-      populateBimTree([
-        { icon: "🏛️", name: "IfcSpace [Grand Lobby & Atrium]", meta: "28m × 28m · Triple-Height" },
-        { icon: "🏗️", name: "IfcColumn [Mega-Columns × 4]", meta: "Ø 1.6m Composite Steel" },
-        { icon: "🏢", name: "IfcCurtainWall [Lower Tier 4-20]", meta: "Double-Skin Unitized" },
-        { icon: "🏢", name: "IfcCurtainWall [Upper Tier 21-34]", meta: "Spectrally Selective" },
-        { icon: "👑", name: "IfcCurtainWall [Executive Penthouse]", meta: "Low-Iron Ultra Clear" },
-        { icon: "📡", name: "IfcElementProxy [Architectural Spire]", meta: "18m Crown Mast" }
+      populateDefenseTree([
+        { icon: "🛡️", name: "TAOC Command Bunker", spec: "MIL-HDBK-1008C" },
+        { icon: "✈️", name: "HAS-01 Hardened Aircraft Shelter", spec: "F-35A Revetment" },
+        { icon: "✈️", name: "HAS-02 Hardened Aircraft Shelter", spec: "MQ-9 Reaper Revetment" },
+        { icon: "📡", name: "Ku-Band 3D AESA Radar", spec: "0.01m² RCS Detection" },
+        { icon: "🚀", name: "Interceptor Battery Pod A-D", spec: "16 Kinetic Ram Missiles" },
+        { icon: "🧱", name: "Hesco Perimeter Blast Berm", spec: "Direct Ram Defense" }
       ]);
     }
 
     // ==========================================
-    // 3. PRESET: C-UAS DEFENSE BASE (YC RFS)
+    // 2. NAVAL SHIPYARD & SUBSEA DEFENSE (PORT)
     // ==========================================
-    function buildDefenseBase() {
-      clearGroup(buildingGroup);
-      siteGroup.visible = true;
-      document.getElementById('active-scene-title').textContent = "FORWARD BASE SENTINEL (C-UAS DEFENSE & INTERCEPTOR PODS)";
-      document.getElementById('ibc-occ-group').textContent = "Military Tactical (Type I-A)";
+    function buildPort() {
+      clearGroup(facilityGroup);
+      document.getElementById('active-scene-title').textContent = "NAVAL SUBSEA DEFENSE CORRIDOR & DRY DOCK";
 
-      // Hardened Command Bunker Core
-      const bunker = createBimMesh(new THREE.BoxGeometry(22, 5.5, 20), concreteWallMat, {
-        bimName: "IfcBuilding [Hardened C2 Bunker]",
-        bimDesc: "Blast-resistant reinforced concrete shelter rated for near-miss fragmentation.",
-        bimDim: "22m × 20m × 5.5m (C50/60 Concrete)",
-        bimCost: "$920,000"
+      // Drydock Basin
+      const dock = createMilMesh(new THREE.BoxGeometry(110, 8, 32), concreteBunkerMat, {
+        milName: "Naval Submarine Dry Dock & Maintenance Basin",
+        milDesc: "Reinforced drydock facility servicing nuclear fast-attack submarines.",
+        milSpec: "Drydock Capacity: 18,000 Tons",
+        milStatus: "SECURED"
       });
-      bunker.position.y = 2.75;
-      buildingGroup.add(bunker);
+      dock.position.set(0, 4, 0);
+      facilityGroup.add(dock);
 
-      // Helipad Surface with Tactical Yellow Markings
-      const helipad = createBimMesh(new THREE.CylinderGeometry(8, 8, 0.4, 32), darkZincMat, {
-        bimName: "IfcSlab [Tactical Drone/Helicopter Pad]",
-        bimDesc: "Non-skid reinforced helipad with night lighting and fuel drainage.",
-        bimDim: "Ø 16m Helipad",
-        bimCost: "$140,000"
+      // Subsea Fiber Landing Terminal
+      const terminal = createMilMesh(new THREE.BoxGeometry(22, 6, 18), blastShieldMat, {
+        milName: "TAT-14 Transatlantic Fiber Landing Facility",
+        milDesc: "Hardened shore terminus for critical undersea telecommunications trunkline.",
+        milSpec: "Monitored by SentinelMesh",
+        milStatus: "SURVEILLANCE ACTIVE"
       });
-      helipad.position.set(0, 5.7, 0);
-      buildingGroup.add(helipad);
+      terminal.position.set(0, 3, -40);
+      facilityGroup.add(terminal);
 
-      // Active Rotating 3D AESA Radar Node
-      const radarStand = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 3.5), darkZincMat);
-      radarStand.position.set(-8, 7.25, -7);
-      buildingGroup.add(radarStand);
-
-      const radarDome = createBimMesh(new THREE.SphereGeometry(1.8, 24, 16), concreteWallMat, {
-        bimName: "IfcSensor [Ku-Band 3D AESA Radar]",
-        bimDesc: "Solid-state phased array radar tracking micro-drones up to 3km range.",
-        bimDim: "Ø 3.6m Radome",
-        bimCost: "$180,000"
-      });
-      radarDome.position.set(-8, 9.5, -7);
-      buildingGroup.add(radarDome);
-
-      // 4 Low-Cost Attritable Interceptor Launch Tubes
-      for (let x of [-6, 6]) {
-        for (let z of [-6, 6]) {
-          const tube = createBimMesh(new THREE.BoxGeometry(1.6, 3.2, 1.6), darkZincMat, {
-            bimName: "IfcBuildingElement [Kinetic Interceptor Pod]",
-            bimDesc: "Quad-canister launcher firing autonomous $4.8k kinetic ram-drones.",
-            bimDim: "Quad Launch Pod (4 Ready Munitions)",
-            bimCost: "$48,000"
-          });
-          tube.position.set(x, 6.8, z);
-          tube.rotation.x = 0.35; // Angled for rapid vertical launch
-          buildingGroup.add(tube);
-        }
-      }
-
-      // Perimeter Reinforced Blast Walls
-      for (let side of [-16, 16]) {
-        const wallX = createBimMesh(new THREE.BoxGeometry(36, 4.0, 1.2), darkZincMat, {
-          bimName: "IfcWall [Reinforced Blast Wall Perimeter]",
-          bimDesc: "Hesco-style perimeter defense shielding against direct vehicle & drone rams.",
-          bimDim: "36m × 4m × 1.2m",
-          bimCost: "$65,000"
-        });
-        wallX.position.set(0, 2.0, side);
-        buildingGroup.add(wallX);
-      }
-
-      populateBimTree([
-        { icon: "🛡️", name: "IfcBuilding [Hardened C2 Bunker]", meta: "Blast-Resistant C50/60" },
-        { icon: "🚁", name: "IfcSlab [Tactical Helipad]", meta: "Ø 16m Non-Skid Landing" },
-        { icon: "📡", name: "IfcSensor [Ku-Band AESA Radar]", meta: "3km Micro-UAS Detection" },
-        { icon: "🚀", name: "IfcElement [Interceptor Pods × 4]", meta: "16 Kinetic Ram Missiles" },
-        { icon: "🧱", name: "IfcWall [Perimeter Blast Walls]", meta: "Hesco Fragment Barrier" }
+      populateDefenseTree([
+        { icon: "⚓", name: "Submarine Drydock Basin", spec: "18,000 Ton Capacity" },
+        { icon: "🌊", name: "Subsea Cable Terminal", spec: "TAT-14 Shore Landing" },
+        { icon: "📡", name: "Harbor AESA Surveillance", spec: "Surface & Air Radar" },
+        { icon: "🚀", name: "Pier Interceptor Pods", spec: "Port Counter-UAS" }
       ]);
     }
 
-    // ==========================================
-    // 4. PRESET: ADVANCED DRONE GIGAFACTORY
-    // ==========================================
-    function buildFactory() {
-      clearGroup(buildingGroup);
-      siteGroup.visible = true;
-      document.getElementById('active-scene-title').textContent = "AUTONOMOUS ROBOTICS GIGAFACTORY";
-      document.getElementById('ibc-occ-group').textContent = "Factory Industrial (F-1)";
+    // Dynamic Threat & Intercept Simulation
+    let threatMesh = null;
+    let interceptorMesh = null;
+    let isIntercepting = false;
+    let interceptProgress = 0;
 
-      // Main High-Bay Production Floor
-      const hall = createBimMesh(new THREE.BoxGeometry(38, 8, 26), darkZincMat, {
-        bimName: "IfcSpace [High-Bay Drone Assembly Hall]",
-        bimDesc: "Clear-span industrial manufacturing space with 8m ceiling clearance.",
-        bimDim: "38m × 26m × 8m (988 m²)",
-        bimCost: "$1,450,000"
-      });
-      hall.position.y = 4;
-      buildingGroup.add(hall);
+    function buildThreatVectors() {
+      clearGroup(threatGroup);
 
-      // Sawtooth North-Facing Skylight Monitors (Energy Efficient Natural Daylight)
-      for (let x = -14; x <= 14; x += 7) {
-        const roofTooth = createBimMesh(new THREE.ConeGeometry(5, 4, 3), darkZincMat, {
-          bimName: "IfcRoof [Sawtooth Daylight Monitor]",
-          bimDesc: "Diffuses natural north daylight to reduce factory lighting power by 42%.",
-          bimDim: "Sawtooth Skylight Bay",
-          bimCost: "$28,000"
-        });
-        roofTooth.position.set(x, 9.8, 0);
-        roofTooth.rotation.z = Math.PI / 6;
-        buildingGroup.add(roofTooth);
-      }
+      // Hostile Ingress Vector (Red Trajectory)
+      const threatPoints = [
+        new THREE.Vector3(120, 20, -110),
+        new THREE.Vector3(50, 16, -40),
+        new THREE.Vector3(0, 5, 0)
+      ];
+      const threatGeo = new THREE.BufferGeometry().setFromPoints(threatPoints);
+      const threatLine = new THREE.Line(threatGeo, new THREE.LineDashedMaterial({ color: 0xff2255, dashSize: 3, gapSize: 2 }));
+      threatLine.computeLineDistances();
+      threatGroup.add(threatLine);
 
-      // Automated Logistics Loading Bays (AGV / Freight)
-      for (let z of [-8, 0, 8]) {
-        const dock = createBimMesh(new THREE.BoxGeometry(4.2, 4.2, 0.4), darkZincMat, {
-          bimName: "IfcDoor [Automated Logistics Roll-Up Dock]",
-          bimDesc: "High-speed insulated overhead dock door with automated AGV guidance.",
-          bimDim: "4.2m × 4.2m",
-          bimCost: "$14,500"
-        });
-        dock.position.set(19.2, 2.1, z);
-        buildingGroup.add(dock);
-      }
+      // Shahed-136 Drone Model
+      const droneGeo = new THREE.ConeGeometry(1.6, 3.2, 3);
+      droneGeo.rotateX(Math.PI / 2);
+      threatMesh = new THREE.Mesh(droneGeo, new THREE.MeshBasicMaterial({ color: 0xff2255 }));
+      threatMesh.position.set(85, 18, -75);
+      threatGroup.add(threatMesh);
 
-      populateBimTree([
-        { icon: "🏭", name: "IfcSpace [High-Bay Assembly Hall]", meta: "988 m² · 8m Clearance" },
-        { icon: "☀️", name: "IfcRoof [Sawtooth Daylight Bays × 5]", meta: "North Light Skylights" },
-        { icon: "🚛", name: "IfcDoor [Logistics AGV Docks × 3]", meta: "Automated Roll-Up" }
-      ]);
+      // Friendly Interceptor Model (Green Trajectory)
+      const interGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.8);
+      interceptorMesh = new THREE.Mesh(interGeo, new THREE.MeshBasicMaterial({ color: 0x00ff88 }));
+      interceptorMesh.position.set(25, 3.6, 25);
+      threatGroup.add(interceptorMesh);
+    }
+
+    // Trigger Tactical Intercept Simulation
+    function triggerTacticalIntercept() {
+      isIntercepting = true;
+      interceptProgress = 0;
+    }
+
+    function toggleDefenseAlarm() {
+      alert("⚠️ DEFCON 2 ALARM TRIGGERED:\n• Hostile Drone Swarm detected on azimuth 048°\n• 4 Low-Cost Interceptors cleared for immediate launch\n• Personnel instructed to proceed to Hardened Shelters");
     }
 
     // Helper: Clear a Three.js Group
@@ -877,233 +699,66 @@
       }
     }
 
-    // Helper: Populate the Right-Hand BIM Element Hierarchy Tree
-    function populateBimTree(elements) {
-      const list = document.getElementById('bim-tree-list');
+    // Helper: Populate Right-Hand Facility Tree
+    function populateDefenseTree(items) {
+      const list = document.getElementById('defense-tree-list');
       list.innerHTML = '';
-      elements.forEach(item => {
+      items.forEach(item => {
         const row = document.createElement('div');
-        row.className = "p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between transition-all";
-        row.innerHTML = `<span class="text-cyan-300">${item.icon} ${item.name}</span><span class="text-[9px] text-slate-400">${item.meta}</span>`;
+        row.className = "p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-rose-500/40 cursor-pointer flex items-center justify-between transition-all";
+        row.innerHTML = `<span class="text-rose-300">${item.icon} ${item.name}</span><span class="text-[9px] text-slate-400">${item.spec}</span>`;
         list.appendChild(row);
       });
     }
 
-    // Dynamic Zoning Envelope Box: Clean Translucent Bounds
-    let zoningBoxMesh = null;
-    let zoningEdgeMesh = null;
-    function updateZoningEnvelope() {
-      clearGroup(zoningGroup);
-      if (!document.getElementById('toggle-zoning-envelope').checked) return;
-
-      const w = parseFloat(document.getElementById('slider-lot-width').value);
-      const h = parseFloat(document.getElementById('slider-height').value);
-      const setback = parseFloat(document.getElementById('slider-setback').value);
-      const depth = w * 1.33;
-
-      const envWidth = Math.max(4, w - setback * 2);
-      const envDepth = Math.max(4, depth - setback * 2);
-
-      // Translucent inner volume
-      const envGeo = new THREE.BoxGeometry(envWidth, h, envDepth);
-      const envMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.08, depthWrite: false });
-      zoningBoxMesh = new THREE.Mesh(envGeo, envMat);
-      zoningBoxMesh.position.y = h / 2;
-      zoningGroup.add(zoningBoxMesh);
-
-      // Glowing dashed wireframe edge outlines
-      const edgesGeo = new THREE.EdgesGeometry(envGeo);
-      const edgeMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 1.5, transparent: true, opacity: 0.65 });
-      zoningEdgeMesh = new THREE.LineSegments(edgesGeo, edgeMat);
-      zoningEdgeMesh.position.y = h / 2;
-      zoningGroup.add(zoningEdgeMesh);
-
-      // Update stat labels
-      document.getElementById('val-lot-dim').textContent = `${w}m × ${depth.toFixed(0)}m (${(w * depth).toFixed(0)}m²)`;
-      document.getElementById('val-max-height').textContent = `${h} m`;
-      document.getElementById('val-setbacks').textContent = `${setback}m / ${(setback*0.6).toFixed(1)}m`;
-
-      const far = parseFloat(document.getElementById('slider-far').value);
-      const maxGFA = (w * depth * far).toFixed(0);
-      document.getElementById('stat-max-gfa').textContent = `${Number(maxGFA).toLocaleString()} m²`;
-      document.getElementById('stat-max-stories').textContent = `${Math.floor(h / 3.6)} Floors`;
-      document.getElementById('stat-occupancy-load').textContent = `${Math.floor(maxGFA / 14).toLocaleString()} Persons`;
-    }
-
-    // Dynamic Counter-UAS Defense Dome
-    let cuasMesh = null;
-    function updateDefenseDome() {
-      clearGroup(defenseGroup);
-      if (!document.getElementById('toggle-cuas-dome').checked) return;
-
-      const r = parseFloat(document.getElementById('slider-cuas-range').value) * 0.035; // scaled visual dome
-      const domeGeo = new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-      const cuasDomeMat = new THREE.MeshBasicMaterial({ color: 0xff3366, wireframe: true, transparent: true, opacity: 0.25 });
-      cuasMesh = new THREE.Mesh(domeGeo, cuasDomeMat);
-      cuasMesh.position.y = 0.05;
-      defenseGroup.add(cuasMesh);
-
-      // Interceptor Trajectory Lines
-      if (document.getElementById('toggle-cuas-interceptors').checked) {
-        const points = [
-          new THREE.Vector3(0, 7, 0),
-          new THREE.Vector3(r * 0.65, r * 0.55, -r * 0.45)
-        ];
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-        const lineMat = new THREE.LineDashedMaterial({ color: 0x00ff88, dashSize: 2, gapSize: 1 });
-        const line = new THREE.Line(lineGeo, lineMat);
-        line.computeLineDistances();
-        defenseGroup.add(line);
-
-        // Hostile Ingress Vector
-        const threatPts = [
-          new THREE.Vector3(r * 0.95, r * 0.35, -r * 0.75),
-          new THREE.Vector3(r * 0.65, r * 0.55, -r * 0.45)
-        ];
-        const threatGeo = new THREE.BufferGeometry().setFromPoints(threatPts);
-        const threatMat = new THREE.LineBasicMaterial({ color: 0xff3366, linewidth: 2 });
-        defenseGroup.add(new THREE.Line(threatGeo, threatMat));
-      }
-    }
-
-    // Solar Sun Azimuth Calculator
-    function updateSolarPosition() {
-      const time = parseFloat(document.getElementById('slider-solar-time').value);
-      const season = parseInt(document.getElementById('slider-season').value);
-      
-      const hr = Math.floor(time);
-      const min = Math.round((time - hr) * 60);
-      document.getElementById('val-solar-time').textContent = `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-
-      // Convert solar time to azimuth angle
-      const solarAngle = ((time - 6) / 12) * Math.PI;
-      const elevation = Math.sin(solarAngle) * (0.6 + season * 0.03);
-
-      const rad = 75;
-      sunLight.position.x = Math.cos(solarAngle) * rad;
-      sunLight.position.y = Math.max(8, elevation * rad);
-      sunLight.position.z = Math.sin(solarAngle) * 45;
-
-      if (time < 8 || time > 16.5) {
-        sunLight.color.setHex(0xffaa55); // Golden hour
-        scene.fog.color.setHex(0x1a1215);
-      } else {
-        sunLight.color.setHex(0xfffaed);
-        scene.fog.color.setHex(0x0c1524);
-      }
-    }
-
-    // Event Listeners for Controls
-    document.getElementById('slider-lot-width').addEventListener('input', updateZoningEnvelope);
-    document.getElementById('slider-far').addEventListener('input', (e) => {
-      document.getElementById('val-far').textContent = `${e.target.value} FAR`;
-      updateZoningEnvelope();
-    });
-    document.getElementById('slider-height').addEventListener('input', updateZoningEnvelope);
-    document.getElementById('slider-setback').addEventListener('input', updateZoningEnvelope);
-    document.getElementById('toggle-zoning-envelope').addEventListener('change', updateZoningEnvelope);
-
-    document.getElementById('slider-solar-time').addEventListener('input', updateSolarPosition);
-    document.getElementById('slider-season').addEventListener('input', updateSolarPosition);
-
-    document.getElementById('slider-cuas-range').addEventListener('input', (e) => {
-      document.getElementById('val-cuas-range').textContent = `${e.target.value} m`;
-      updateDefenseDome();
-    });
-    document.getElementById('toggle-cuas-dome').addEventListener('change', updateDefenseDome);
-    document.getElementById('toggle-cuas-interceptors').addEventListener('change', updateDefenseDome);
-
-    // Preset Switching
-    document.getElementById('preset-residence').addEventListener('click', () => {
-      buildVilla();
-      camera.position.set(45, 28, 55);
-      controls.target.set(0, 4, 0);
-      updateZoningEnvelope();
-    });
-    document.getElementById('preset-tower').addEventListener('click', () => {
-      buildSkyscraper();
-      camera.position.set(90, 80, 110);
-      controls.target.set(0, 50, 0);
-      document.getElementById('slider-height').value = 120;
-      updateZoningEnvelope();
-    });
-    document.getElementById('preset-defense').addEventListener('click', () => {
-      buildDefenseBase();
-      camera.position.set(45, 24, 45);
-      controls.target.set(0, 3, 0);
-      updateZoningEnvelope();
-    });
-    document.getElementById('preset-factory').addEventListener('click', () => {
-      buildFactory();
-      camera.position.set(55, 30, 60);
+    // Event Listeners for Preset Switching
+    document.getElementById('preset-airbase').addEventListener('click', () => {
+      buildAirbase();
+      buildThreatVectors();
+      camera.position.set(65, 45, 80);
       controls.target.set(0, 5, 0);
-      updateZoningEnvelope();
+    });
+
+    document.getElementById('preset-port').addEventListener('click', () => {
+      buildPort();
+      buildThreatVectors();
+      camera.position.set(75, 50, 75);
+      controls.target.set(0, 4, 0);
     });
 
     // Camera Navigation Shortcuts
     document.getElementById('btn-camera-top').addEventListener('click', () => {
-      camera.position.set(0, 110, 0.01);
+      camera.position.set(0, 160, 0.01);
       controls.target.set(0, 0, 0);
     });
     document.getElementById('btn-camera-elevation').addEventListener('click', () => {
-      camera.position.set(0, 15, 80);
+      camera.position.set(0, 25, 120);
       controls.target.set(0, 15, 0);
     });
     document.getElementById('btn-camera-pedestrian').addEventListener('click', () => {
-      camera.position.set(0, 1.7, 28);
+      camera.position.set(0, 1.7, 45);
       controls.target.set(0, 1.7, 0);
     });
     document.getElementById('btn-camera-perspective').addEventListener('click', () => {
-      camera.position.set(45, 28, 55);
-      controls.target.set(0, 4, 0);
+      camera.position.set(65, 45, 80);
+      controls.target.set(0, 5, 0);
     });
 
-    // Toggle Daylight Environment Mode
-    let isDaylight = false;
+    // FLIR / Night Vision Toggle
+    let isFlir = false;
     document.getElementById('btn-toggle-daylight').addEventListener('click', () => {
-      isDaylight = !isDaylight;
-      if (isDaylight) {
-        scene.background = new THREE.Color(0xd2e3f5);
-        scene.fog.color = new THREE.Color(0xd2e3f5);
-        hemiLight.intensity = 1.2;
-        groundMat.color.setHex(0x6b7787);
-        document.getElementById('btn-toggle-daylight').textContent = "🌙 NIGHT C2";
+      isFlir = !isFlir;
+      if (isFlir) {
+        scene.background = new THREE.Color(0x021810);
+        scene.fog.color = new THREE.Color(0x021810);
+        hemiLight.color.setHex(0x00ff88);
+        document.getElementById('btn-toggle-daylight').textContent = "👁️ FLIR THERMAL";
       } else {
-        scene.background = new THREE.Color(0x0c1524);
-        scene.fog.color = new THREE.Color(0x0c1524);
-        hemiLight.intensity = 0.6;
-        groundMat.color.setHex(0x0f1726);
-        document.getElementById('btn-toggle-daylight').textContent = "☀️ SKY ILLUMINATION";
+        scene.background = new THREE.Color(0x060a14);
+        scene.fog.color = new THREE.Color(0x060a14);
+        hemiLight.color.setHex(0xddeeff);
+        document.getElementById('btn-toggle-daylight').textContent = "☀️ NIGHT/DAY FLIR";
       }
-    });
-
-    // File Drag & Drop
-    const fileInput = document.getElementById('file-input');
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const contents = evt.target.result;
-        const loader = new THREE.GLTFLoader();
-        loader.parse(contents, '', (gltf) => {
-          clearGroup(buildingGroup);
-          buildingGroup.add(gltf.scene);
-          gltf.scene.traverse((node) => {
-            if (node.isMesh) {
-              node.castShadow = true;
-              node.receiveShadow = true;
-            }
-          });
-        });
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    // Defense Intercept Simulation
-    document.getElementById('btn-simulate-intercept').addEventListener('click', () => {
-      alert("C-UAS KINETIC INTERCEPT SIMULATION:\n• Radar acquisition at 1,180m\n• Threat Profile: Shahed-136 / Low-Altitude Strike Drone\n• Autonomous Interceptor #2 launched from Launch Pod A\n• Calculated Intercept Point: T+5.8s at altitude 28m AGL\n• Defeat Probability: 99.4% Kinetic Neutralization");
     });
 
     // Window Resize
@@ -1114,12 +769,10 @@
     });
 
     // Initial Scene Setup
-    buildVilla();
-    updateZoningEnvelope();
-    updateDefenseDome();
-    updateSolarPosition();
+    buildAirbase();
+    buildThreatVectors();
 
-    // Render Loop with FPS Counter
+    // Render Loop with Radar Rotation & Intercept Animation
     let lastTime = performance.now();
     let frameCount = 0;
     const fpsEl = document.getElementById('fps-counter');
@@ -1128,6 +781,33 @@
       requestAnimationFrame(animate);
       controls.update();
 
+      // Continuous 3D AESA Radar Rotation
+      if (rotatingRadarMesh) {
+        rotatingRadarMesh.rotation.z += 0.035;
+      }
+
+      // Kinetic Intercept Animation
+      if (isIntercepting && threatMesh && interceptorMesh) {
+        interceptProgress += 0.015;
+        // Hostile drone approaches base
+        threatMesh.position.x = 85 * (1 - interceptProgress);
+        threatMesh.position.z = -75 * (1 - interceptProgress);
+        threatMesh.position.y = 18 - interceptProgress * 10;
+
+        // Friendly interceptor climbs and intercepts
+        interceptorMesh.position.x = 25 + (threatMesh.position.x - 25) * (interceptProgress * 1.5);
+        interceptorMesh.position.z = 25 + (threatMesh.position.z - 25) * (interceptProgress * 1.5);
+        interceptorMesh.position.y = 3.6 + interceptProgress * 22;
+
+        if (interceptProgress >= 0.7) {
+          isIntercepting = false;
+          alert("💥 KINETIC INTERCEPT CONFIRMED:\n• Target TRK-UAS-0842 destroyed at altitude 24m AGL\n• Engagement cost: $4,800\n• Base infrastructure undamaged");
+          threatMesh.position.set(85, 18, -75);
+          interceptorMesh.position.set(25, 3.6, 25);
+        }
+      }
+
+      // FPS Monitor
       frameCount++;
       if (time - lastTime >= 1000) {
         fpsEl.textContent = frameCount;
