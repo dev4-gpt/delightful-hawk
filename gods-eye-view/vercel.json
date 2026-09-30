@@ -9,6 +9,7 @@
     { "source": "/mission-control", "destination": "/mission-control.html" },
     { "source": "/globe-lite", "destination": "/globe-lite.html" },
     { "source": "/architecture", "destination": "/architecture.html" },
+    { "source": "/system-architecture", "destination": "/system-architecture.html" },
 
     { "source": "/api/cctv/sources", "destination": "/api/cctv?sub=sources" },
     { "source": "/api/cctv/health", "destination": "/api/cctv?sub=health" },
