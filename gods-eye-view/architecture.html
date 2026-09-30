@@ -13,8 +13,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #070c14;
-      --card-bg: rgba(13, 22, 38, 0.85);
+      --bg: #090e17;
+      --card-bg: rgba(13, 22, 38, 0.88);
       --border: rgba(0, 240, 255, 0.25);
       --accent: #00f0ff;
       --accent-glow: rgba(0, 240, 255, 0.4);
@@ -42,7 +42,6 @@
     .slider-accent {
       accent-color: var(--accent);
     }
-    /* Custom scrollbars */
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -54,19 +53,12 @@
       background: rgba(0, 240, 255, 0.3);
       border-radius: 4px;
     }
-    .pulse-amber {
-      animation: pulseAmber 2.5s infinite;
-    }
-    @keyframes pulseAmber {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 0.3; }
-    }
   </style>
 </head>
 <body class="w-screen h-screen flex flex-col antialiased">
 
   <!-- Top Navigation & Header Bar -->
-  <header class="h-14 border-b border-cyan-500/20 px-5 flex items-center justify-between bg-[#080e1a]/90 backdrop-blur-md z-50">
+  <header class="h-14 border-b border-cyan-500/20 px-5 flex items-center justify-between bg-[#080e1a]/95 backdrop-blur-md z-50">
     <div class="flex items-center gap-3">
       <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -93,12 +85,12 @@
     <div class="flex items-center gap-2 text-xs mono">
       <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 flex items-center gap-1.5 transition-all">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-        <span>LOAD IFC / GLTF</span>
+        <span>IMPORT BIM / GLTF</span>
         <input type="file" id="file-input" accept=".gltf,.glb,.obj,.ifc" class="hidden">
       </label>
-      <button id="btn-export-cad" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 flex items-center gap-1.5 transition-all">
+      <button id="btn-export-cad" onclick="alert('Exporting Architectural & Zoning Report (PDF/CAD DXF)...')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 flex items-center gap-1.5 transition-all">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <span>REPORT (PDF)</span>
+        <span>REPORT</span>
       </button>
     </div>
   </header>
@@ -107,29 +99,28 @@
   <div class="flex-1 flex overflow-hidden relative">
 
     <!-- Left Tool Panel: Architectural Controls & Zoning Generator -->
-    <aside class="w-80 border-r border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-4 overflow-y-auto z-20 text-xs">
+    <aside class="w-80 border-r border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-3.5 overflow-y-auto z-20 text-xs">
       
       <!-- Architectural Presets -->
       <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
         <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
           <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-            ARCHITECTURAL SCENE
+            ARCHITECTURAL DESIGN PRESETS
           </span>
-          <span class="mono text-[10px] text-cyan-400">PRESET</span>
         </div>
-        <div class="grid grid-cols-2 gap-1.5 mono">
-          <button id="preset-residence" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-cyan-200 text-left hover:bg-cyan-500/30 transition-all">
-            🏡 Modern Villa
+        <div class="grid grid-cols-2 gap-2 mono">
+          <button id="preset-residence" class="px-2.5 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-cyan-200 text-left hover:bg-cyan-500/30 transition-all">
+            🏡 Villa Horizon
           </button>
-          <button id="preset-tower" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
-            🏢 42-St Skyscraper
+          <button id="preset-tower" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
+            🏢 42-St Tower
           </button>
-          <button id="preset-defense" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
-            🛡️ C-UAS Defense Base
+          <button id="preset-defense" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
+            🛡️ C-UAS Base
           </button>
-          <button id="preset-factory" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
-            🏭 Drone Gigafactory
+          <button id="preset-factory" class="px-2.5 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
+            🏭 Gigafactory
           </button>
         </div>
       </div>
@@ -141,46 +132,46 @@
             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
             ZONING ENVELOPE (FAR)
           </span>
-          <label class="flex items-center gap-1 cursor-pointer">
+          <label class="flex items-center gap-1.5 cursor-pointer">
             <input type="checkbox" id="toggle-zoning-envelope" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0">
-            <span class="mono text-[10px] text-cyan-400">SHOW</span>
+            <span class="mono text-[10px] text-cyan-400">BOUNDS</span>
           </label>
         </div>
         
         <div class="flex flex-col gap-2 mono">
           <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Lot Width × Depth:</span>
-            <span id="val-lot-dim" class="text-white font-medium">40m × 60m (2,400m²)</span>
+            <span class="text-slate-400">Lot Dimensions:</span>
+            <span id="val-lot-dim" class="text-white font-medium">36m × 48m (1,728m²)</span>
           </div>
-          <input type="range" id="slider-lot-width" min="20" max="100" value="40" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-lot-width" min="25" max="80" value="36" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
           
           <div class="flex justify-between items-center text-[11px] mt-1">
             <span class="text-slate-400">Floor Area Ratio (FAR):</span>
-            <span id="val-far" class="text-cyan-300 font-semibold">4.5 FAR</span>
+            <span id="val-far" class="text-cyan-300 font-semibold">3.8 FAR</span>
           </div>
-          <input type="range" id="slider-far" min="1.0" max="15.0" step="0.5" value="4.5" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-far" min="1.0" max="12.0" step="0.2" value="3.8" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
           <div class="flex justify-between items-center text-[11px] mt-1">
             <span class="text-slate-400">Max Height Envelope:</span>
-            <span id="val-max-height" class="text-white font-medium">85 m</span>
+            <span id="val-max-height" class="text-white font-medium">24 m</span>
           </div>
-          <input type="range" id="slider-height" min="10" max="250" value="85" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-height" min="12" max="180" value="24" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
           <div class="flex justify-between items-center text-[11px] mt-1">
             <span class="text-slate-400">Setbacks (Front/Side):</span>
-            <span id="val-setbacks" class="text-white font-medium">5m / 3m</span>
+            <span id="val-setbacks" class="text-white font-medium">4m / 2.5m</span>
           </div>
-          <input type="range" id="slider-setback" min="0" max="15" value="5" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-setback" min="1" max="10" value="4" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
         </div>
 
-        <div class="mt-2 pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[10px] mono">
+        <div class="mt-1 pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[10px] mono">
           <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
             <div class="text-slate-400">MAX ALLOWED GFA</div>
-            <div id="stat-max-gfa" class="text-cyan-300 font-bold text-xs mt-0.5">10,800 m²</div>
+            <div id="stat-max-gfa" class="text-cyan-300 font-bold text-xs mt-0.5">6,566 m²</div>
           </div>
           <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
             <div class="text-slate-400">MAX STORIES</div>
-            <div id="stat-max-stories" class="text-white font-bold text-xs mt-0.5">24 Floors</div>
+            <div id="stat-max-stories" class="text-white font-bold text-xs mt-0.5">6 Floors</div>
           </div>
         </div>
       </div>
@@ -192,26 +183,26 @@
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
             SOLAR & SHADOW STUDY
           </span>
-          <span class="mono text-[10px] text-amber-300">SUN AZIMUTH</span>
+          <span id="val-solar-time" class="mono text-[10px] text-amber-300 font-semibold">14:00</span>
         </div>
 
         <div class="flex flex-col gap-2 mono">
           <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Time of Day (Solar):</span>
-            <span id="val-solar-time" class="text-amber-300 font-semibold">14:30 (2:30 PM)</span>
+            <span class="text-slate-400">Sun Position (Hour):</span>
+            <span class="text-amber-200">06:00 → 18:00</span>
           </div>
-          <input type="range" id="slider-solar-time" min="6.0" max="18.0" step="0.25" value="14.5" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-solar-time" min="6.0" max="18.0" step="0.25" value="14.0" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
           <div class="flex justify-between items-center text-[11px] mt-1">
-            <span class="text-slate-400">Season / Month:</span>
+            <span class="text-slate-400">Season / Solstice:</span>
             <span id="val-season" class="text-white font-medium">Summer Solstice (Jun)</span>
           </div>
           <input type="range" id="slider-season" min="1" max="12" value="6" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
         </div>
 
         <div class="mt-1 bg-slate-900/60 p-2 rounded border border-slate-800 text-[10px] mono flex items-center justify-between">
-          <span class="text-slate-400">Courtyard Solar Exposure:</span>
-          <span class="text-emerald-400 font-semibold">6.8 hrs / day (Compliant)</span>
+          <span class="text-slate-400">Direct Facade Lux:</span>
+          <span class="text-emerald-400 font-semibold">82,400 Lux (Optimal)</span>
         </div>
       </div>
 
@@ -222,38 +213,51 @@
             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/></svg>
             FLOORPLATE SLICER
           </span>
-          <label class="flex items-center gap-1 cursor-pointer">
+          <label class="flex items-center gap-1.5 cursor-pointer">
             <input type="checkbox" id="toggle-slicer" class="rounded border-slate-700 text-cyan-500 focus:ring-0">
-            <span class="mono text-[10px] text-cyan-400">ACTIVE</span>
+            <span class="mono text-[10px] text-cyan-400">CUT</span>
           </label>
         </div>
         <div class="flex flex-col gap-1.5 mono">
           <div class="flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">Section Cut Height:</span>
-            <span id="val-slicer-height" class="text-cyan-300 font-medium">Level 4 (+14.0m)</span>
+            <span class="text-slate-400">Floor Level:</span>
+            <span id="val-slicer-height" class="text-cyan-300 font-medium">Full Building (Open)</span>
           </div>
-          <input type="range" id="slider-slicer" min="0" max="85" value="14" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <input type="range" id="slider-slicer" min="1" max="100" value="100" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
         </div>
       </div>
 
     </aside>
 
     <!-- Center 3D WebGL Viewport -->
-    <main class="flex-1 relative flex flex-col bg-[#050912]">
+    <main class="flex-1 relative flex flex-col bg-[#070c16]">
       <!-- 3D Canvas Container -->
       <div id="three-container" class="w-full h-full"></div>
 
       <!-- Viewport Holographic HUD Overlay -->
       <div class="absolute top-4 left-4 z-10 pointer-events-none flex flex-col gap-2">
-        <div class="glass-panel rounded-lg px-3 py-2 flex items-center gap-3 border-cyan-500/30">
+        <div class="glass-panel rounded-lg px-3.5 py-2 flex items-center gap-3 border-cyan-500/30">
           <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
           <div class="mono text-xs">
-            <span class="text-slate-400">VIEWPORT RENDERER:</span>
-            <span class="text-cyan-300 font-semibold ml-1">THREE.JS PBR HARDWARE PASS</span>
+            <span class="text-slate-400">BIM ARCHITECTURE ENGINE:</span>
+            <span id="active-scene-title" class="text-cyan-300 font-semibold ml-1">VILLA HORIZON (MULTI-TIER RESIDENCE)</span>
           </div>
           <div class="h-3 w-[1px] bg-slate-700"></div>
           <div class="mono text-xs text-slate-300">
             FPS: <span id="fps-counter" class="text-emerald-400 font-bold">60</span>
+          </div>
+        </div>
+
+        <!-- Selected Element Holographic Inspector Pill -->
+        <div id="inspector-pill" class="glass-panel rounded-lg px-3.5 py-2.5 flex flex-col gap-1 border-cyan-500/40 text-xs mono max-w-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-cyan-400 font-bold" id="ins-element-name">IfcCurtainWall (Floor-to-Ceiling Glazing)</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">SELECTED</span>
+          </div>
+          <div class="text-[11px] text-slate-300" id="ins-element-desc">Triple-glazed Low-E insulated glass with dark bronze aluminum mullions (U=1.05 W/m²K).</div>
+          <div class="grid grid-cols-2 gap-2 mt-1 text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+            <div>DIM: <span class="text-white" id="ins-dim">14.0m × 3.6m</span></div>
+            <div>COST: <span class="text-emerald-400 font-semibold" id="ins-cost">$18,400 est.</span></div>
           </div>
         </div>
       </div>
@@ -273,17 +277,14 @@
           🚶 EYE LEVEL (1.7m)
         </button>
         <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
-        <button id="btn-toggle-wireframe" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all">
-          WIREFRAME
-        </button>
-        <button id="btn-toggle-grid" class="px-3 py-1 rounded-full text-cyan-300 bg-slate-800 transition-all">
-          CAD GRID
+        <button id="btn-toggle-daylight" class="px-3 py-1 rounded-full text-amber-300 bg-slate-800/80 transition-all" title="Toggle Daylight Sky vs Night Tactical">
+          ☀️ SKY ILLUMINATION
         </button>
       </div>
     </main>
 
     <!-- Right Panel: Defense Hardening, Counter-UAS & Building Code Engine -->
-    <aside class="w-84 border-l border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-4 overflow-y-auto z-20 text-xs">
+    <aside class="w-84 border-l border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-3.5 overflow-y-auto z-20 text-xs">
       
       <!-- Dual-Use Defense C-UAS Module (YC RFS Alignment) -->
       <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3 border-rose-500/40">
@@ -332,7 +333,7 @@
           </div>
         </div>
 
-        <button id="btn-simulate-intercept" class="w-full py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold mono text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-1.5">
+        <button id="btn-simulate-intercept" class="w-full py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold mono text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           SIMULATE LOW-COST INTERCEPT
         </button>
@@ -351,23 +352,23 @@
         <div class="flex flex-col gap-2 mono text-[11px]">
           <div class="flex justify-between">
             <span class="text-slate-400">Occupancy Group:</span>
-            <span class="text-white font-medium">Business (Group B)</span>
+            <span id="ibc-occ-group" class="text-white font-medium">Residential (R-2)</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Construction Type:</span>
-            <span class="text-cyan-300 font-medium">Type I-B (Fire-Resistive)</span>
+            <span class="text-cyan-300 font-medium">Type II-A (Protected)</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Calculated Occupant Load:</span>
-            <span id="stat-occupancy-load" class="text-white font-bold">1,080 Persons</span>
+            <span id="stat-occupancy-load" class="text-white font-bold">120 Persons</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Required Exit Stairs:</span>
-            <span class="text-emerald-400 font-bold">2 Stairwells (44 in min)</span>
+            <span class="text-emerald-400 font-bold">2 Stairwells (36 in min)</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Plumbing Fixtures (IBC Ch.29):</span>
-            <span class="text-white font-medium">22 W.C. / 14 Lavatories</span>
+            <span class="text-slate-400">Plumbing Fixtures (Ch.29):</span>
+            <span class="text-white font-medium">6 W.C. / 4 Lavatories</span>
           </div>
         </div>
       </div>
@@ -382,27 +383,8 @@
           <span class="mono text-[10px] text-slate-400">IFC 4.3</span>
         </div>
 
-        <div class="flex-1 overflow-y-auto mono text-[11px] flex flex-col gap-1 pr-1">
-          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
-            <span class="text-cyan-300">🏛️ IfcBuildingStorey [Lvl 1 - Pod]</span>
-            <span class="text-[9px] text-slate-500">450 m²</span>
-          </div>
-          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
-            <span class="text-cyan-300">🏛️ IfcBuildingStorey [Lvl 2 - Mezz]</span>
-            <span class="text-[9px] text-slate-500">420 m²</span>
-          </div>
-          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
-            <span class="text-cyan-300">🛡️ IfcBuildingElement [Hardened Roof]</span>
-            <span class="text-[9px] text-rose-400">C-UAS Mount</span>
-          </div>
-          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
-            <span class="text-slate-300">⚡ IfcDistributionFlow [Microgrid Bus]</span>
-            <span class="text-[9px] text-emerald-400">480V Active</span>
-          </div>
-          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
-            <span class="text-slate-300">📡 IfcSensor [3D AESA Radar Node]</span>
-            <span class="text-[9px] text-cyan-400">Online</span>
-          </div>
+        <div id="bim-tree-list" class="flex-1 overflow-y-auto mono text-[11px] flex flex-col gap-1 pr-1">
+          <!-- Filled dynamically by active preset -->
         </div>
       </div>
 
@@ -415,11 +397,11 @@
     // Initialize Three.js Scene, Camera, and Renderer
     const container = document.getElementById('three-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060b14);
-    scene.fog = new THREE.FogExp2(0x060b14, 0.0035);
+    scene.background = new THREE.Color(0x0c1524);
+    scene.fog = new THREE.FogExp2(0x0c1524, 0.003);
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
-    camera.position.set(70, 50, 90);
+    camera.position.set(45, 28, 55);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -427,51 +409,82 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Prevent camera sinking under ground
-    controls.minDistance = 1.7; // 1.7m Human eye-level standoff!
+    controls.maxPolarAngle = Math.PI / 2 - 0.01; // Never clip under ground
+    controls.minDistance = 1.7; // 1.7m Human eye-level walk!
+    controls.target.set(0, 4, 0);
 
-    // Lighting Pipeline: Sun Light + Ambient Illumination
-    const ambientLight = new THREE.AmbientLight(0xddeeff, 0.4);
-    scene.add(ambientLight);
+    // Dynamic Lighting Pipeline
+    const hemiLight = new THREE.HemisphereLight(0xecf5ff, 0x182438, 0.6);
+    scene.add(hemiLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff8ee, 1.8);
-    sunLight.position.set(60, 100, 40);
+    const sunLight = new THREE.DirectionalLight(0xfffaed, 2.2);
+    sunLight.position.set(40, 60, 35);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
-    sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 400;
-    const d = 120;
+    sunLight.shadow.camera.near = 5;
+    sunLight.shadow.camera.far = 300;
+    const d = 50;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
     sunLight.shadow.camera.bottom = -d;
-    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
-    // Ground Plane with CAD Grid
-    const groundGeo = new THREE.PlaneGeometry(300, 300);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x0a101d,
-      roughness: 0.85,
-      metalness: 0.15
-    });
+    // Warm Interior Point Light (visible through glass)
+    const interiorLight = new THREE.PointLight(0xffd599, 1.5, 30);
+    interiorLight.position.set(0, 5, 0);
+    scene.add(interiorLight);
+
+    // Ground Plane & Architectural Site Landscaping
+    const siteGroup = new THREE.Group();
+    scene.add(siteGroup);
+
+    // Main Site Ground (Dark Architectural Slate)
+    const groundGeo = new THREE.PlaneGeometry(240, 240);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f1726, roughness: 0.9, metalness: 0.1 });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
     groundMesh.rotation.x = -Math.PI / 2;
     groundMesh.receiveShadow = true;
-    scene.add(groundMesh);
+    siteGroup.add(groundMesh);
 
-    const gridHelper = new THREE.GridHelper(300, 60, 0x00f0ff, 0x1a2942);
-    gridHelper.position.y = 0.05;
+    // Emerald Green Lawn Plinth (for Villa & Campus)
+    const lawnGeo = new THREE.BoxGeometry(50, 0.3, 40);
+    const lawnMat = new THREE.MeshStandardMaterial({ color: 0x1f382b, roughness: 0.85, metalness: 0.05 });
+    const lawnMesh = new THREE.Mesh(lawnGeo, lawnMat);
+    lawnMesh.position.set(0, 0.15, 0);
+    lawnMesh.receiveShadow = true;
+    siteGroup.add(lawnMesh);
+
+    // Paved Stone Driveway & Terrace
+    const terraceGeo = new THREE.BoxGeometry(32, 0.35, 26);
+    const terraceMat = new THREE.MeshStandardMaterial({ color: 0x273142, roughness: 0.65, metalness: 0.1 });
+    const terraceMesh = new THREE.Mesh(terraceGeo, terraceMat);
+    terraceMesh.position.set(0, 0.2, 0);
+    terraceMesh.receiveShadow = true;
+    siteGroup.add(terraceMesh);
+
+    // Infinity Pool / Water Feature
+    const poolGeo = new THREE.BoxGeometry(14, 0.38, 5);
+    const poolMat = new THREE.MeshPhysicalMaterial({ color: 0x00d4ff, transmission: 0.8, roughness: 0.05, opacity: 0.9, transparent: true });
+    const poolMesh = new THREE.Mesh(poolGeo, poolMat);
+    poolMesh.position.set(5, 0.22, 12);
+    poolMesh.receiveShadow = true;
+    siteGroup.add(poolMesh);
+
+    // Subtle CAD Grid
+    const gridHelper = new THREE.GridHelper(160, 40, 0x00f0ff, 0x1c2b44);
+    gridHelper.position.y = 0.01;
     scene.add(gridHelper);
 
-    // Global Architectural Groups
+    // Global Interactive Groups
     const buildingGroup = new THREE.Group();
     scene.add(buildingGroup);
 
@@ -481,176 +494,378 @@
     const defenseGroup = new THREE.Group();
     scene.add(defenseGroup);
 
-    // Materials Palette
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x88ccff,
+    // Advanced Materials Palette
+    const concreteWallMat = new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.75, metalness: 0.05 });
+    const darkZincMat = new THREE.MeshStandardMaterial({ color: 0x1e2530, roughness: 0.4, metalness: 0.6 });
+    const teakWoodMat = new THREE.MeshStandardMaterial({ color: 0x8a4e2a, roughness: 0.55, metalness: 0.0 });
+    const architecturalGlassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x99ddff,
       metalness: 0.1,
       roughness: 0.05,
-      transmission: 0.9,
+      transmission: 0.85,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.7,
       reflectivity: 0.9
     });
-    const concreteMat = new THREE.MeshStandardMaterial({
-      color: 0xd0d4dc,
-      roughness: 0.7,
-      metalness: 0.05
-    });
-    const steelMat = new THREE.MeshStandardMaterial({
-      color: 0x222a36,
-      roughness: 0.3,
-      metalness: 0.8
-    });
-    const woodMat = new THREE.MeshStandardMaterial({
-      color: 0x8a5231,
-      roughness: 0.6,
-      metalness: 0.0
-    });
-    const zoningMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.35
-    });
-    const cuasDomeMat = new THREE.MeshBasicMaterial({
-      color: 0xff3366,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.22
+    const mullionMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.3, metalness: 0.8 });
+    const solarPanelMat = new THREE.MeshStandardMaterial({ color: 0x0e1c38, roughness: 0.2, metalness: 0.8 });
+
+    // Click Raycaster for BIM Property Inspection
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const inspectPill = document.getElementById('inspector-pill');
+    const insName = document.getElementById('ins-element-name');
+    const insDesc = document.getElementById('ins-element-desc');
+    const insDim = document.getElementById('ins-dim');
+    const insCost = document.getElementById('ins-cost');
+
+    window.addEventListener('click', (event) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(buildingGroup.children, true);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        if (hit.userData && hit.userData.bimName) {
+          insName.textContent = hit.userData.bimName;
+          insDesc.textContent = hit.userData.bimDesc || "BIM Architectural Component (IFC 4.3)";
+          insDim.textContent = hit.userData.bimDim || "Standard Dimension";
+          insCost.textContent = hit.userData.bimCost || "$12,500 est.";
+          inspectPill.style.borderColor = "rgba(0, 240, 255, 0.8)";
+        }
+      }
     });
 
-    // Scene Generation: Modern Villa Preset
+    // Helper: Register a BIM mesh with clickable metadata
+    function createBimMesh(geo, mat, metadata) {
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = metadata;
+      return mesh;
+    }
+
+    // ==========================================
+    // 1. PRESET: VILLA HORIZON (LUXURY RESIDENCE)
+    // ==========================================
     function buildVilla() {
       clearGroup(buildingGroup);
-      
-      // Foundation slab
-      const slabGeo = new THREE.BoxGeometry(32, 0.8, 22);
-      const slab = new THREE.Mesh(slabGeo, concreteMat);
-      slab.position.y = 0.4;
-      slab.castShadow = true;
-      slab.receiveShadow = true;
-      buildingGroup.add(slab);
+      siteGroup.visible = true;
+      document.getElementById('active-scene-title').textContent = "VILLA HORIZON (MULTI-TIER MODERN RESIDENCE)";
+      document.getElementById('ibc-occ-group').textContent = "Residential (R-2)";
 
-      // Level 1 Solid Walls & Wood Volumes
-      const l1Geo = new THREE.BoxGeometry(16, 4.2, 14);
-      const l1 = new THREE.Mesh(l1Geo, woodMat);
-      l1.position.set(-6, 2.9, -2);
-      l1.castShadow = true;
-      l1.receiveShadow = true;
-      buildingGroup.add(l1);
+      // Level 1: Main Living Pavilion with Glass Curtain Wall & Mullions
+      const l1Glass = createBimMesh(new THREE.BoxGeometry(16, 3.8, 10), architecturalGlassMat, {
+        bimName: "IfcCurtainWall (Level 1 Glazed Pavilion)",
+        bimDesc: "Floor-to-ceiling triple low-E argon double-pane curtain wall system.",
+        bimDim: "16.0m × 3.8m (60.8 m²)",
+        bimCost: "$32,000"
+      });
+      l1Glass.position.set(0, 2.2, 0);
+      buildingGroup.add(l1Glass);
 
-      // Level 1 Floor-to-Ceiling Glass Living Pavilion
-      const glassGeo = new THREE.BoxGeometry(14, 4.0, 16);
-      const glassBox = new THREE.Mesh(glassGeo, glassMat);
-      glassBox.position.set(7, 2.8, 1);
-      glassBox.castShadow = true;
-      buildingGroup.add(glassBox);
+      // Level 1 Mullion Grid (Frames every 2 meters)
+      for (let x = -8; x <= 8; x += 2) {
+        const mullion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.8, 10.1), mullionMat);
+        mullion.position.set(x, 2.2, 0);
+        buildingGroup.add(mullion);
+      }
 
-      // Level 2 Cantilevered Master Suite
-      const l2Geo = new THREE.BoxGeometry(26, 3.8, 16);
-      const l2 = new THREE.Mesh(l2Geo, concreteMat);
-      l2.position.set(1, 6.8, 0);
-      l2.castShadow = true;
-      l2.receiveShadow = true;
-      buildingGroup.add(l2);
+      // Ground Floor Solid Timber Dining Wing
+      const woodWing = createBimMesh(new THREE.BoxGeometry(8, 3.8, 8), teakWoodMat, {
+        bimName: "IfcWall (Cedar Timber Clad Dining Wing)",
+        bimDesc: "Thermally treated cedar slat rainscreen over insulated structural backing.",
+        bimDim: "8.0m × 3.8m × 8.0m",
+        bimCost: "$16,500"
+      });
+      woodWing.position.set(-10, 2.2, -2);
+      buildingGroup.add(woodWing);
 
-      // Structural Steel Columns
-      for (let x of [-13, 14]) {
-        for (let z of [-8, 9]) {
-          const colGeo = new THREE.CylinderGeometry(0.25, 0.25, 6.8);
-          const col = new THREE.Mesh(colGeo, steelMat);
-          col.position.set(x * 0.8, 3.4, z * 0.8);
-          col.castShadow = true;
+      // Level 2: Interlocking Cantilevered Master Suite in Board-Formed Concrete
+      const l2Concrete = createBimMesh(new THREE.BoxGeometry(18, 3.6, 9), concreteWallMat, {
+        bimName: "IfcWall (Level 2 Cantilevered Suite)",
+        bimDesc: "Reinforced architectural concrete with board-formed timber grain texture.",
+        bimDim: "18.0m × 3.6m × 9.0m",
+        bimCost: "$44,000"
+      });
+      l2Concrete.position.set(3, 5.8, -1);
+      buildingGroup.add(l2Concrete);
+
+      // Level 2 Corner Window Glazing
+      const l2Glass = createBimMesh(new THREE.BoxGeometry(8, 3.2, 0.2), architecturalGlassMat, {
+        bimName: "IfcWindow (Master Bedroom Panoramic Pane)",
+        bimDesc: "Acoustically laminated solar-control window pane.",
+        bimDim: "8.0m × 3.2m",
+        bimCost: "$11,200"
+      });
+      l2Glass.position.set(4, 5.8, 3.6);
+      buildingGroup.add(l2Glass);
+
+      // Level 2 Walk-Out Roof Balcony with Glass Railing
+      const balconySlab = createBimMesh(new THREE.BoxGeometry(8, 0.3, 7), teakWoodMat, {
+        bimName: "IfcSlab (Level 2 Outdoor Teak Terrace)",
+        bimDesc: "Elevated outdoor living terrace with integrated drainage.",
+        bimDim: "8.0m × 7.0m (56 m²)",
+        bimCost: "$9,800"
+      });
+      balconySlab.position.set(-8, 4.0, 0);
+      buildingGroup.add(balconySlab);
+
+      const glassRailing = createBimMesh(new THREE.BoxGeometry(8, 1.1, 0.1), architecturalGlassMat, {
+        bimName: "IfcRailing (Tempered Glass Balustrade)",
+        bimDesc: "Frameless 15mm toughened structural laminated glass railing.",
+        bimDim: "8.0m × 1.1m (Code Compliant 42\")",
+        bimCost: "$4,200"
+      });
+      glassRailing.position.set(-8, 4.6, 3.5);
+      buildingGroup.add(glassRailing);
+
+      // Rooftop Photovoltaic (PV) Solar Array
+      for (let i = -1; i <= 3; i++) {
+        const pv = createBimMesh(new THREE.BoxGeometry(3, 0.1, 1.8), solarPanelMat, {
+          bimName: "IfcEnergyConversionDevice (High-Efficiency Solar PV Panel)",
+          bimDesc: "Monocrystalline 450W solar module producing renewable microgrid power.",
+          bimDim: "3.0m × 1.8m",
+          bimCost: "$1,850 each"
+        });
+        pv.position.set(i * 3.4, 7.7, -1);
+        pv.rotation.x = -0.15; // Tilted toward south sun
+        buildingGroup.add(pv);
+      }
+
+      // Update Tree List
+      populateBimTree([
+        { icon: "🏛️", name: "IfcCurtainWall [Level 1 Glazing]", meta: "60.8 m² · Triple Low-E" },
+        { icon: "🧱", name: "IfcWall [Timber Dining Wing]", meta: "Cedar Rainscreen" },
+        { icon: "🏗️", name: "IfcWall [Level 2 Concrete]", meta: "Board-Formed C30/37" },
+        { icon: "🪟", name: "IfcWindow [Panoramic Corner]", meta: "Acoustic Solar Control" },
+        { icon: "🪵", name: "IfcSlab [Teak Roof Balcony]", meta: "56 m² · Teak Deck" },
+        { icon: "⚡", name: "IfcSolarDevice [PV Panels × 5]", meta: "2.25 kW Peak Array" }
+      ]);
+    }
+
+    // ==========================================
+    // 2. PRESET: 42-STORY COMMERCIAL TOWER
+    // ==========================================
+    function buildSkyscraper() {
+      clearGroup(buildingGroup);
+      siteGroup.visible = false;
+      document.getElementById('active-scene-title').textContent = "AETHERIS SPIRE (42-STORY COMMERCIAL TOWER)";
+      document.getElementById('ibc-occ-group').textContent = "Business (Group B)";
+
+      // Grand Entrance Lobby (Level 1-3)
+      const lobby = createBimMesh(new THREE.BoxGeometry(28, 10, 28), architecturalGlassMat, {
+        bimName: "IfcSpace (Triple-Height Grand Lobby)",
+        bimDesc: "Public civic atrium with revolving doors, reception desks, and turnstile security.",
+        bimDim: "28m × 28m × 10m",
+        bimCost: "$1,800,000"
+      });
+      lobby.position.y = 5;
+      buildingGroup.add(lobby);
+
+      // Lobby Perimeter Columns
+      for (let x of [-13, 13]) {
+        for (let z of [-13, 13]) {
+          const col = createBimMesh(new THREE.CylinderGeometry(0.8, 0.8, 10), darkZincMat, {
+            bimName: "IfcColumn (Structural Steel Mega-Column)",
+            bimDesc: "Composite concrete-filled steel tube resisting seismic and wind overturning.",
+            bimDim: "Ø 1.6m × 10m",
+            bimCost: "$45,000"
+          });
+          col.position.set(x, 5, z);
           buildingGroup.add(col);
         }
       }
-    }
 
-    // Scene Generation: 42-Story Skyscraper Preset
-    function buildSkyscraper() {
-      clearGroup(buildingGroup);
-      
-      // Podium
-      const podGeo = new THREE.BoxGeometry(34, 12, 34);
-      const pod = new THREE.Mesh(podGeo, concreteMat);
-      pod.position.y = 6;
-      pod.castShadow = true;
-      pod.receiveShadow = true;
-      buildingGroup.add(pod);
+      // Tier 1 Tower Body (Floors 4-20)
+      const t1 = createBimMesh(new THREE.BoxGeometry(24, 40, 24), architecturalGlassMat, {
+        bimName: "IfcCurtainWall (Floors 4-20 Lower Office Tier)",
+        bimDesc: "Unitized double-skin curtain wall with automated solar blinds.",
+        bimDim: "24m × 24m × 40m",
+        bimCost: "$8,500,000"
+      });
+      t1.position.y = 30;
+      buildingGroup.add(t1);
 
-      // Glass Tower Core
-      const towerGeo = new THREE.BoxGeometry(24, 75, 24);
-      const tower = new THREE.Mesh(towerGeo, glassMat);
-      tower.position.y = 49.5;
-      tower.castShadow = true;
-      buildingGroup.add(tower);
-
-      // Steel Mullion Fins
-      for (let i = -11; i <= 11; i += 3) {
-        const finGeo = new THREE.BoxGeometry(0.3, 75, 0.8);
-        const fin1 = new THREE.Mesh(finGeo, steelMat);
-        fin1.position.set(i, 49.5, 12.4);
-        buildingGroup.add(fin1);
-
-        const fin2 = new THREE.Mesh(finGeo, steelMat);
-        fin2.position.set(i, 49.5, -12.4);
-        buildingGroup.add(fin2);
+      // Tier 1 Spandrel Bands
+      for (let y = 14; y <= 48; y += 4) {
+        const band = new THREE.Mesh(new THREE.BoxGeometry(24.2, 0.8, 24.2), darkZincMat);
+        band.position.y = y;
+        buildingGroup.add(band);
       }
 
-      // Architectural Crown / Spire
-      const crownGeo = new THREE.ConeGeometry(8, 16, 4);
-      const crown = new THREE.Mesh(crownGeo, steelMat);
-      crown.position.y = 95;
+      // Tier 2 Tower Body (Floors 21-34, Setback)
+      const t2 = createBimMesh(new THREE.BoxGeometry(20, 35, 20), architecturalGlassMat, {
+        bimName: "IfcCurtainWall (Floors 21-34 Upper Office Tier)",
+        bimDesc: "High-performance spectrally selective curtain wall.",
+        bimDim: "20m × 20m × 35m",
+        bimCost: "$6,200,000"
+      });
+      t2.position.y = 67.5;
+      buildingGroup.add(t2);
+
+      // Tier 3 Executive Penthouse (Floors 35-42, Setback)
+      const t3 = createBimMesh(new THREE.BoxGeometry(16, 22, 16), architecturalGlassMat, {
+        bimName: "IfcCurtainWall (Floors 35-42 Executive Penthouse)",
+        bimDesc: "Clear low-iron executive glazing with panoramic city views.",
+        bimDim: "16m × 16m × 22m",
+        bimCost: "$4,100,000"
+      });
+      t3.position.y = 96;
+      buildingGroup.add(t3);
+
+      // Architectural Crown & Telecommunications Spire
+      const crown = createBimMesh(new THREE.CylinderGeometry(0.2, 4, 18, 4), darkZincMat, {
+        bimName: "IfcBuildingElementProxy (Architectural Spire)",
+        bimDesc: "Aero-dynamic perforated steel crown spire with FAA warning beacon.",
+        bimDim: "18m Height Spire",
+        bimCost: "$350,000"
+      });
+      crown.position.y = 116;
       crown.rotation.y = Math.PI / 4;
-      crown.castShadow = true;
       buildingGroup.add(crown);
+
+      populateBimTree([
+        { icon: "🏛️", name: "IfcSpace [Grand Lobby & Atrium]", meta: "28m × 28m · Triple-Height" },
+        { icon: "🏗️", name: "IfcColumn [Mega-Columns × 4]", meta: "Ø 1.6m Composite Steel" },
+        { icon: "🏢", name: "IfcCurtainWall [Lower Tier 4-20]", meta: "Double-Skin Unitized" },
+        { icon: "🏢", name: "IfcCurtainWall [Upper Tier 21-34]", meta: "Spectrally Selective" },
+        { icon: "👑", name: "IfcCurtainWall [Executive Penthouse]", meta: "Low-Iron Ultra Clear" },
+        { icon: "📡", name: "IfcElementProxy [Architectural Spire]", meta: "18m Crown Mast" }
+      ]);
     }
 
-    // Scene Generation: Defense C-UAS Hardened Base Preset
+    // ==========================================
+    // 3. PRESET: C-UAS DEFENSE BASE (YC RFS)
+    // ==========================================
     function buildDefenseBase() {
       clearGroup(buildingGroup);
+      siteGroup.visible = true;
+      document.getElementById('active-scene-title').textContent = "FORWARD BASE SENTINEL (C-UAS DEFENSE & INTERCEPTOR PODS)";
+      document.getElementById('ibc-occ-group').textContent = "Military Tactical (Type I-A)";
 
-      // Hardened Bunker Module
-      const bunkerGeo = new THREE.BoxGeometry(28, 5, 24);
-      const bunker = new THREE.Mesh(bunkerGeo, concreteMat);
-      bunker.position.y = 2.5;
-      bunker.castShadow = true;
-      bunker.receiveShadow = true;
+      // Hardened Command Bunker Core
+      const bunker = createBimMesh(new THREE.BoxGeometry(22, 5.5, 20), concreteWallMat, {
+        bimName: "IfcBuilding [Hardened C2 Bunker]",
+        bimDesc: "Blast-resistant reinforced concrete shelter rated for near-miss fragmentation.",
+        bimDim: "22m × 20m × 5.5m (C50/60 Concrete)",
+        bimCost: "$920,000"
+      });
+      bunker.position.y = 2.75;
       buildingGroup.add(bunker);
 
-      // Reinforced Blast Wall Perimeter
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x3d4653, roughness: 0.9 });
-      for (let side of [-18, 18]) {
-        const wallX = new THREE.BoxGeometry(44, 4.5, 1.2);
-        const wX = new THREE.Mesh(wallX, wallMat);
-        wX.position.set(0, 2.25, side);
-        wX.castShadow = true;
-        buildingGroup.add(wX);
+      // Helipad Surface with Tactical Yellow Markings
+      const helipad = createBimMesh(new THREE.CylinderGeometry(8, 8, 0.4, 32), darkZincMat, {
+        bimName: "IfcSlab [Tactical Drone/Helicopter Pad]",
+        bimDesc: "Non-skid reinforced helipad with night lighting and fuel drainage.",
+        bimDim: "Ø 16m Helipad",
+        bimCost: "$140,000"
+      });
+      helipad.position.set(0, 5.7, 0);
+      buildingGroup.add(helipad);
 
-        const wallZ = new THREE.BoxGeometry(1.2, 4.5, 36);
-        const wZ = new THREE.Mesh(wallZ, wallMat);
-        wZ.position.set(side, 2.25, 0);
-        wZ.castShadow = true;
-        buildingGroup.add(wZ);
+      // Active Rotating 3D AESA Radar Node
+      const radarStand = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 3.5), darkZincMat);
+      radarStand.position.set(-8, 7.25, -7);
+      buildingGroup.add(radarStand);
+
+      const radarDome = createBimMesh(new THREE.SphereGeometry(1.8, 24, 16), concreteWallMat, {
+        bimName: "IfcSensor [Ku-Band 3D AESA Radar]",
+        bimDesc: "Solid-state phased array radar tracking micro-drones up to 3km range.",
+        bimDim: "Ø 3.6m Radome",
+        bimCost: "$180,000"
+      });
+      radarDome.position.set(-8, 9.5, -7);
+      buildingGroup.add(radarDome);
+
+      // 4 Low-Cost Attritable Interceptor Launch Tubes
+      for (let x of [-6, 6]) {
+        for (let z of [-6, 6]) {
+          const tube = createBimMesh(new THREE.BoxGeometry(1.6, 3.2, 1.6), darkZincMat, {
+            bimName: "IfcBuildingElement [Kinetic Interceptor Pod]",
+            bimDesc: "Quad-canister launcher firing autonomous $4.8k kinetic ram-drones.",
+            bimDim: "Quad Launch Pod (4 Ready Munitions)",
+            bimCost: "$48,000"
+          });
+          tube.position.set(x, 6.8, z);
+          tube.rotation.x = 0.35; // Angled for rapid vertical launch
+          buildingGroup.add(tube);
+        }
       }
 
-      // Rooftop AESA Radar Dome
-      const radGeo = new THREE.SphereGeometry(3.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-      const radMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
-      const rad = new THREE.Mesh(radGeo, radMat);
-      rad.position.set(0, 5.0, 0);
-      rad.castShadow = true;
-      buildingGroup.add(rad);
-
-      // 4 Low-Cost Interceptor Launch Canisters
-      for (let pos of [[-8, -7], [8, -7], [-8, 7], [8, 7]]) {
-        const podGeo = new THREE.BoxGeometry(2.2, 3.2, 2.2);
-        const pod = new THREE.Mesh(podGeo, steelMat);
-        pod.position.set(pos[0], 6.6, pos[1]);
-        pod.rotation.x = 0.25;
-        pod.castShadow = true;
-        buildingGroup.add(pod);
+      // Perimeter Reinforced Blast Walls
+      for (let side of [-16, 16]) {
+        const wallX = createBimMesh(new THREE.BoxGeometry(36, 4.0, 1.2), darkZincMat, {
+          bimName: "IfcWall [Reinforced Blast Wall Perimeter]",
+          bimDesc: "Hesco-style perimeter defense shielding against direct vehicle & drone rams.",
+          bimDim: "36m × 4m × 1.2m",
+          bimCost: "$65,000"
+        });
+        wallX.position.set(0, 2.0, side);
+        buildingGroup.add(wallX);
       }
+
+      populateBimTree([
+        { icon: "🛡️", name: "IfcBuilding [Hardened C2 Bunker]", meta: "Blast-Resistant C50/60" },
+        { icon: "🚁", name: "IfcSlab [Tactical Helipad]", meta: "Ø 16m Non-Skid Landing" },
+        { icon: "📡", name: "IfcSensor [Ku-Band AESA Radar]", meta: "3km Micro-UAS Detection" },
+        { icon: "🚀", name: "IfcElement [Interceptor Pods × 4]", meta: "16 Kinetic Ram Missiles" },
+        { icon: "🧱", name: "IfcWall [Perimeter Blast Walls]", meta: "Hesco Fragment Barrier" }
+      ]);
+    }
+
+    // ==========================================
+    // 4. PRESET: ADVANCED DRONE GIGAFACTORY
+    // ==========================================
+    function buildFactory() {
+      clearGroup(buildingGroup);
+      siteGroup.visible = true;
+      document.getElementById('active-scene-title').textContent = "AUTONOMOUS ROBOTICS GIGAFACTORY";
+      document.getElementById('ibc-occ-group').textContent = "Factory Industrial (F-1)";
+
+      // Main High-Bay Production Floor
+      const hall = createBimMesh(new THREE.BoxGeometry(38, 8, 26), darkZincMat, {
+        bimName: "IfcSpace [High-Bay Drone Assembly Hall]",
+        bimDesc: "Clear-span industrial manufacturing space with 8m ceiling clearance.",
+        bimDim: "38m × 26m × 8m (988 m²)",
+        bimCost: "$1,450,000"
+      });
+      hall.position.y = 4;
+      buildingGroup.add(hall);
+
+      // Sawtooth North-Facing Skylight Monitors (Energy Efficient Natural Daylight)
+      for (let x = -14; x <= 14; x += 7) {
+        const roofTooth = createBimMesh(new THREE.ConeGeometry(5, 4, 3), darkZincMat, {
+          bimName: "IfcRoof [Sawtooth Daylight Monitor]",
+          bimDesc: "Diffuses natural north daylight to reduce factory lighting power by 42%.",
+          bimDim: "Sawtooth Skylight Bay",
+          bimCost: "$28,000"
+        });
+        roofTooth.position.set(x, 9.8, 0);
+        roofTooth.rotation.z = Math.PI / 6;
+        buildingGroup.add(roofTooth);
+      }
+
+      // Automated Logistics Loading Bays (AGV / Freight)
+      for (let z of [-8, 0, 8]) {
+        const dock = createBimMesh(new THREE.BoxGeometry(4.2, 4.2, 0.4), darkZincMat, {
+          bimName: "IfcDoor [Automated Logistics Roll-Up Dock]",
+          bimDesc: "High-speed insulated overhead dock door with automated AGV guidance.",
+          bimDim: "4.2m × 4.2m",
+          bimCost: "$14,500"
+        });
+        dock.position.set(19.2, 2.1, z);
+        buildingGroup.add(dock);
+      }
+
+      populateBimTree([
+        { icon: "🏭", name: "IfcSpace [High-Bay Assembly Hall]", meta: "988 m² · 8m Clearance" },
+        { icon: "☀️", name: "IfcRoof [Sawtooth Daylight Bays × 5]", meta: "North Light Skylights" },
+        { icon: "🚛", name: "IfcDoor [Logistics AGV Docks × 3]", meta: "Automated Roll-Up" }
+      ]);
     }
 
     // Helper: Clear a Three.js Group
@@ -662,8 +877,21 @@
       }
     }
 
-    // Dynamic Zoning Envelope Box
-    let zoningMesh = null;
+    // Helper: Populate the Right-Hand BIM Element Hierarchy Tree
+    function populateBimTree(elements) {
+      const list = document.getElementById('bim-tree-list');
+      list.innerHTML = '';
+      elements.forEach(item => {
+        const row = document.createElement('div');
+        row.className = "p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between transition-all";
+        row.innerHTML = `<span class="text-cyan-300">${item.icon} ${item.name}</span><span class="text-[9px] text-slate-400">${item.meta}</span>`;
+        list.appendChild(row);
+      });
+    }
+
+    // Dynamic Zoning Envelope Box: Clean Translucent Bounds
+    let zoningBoxMesh = null;
+    let zoningEdgeMesh = null;
     function updateZoningEnvelope() {
       clearGroup(zoningGroup);
       if (!document.getElementById('toggle-zoning-envelope').checked) return;
@@ -671,26 +899,35 @@
       const w = parseFloat(document.getElementById('slider-lot-width').value);
       const h = parseFloat(document.getElementById('slider-height').value);
       const setback = parseFloat(document.getElementById('slider-setback').value);
-      const depth = w * 1.5;
+      const depth = w * 1.33;
 
-      const envWidth = Math.max(5, w - setback * 2);
-      const envDepth = Math.max(5, depth - setback * 2);
+      const envWidth = Math.max(4, w - setback * 2);
+      const envDepth = Math.max(4, depth - setback * 2);
 
+      // Translucent inner volume
       const envGeo = new THREE.BoxGeometry(envWidth, h, envDepth);
-      zoningMesh = new THREE.Mesh(envGeo, zoningMat);
-      zoningMesh.position.y = h / 2;
-      zoningGroup.add(zoningMesh);
+      const envMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.08, depthWrite: false });
+      zoningBoxMesh = new THREE.Mesh(envGeo, envMat);
+      zoningBoxMesh.position.y = h / 2;
+      zoningGroup.add(zoningBoxMesh);
+
+      // Glowing dashed wireframe edge outlines
+      const edgesGeo = new THREE.EdgesGeometry(envGeo);
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 1.5, transparent: true, opacity: 0.65 });
+      zoningEdgeMesh = new THREE.LineSegments(edgesGeo, edgeMat);
+      zoningEdgeMesh.position.y = h / 2;
+      zoningGroup.add(zoningEdgeMesh);
 
       // Update stat labels
       document.getElementById('val-lot-dim').textContent = `${w}m × ${depth.toFixed(0)}m (${(w * depth).toFixed(0)}m²)`;
       document.getElementById('val-max-height').textContent = `${h} m`;
-      document.getElementById('val-setbacks').textContent = `${setback}m / ${(setback*0.6).toFixed(0)}m`;
+      document.getElementById('val-setbacks').textContent = `${setback}m / ${(setback*0.6).toFixed(1)}m`;
 
       const far = parseFloat(document.getElementById('slider-far').value);
       const maxGFA = (w * depth * far).toFixed(0);
       document.getElementById('stat-max-gfa').textContent = `${Number(maxGFA).toLocaleString()} m²`;
-      document.getElementById('stat-max-stories').textContent = `${Math.floor(h / 3.5)} Floors`;
-      document.getElementById('stat-occupancy-load').textContent = `${Math.floor(maxGFA / 10).toLocaleString()} Persons`;
+      document.getElementById('stat-max-stories').textContent = `${Math.floor(h / 3.6)} Floors`;
+      document.getElementById('stat-occupancy-load').textContent = `${Math.floor(maxGFA / 14).toLocaleString()} Persons`;
     }
 
     // Dynamic Counter-UAS Defense Dome
@@ -699,17 +936,19 @@
       clearGroup(defenseGroup);
       if (!document.getElementById('toggle-cuas-dome').checked) return;
 
-      const r = parseFloat(document.getElementById('slider-cuas-range').value) * 0.08; // visual scale factor
-      const domeGeo = new THREE.SphereGeometry(r, 32, 18, 0, Math.PI * 2, 0, Math.PI / 2);
+      const r = parseFloat(document.getElementById('slider-cuas-range').value) * 0.035; // scaled visual dome
+      const domeGeo = new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const cuasDomeMat = new THREE.MeshBasicMaterial({ color: 0xff3366, wireframe: true, transparent: true, opacity: 0.25 });
       cuasMesh = new THREE.Mesh(domeGeo, cuasDomeMat);
-      cuasMesh.position.y = 0.1;
+      cuasMesh.position.y = 0.05;
       defenseGroup.add(cuasMesh);
 
       // Interceptor Trajectory Lines
       if (document.getElementById('toggle-cuas-interceptors').checked) {
-        const points = [];
-        points.push(new THREE.Vector3(0, 6, 0));
-        points.push(new THREE.Vector3(r * 0.7, r * 0.6, -r * 0.5));
+        const points = [
+          new THREE.Vector3(0, 7, 0),
+          new THREE.Vector3(r * 0.65, r * 0.55, -r * 0.45)
+        ];
         const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
         const lineMat = new THREE.LineDashedMaterial({ color: 0x00ff88, dashSize: 2, gapSize: 1 });
         const line = new THREE.Line(lineGeo, lineMat);
@@ -718,13 +957,12 @@
 
         // Hostile Ingress Vector
         const threatPts = [
-          new THREE.Vector3(r * 0.95, r * 0.4, -r * 0.8),
-          new THREE.Vector3(r * 0.7, r * 0.6, -r * 0.5)
+          new THREE.Vector3(r * 0.95, r * 0.35, -r * 0.75),
+          new THREE.Vector3(r * 0.65, r * 0.55, -r * 0.45)
         ];
         const threatGeo = new THREE.BufferGeometry().setFromPoints(threatPts);
         const threatMat = new THREE.LineBasicMaterial({ color: 0xff3366, linewidth: 2 });
-        const threatLine = new THREE.Line(threatGeo, threatMat);
-        defenseGroup.add(threatLine);
+        defenseGroup.add(new THREE.Line(threatGeo, threatMat));
       }
     }
 
@@ -738,19 +976,20 @@
       document.getElementById('val-solar-time').textContent = `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 
       // Convert solar time to azimuth angle
-      const solarAngle = ((time - 6) / 12) * Math.PI; // 0 at 6am, PI at 6pm
+      const solarAngle = ((time - 6) / 12) * Math.PI;
       const elevation = Math.sin(solarAngle) * (0.6 + season * 0.03);
 
-      const rad = 130;
+      const rad = 75;
       sunLight.position.x = Math.cos(solarAngle) * rad;
-      sunLight.position.y = Math.max(10, elevation * rad);
-      sunLight.position.z = Math.sin(solarAngle) * 60;
+      sunLight.position.y = Math.max(8, elevation * rad);
+      sunLight.position.z = Math.sin(solarAngle) * 45;
 
-      // Adjust sky ambient warmth
       if (time < 8 || time > 16.5) {
         sunLight.color.setHex(0xffaa55); // Golden hour
+        scene.fog.color.setHex(0x1a1215);
       } else {
-        sunLight.color.setHex(0xfff8ee);
+        sunLight.color.setHex(0xfffaed);
+        scene.fog.color.setHex(0x0c1524);
       }
     }
 
@@ -774,50 +1013,71 @@
     document.getElementById('toggle-cuas-dome').addEventListener('change', updateDefenseDome);
     document.getElementById('toggle-cuas-interceptors').addEventListener('change', updateDefenseDome);
 
-    // Preset Buttons
+    // Preset Switching
     document.getElementById('preset-residence').addEventListener('click', () => {
       buildVilla();
-      camera.position.set(40, 30, 50);
-      controls.target.set(0, 5, 0);
+      camera.position.set(45, 28, 55);
+      controls.target.set(0, 4, 0);
+      updateZoningEnvelope();
     });
     document.getElementById('preset-tower').addEventListener('click', () => {
       buildSkyscraper();
-      camera.position.set(70, 70, 90);
-      controls.target.set(0, 45, 0);
+      camera.position.set(90, 80, 110);
+      controls.target.set(0, 50, 0);
+      document.getElementById('slider-height').value = 120;
+      updateZoningEnvelope();
     });
     document.getElementById('preset-defense').addEventListener('click', () => {
       buildDefenseBase();
-      camera.position.set(45, 25, 45);
+      camera.position.set(45, 24, 45);
       controls.target.set(0, 3, 0);
+      updateZoningEnvelope();
     });
     document.getElementById('preset-factory').addEventListener('click', () => {
-      buildDefenseBase();
+      buildFactory();
+      camera.position.set(55, 30, 60);
+      controls.target.set(0, 5, 0);
+      updateZoningEnvelope();
     });
 
-    // Camera Navigation Buttons
+    // Camera Navigation Shortcuts
     document.getElementById('btn-camera-top').addEventListener('click', () => {
-      camera.position.set(0, 140, 0.01);
+      camera.position.set(0, 110, 0.01);
       controls.target.set(0, 0, 0);
     });
     document.getElementById('btn-camera-elevation').addEventListener('click', () => {
-      camera.position.set(0, 20, 110);
-      controls.target.set(0, 20, 0);
+      camera.position.set(0, 15, 80);
+      controls.target.set(0, 15, 0);
     });
     document.getElementById('btn-camera-pedestrian').addEventListener('click', () => {
-      camera.position.set(0, 1.7, 35);
+      camera.position.set(0, 1.7, 28);
       controls.target.set(0, 1.7, 0);
     });
     document.getElementById('btn-camera-perspective').addEventListener('click', () => {
-      camera.position.set(50, 40, 60);
-      controls.target.set(0, 10, 0);
+      camera.position.set(45, 28, 55);
+      controls.target.set(0, 4, 0);
     });
 
-    document.getElementById('btn-toggle-grid').addEventListener('click', () => {
-      gridHelper.visible = !gridHelper.visible;
-      document.getElementById('btn-toggle-grid').classList.toggle('text-cyan-300');
+    // Toggle Daylight Environment Mode
+    let isDaylight = false;
+    document.getElementById('btn-toggle-daylight').addEventListener('click', () => {
+      isDaylight = !isDaylight;
+      if (isDaylight) {
+        scene.background = new THREE.Color(0xd2e3f5);
+        scene.fog.color = new THREE.Color(0xd2e3f5);
+        hemiLight.intensity = 1.2;
+        groundMat.color.setHex(0x6b7787);
+        document.getElementById('btn-toggle-daylight').textContent = "🌙 NIGHT C2";
+      } else {
+        scene.background = new THREE.Color(0x0c1524);
+        scene.fog.color = new THREE.Color(0x0c1524);
+        hemiLight.intensity = 0.6;
+        groundMat.color.setHex(0x0f1726);
+        document.getElementById('btn-toggle-daylight').textContent = "☀️ SKY ILLUMINATION";
+      }
     });
 
-    // Drag and Drop glTF / OBJ File Upload
+    // File Drag & Drop
     const fileInput = document.getElementById('file-input');
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -841,12 +1101,12 @@
       reader.readAsArrayBuffer(file);
     });
 
-    // Simulation Trigger
+    // Defense Intercept Simulation
     document.getElementById('btn-simulate-intercept').addEventListener('click', () => {
-      alert("C-UAS KINETIC INTERCEPT SIMULATION:\n• Radar acquisition at 1,180m\n• Ingress speed: 45 m/s (low altitude 25m AGL)\n• Autonomous Interceptor #2 launched from Pod A\n• Calculated Intercept: T+6.4s at coordinates (+85m, +35m AGL)\n• Estimated Defeat: 100% Kinetic Neutralization");
+      alert("C-UAS KINETIC INTERCEPT SIMULATION:\n• Radar acquisition at 1,180m\n• Threat Profile: Shahed-136 / Low-Altitude Strike Drone\n• Autonomous Interceptor #2 launched from Launch Pod A\n• Calculated Intercept Point: T+5.8s at altitude 28m AGL\n• Defeat Probability: 99.4% Kinetic Neutralization");
     });
 
-    // Window Resize Handler
+    // Window Resize
     window.addEventListener('resize', () => {
       camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
@@ -859,7 +1119,7 @@
     updateDefenseDome();
     updateSolarPosition();
 
-    // Render Loop with FPS Monitor
+    // Render Loop with FPS Counter
     let lastTime = performance.now();
     let frameCount = 0;
     const fpsEl = document.getElementById('fps-counter');
@@ -868,7 +1128,6 @@
       requestAnimationFrame(animate);
       controls.update();
 
-      // FPS Calculation
       frameCount++;
       if (time - lastTime >= 1000) {
         fpsEl.textContent = frameCount;
