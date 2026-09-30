@@ -87,6 +87,19 @@
       <a href="/system-architecture.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">⚡ SYSTEM IR</a>
     </nav>
 
+    <!-- Antigravity Specialist Swarm Mesh Status Bar -->
+    <div class="hidden xl:flex items-center gap-1.5 mono text-[10px] bg-slate-950/80 border border-cyan-500/30 rounded-lg p-1" id="swarm-mesh-bar">
+      <span class="text-cyan-400 font-bold px-1.5 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        SWARM:
+      </span>
+      <span id="badge-radar" class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">📡 RadarLOS: NOMINAL</span>
+      <span id="badge-threat" class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">💥 ThreatAssessor: UFC OK</span>
+      <span id="badge-fire" class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/30">🎯 FireControl: ARMED</span>
+      <span id="badge-shield" class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/30">🛡️ AgentShield: VERIFIED</span>
+      <span id="badge-budget" class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">⚡ Budget: 480 TOK</span>
+    </div>
+
     <!-- Defense Alert Status & Mode -->
     <div class="flex items-center gap-2 text-xs mono">
       <div class="px-3 py-1.5 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 flex items-center gap-2">
@@ -354,6 +367,42 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           EXECUTE AUTONOMOUS INTERCEPT
         </button>
+
+        <!-- Semi-Autonomous CIWS Mode Toggle (DoD Directive 3000.09) -->
+        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-[10px] mono">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span class="text-slate-300">Semi-Auto CIWS (DoD 3000.09):</span>
+          </div>
+          <label class="flex items-center gap-1 cursor-pointer">
+            <input type="checkbox" id="toggle-ciws" class="rounded border-slate-700 text-amber-500 focus:ring-0">
+            <span id="label-ciws" class="text-amber-400 font-bold">MANUAL</span>
+          </label>
+        </div>
+
+        <!-- Export Cursor-on-Target (CoT) XML Button -->
+        <button id="btn-export-cot" class="w-full py-1.5 rounded-lg bg-slate-800/90 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1.5 transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          EXPORT CURSOR-ON-TARGET (CoT) XML
+        </button>
+      </div>
+
+      <!-- Live Multi-Agent Swarm Deliberation Stream -->
+      <div class="glass-panel rounded-xl p-3 flex flex-col gap-2 border-cyan-500/30">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-1.5">
+          <span class="font-semibold text-cyan-300 tracking-wide flex items-center gap-1.5 mono text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+            SWARM DELIBERATION STREAM
+          </span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 mono">ECC BUS</span>
+        </div>
+        <div id="swarm-event-stream" class="h-32 overflow-y-auto flex flex-col gap-1 text-[10px] mono text-slate-300 p-1.5 bg-black/50 rounded border border-slate-900">
+          <div class="text-cyan-400">[MasterRouterSwarm] Active: 5 agents coordinated.</div>
+          <div class="text-slate-400">[AgentShieldGuard] Telemetry clean. Clamping verified.</div>
+          <div class="text-emerald-400">[RadarLOSAgent] Horizon 3.2km. Buffer 42s.</div>
+          <div class="text-slate-300">[ThreatAssessorAgent] 50kg TNT blast evaluated: SURVIVABLE.</div>
+          <div class="text-rose-400">[FireControlAgent] Effector assigned: POD-A Ram Drone #2.</div>
+        </div>
       </div>
 
       <!-- Military Facility Asset Hierarchy (USACE & MIL-STD) -->
@@ -376,7 +425,13 @@
   </div>
 
   <!-- Three.js 3D Defense Tactical Engine Script -->
-  <script>
+  <script type="module">
+    import { MasterRouterSwarm } from './src/agents/masterRouterSwarm.js';
+
+    // Initialize Aetheris Agentic Defense Swarm
+    const swarm = new MasterRouterSwarm();
+    window.__AETHERIS_SWARM__ = swarm;
+
     // Initialize Three.js Scene, Camera, and Renderer
     const container = document.getElementById('three-container');
     const scene = new THREE.Scene();
@@ -680,15 +735,116 @@
       threatGroup.add(interceptorMesh);
     }
 
-    // Trigger Tactical Intercept Simulation
-    function triggerTacticalIntercept() {
-      isIntercepting = true;
-      interceptProgress = 0;
+    // ==========================================
+    // AGENTIC DEFENSE SWARM REAL-TIME EVENT BUS
+    // ==========================================
+    const eventStreamEl = document.getElementById('swarm-event-stream');
+    const badgeRadar = document.getElementById('badge-radar');
+    const badgeThreat = document.getElementById('badge-threat');
+    const badgeFire = document.getElementById('badge-fire');
+    const badgeShield = document.getElementById('badge-shield');
+    const badgeBudget = document.getElementById('badge-budget');
+
+    swarm.subscribe((evt) => {
+      if (!eventStreamEl) return;
+      const line = document.createElement('div');
+      const timeStr = new Date(evt.timestamp).toISOString().substring(11, 19);
+      
+      if (evt.source === 'RadarLOSAgent') {
+        line.className = evt.payload.isMasked ? 'text-amber-400 font-semibold' : 'text-cyan-400';
+        line.textContent = `[${timeStr}] [RadarLOS] ${evt.payload.telemetryVerdict}`;
+        if (badgeRadar) badgeRadar.textContent = `📡 RadarLOS: ${evt.payload.isMasked ? 'MASKED' : 'CLEAR'}`;
+      } else if (evt.source === 'ThreatAssessorAgent') {
+        line.className = evt.payload.allCriticalSurvive ? 'text-emerald-400' : 'text-rose-400 font-bold';
+        line.textContent = `[${timeStr}] [ThreatAssessor] ${evt.payload.telemetryVerdict}`;
+        if (badgeThreat) badgeThreat.textContent = `💥 Threat: ${evt.payload.verdictStatus}`;
+      } else if (evt.source === 'FireControlAgent') {
+        line.className = 'text-rose-300 font-semibold';
+        line.textContent = `[${timeStr}] [FireControl] Effector ${evt.payload.assignedPod || 'Strike'}: ${evt.payload.costSavingsPercent || 99.85}% savings ($4,800)`;
+        if (badgeFire) badgeFire.textContent = `🎯 FireControl: ${evt.payload.assignedPod || 'ARMED'}`;
+      } else if (evt.source === 'AgentShieldGuard') {
+        line.className = evt.payload.passed ? 'text-purple-300' : 'text-amber-400 font-bold';
+        line.textContent = `[${timeStr}] [AgentShield] ${evt.payload.verdict}`;
+        if (badgeShield) badgeShield.textContent = `🛡️ Shield: ${evt.payload.passed ? 'VERIFIED' : 'CONTAINED'}`;
+      } else if (evt.source === 'BudgetGovernor') {
+        line.className = 'text-amber-300';
+        line.textContent = `[${timeStr}] [BudgetGov] Spend: $${evt.payload.totalCostUsd} (${evt.payload.activeModel})`;
+        if (badgeBudget) badgeBudget.textContent = `⚡ Budget: $${evt.payload.totalCostUsd}`;
+      }
+      
+      eventStreamEl.appendChild(line);
+      eventStreamEl.scrollTop = eventStreamEl.scrollHeight;
+    });
+
+    // Reactive Slider Dispatch to Defense Swarm
+    function updateSwarmTrack() {
+      const radarAlt = Number(document.getElementById('slider-radar-alt').value);
+      const targetAlt = Number(document.getElementById('slider-ingress-alt').value);
+      const warheadKg = Number(document.getElementById('slider-warhead').value);
+      const standoffM = Number(document.getElementById('slider-standoff').value);
+
+      document.getElementById('val-radar-alt').textContent = `${radarAlt} m AGL`;
+      document.getElementById('val-ingress-alt').textContent = `${targetAlt} m (Terrain Nap)`;
+      document.getElementById('val-warhead-weight').textContent = `${warheadKg} kg TNT (Shahed)`;
+      document.getElementById('val-standoff-dist').textContent = `${standoffM} meters`;
+
+      const cop = swarm.processTacticalTrack({
+        targetId: 'TRK-UAS-0842',
+        speedKmh: 185,
+        altitude: targetAlt,
+        azimuth: 48,
+        distanceMeters: 950,
+        radarAltitude: radarAlt,
+        standoffBufferMeters: standoffM,
+        warheadKg
+      });
+
+      document.getElementById('val-dead-zone').textContent = `${cop.radarLOS.deadZonePercent}% BLIND`;
     }
 
-    function toggleDefenseAlarm() {
-      alert("⚠️ DEFCON 2 ALARM TRIGGERED:\n• Hostile Drone Swarm detected on azimuth 048°\n• 4 Low-Cost Interceptors cleared for immediate launch\n• Personnel instructed to proceed to Hardened Shelters");
+    document.getElementById('slider-radar-alt').addEventListener('input', updateSwarmTrack);
+    document.getElementById('slider-ingress-alt').addEventListener('input', updateSwarmTrack);
+    document.getElementById('slider-warhead').addEventListener('input', updateSwarmTrack);
+    document.getElementById('slider-standoff').addEventListener('input', updateSwarmTrack);
+
+    // Semi-Autonomous CIWS Mode Toggle (DoD Directive 3000.09)
+    const ciwsToggle = document.getElementById('toggle-ciws');
+    const ciwsLabel = document.getElementById('label-ciws');
+    if (ciwsToggle && ciwsLabel) {
+      ciwsToggle.addEventListener('change', (e) => {
+        swarm.fireControl.setCIWSMode(e.target.checked);
+        if (e.target.checked) {
+          ciwsLabel.textContent = "AUTO CIWS";
+          ciwsLabel.className = "text-rose-400 font-bold animate-pulse";
+        } else {
+          ciwsLabel.textContent = "MANUAL";
+          ciwsLabel.className = "text-amber-400 font-bold";
+        }
+      });
     }
+
+    // Export Cursor-on-Target (CoT) XML Handler
+    const exportCotBtn = document.getElementById('btn-export-cot');
+    if (exportCotBtn) {
+      exportCotBtn.addEventListener('click', () => {
+        const sol = swarm.fireControl.computeInterceptSolution({ targetId: 'TRK-UAS-0842', targetAzimuthDeg: 48 });
+        const cotXml = swarm.fireControl.generateCursorOnTargetXML(sol);
+        console.log('[Aetheris Cursor-on-Target XML Payload]:\n', cotXml);
+        alert("📋 CURSOR-ON-TARGET (CoT) XML GENERATED:\n\n" + cotXml.substring(0, 320) + "\n...\n(Full MIL-STD event logged to DevTools Console)");
+      });
+    }
+
+    // Trigger Tactical Intercept Simulation
+    window.triggerTacticalIntercept = function() {
+      swarm.executeKineticStrike('POD-A');
+      isIntercepting = true;
+      interceptProgress = 0;
+    };
+    document.getElementById('btn-fire-intercept').addEventListener('click', window.triggerTacticalIntercept);
+
+    window.toggleDefenseAlarm = function() {
+      alert("⚠️ DEFCON 2 ALARM TRIGGERED:\n• Hostile Drone Swarm detected on azimuth 048°\n• 4 Low-Cost Interceptors cleared for immediate launch\n• Personnel instructed to proceed to Hardened Shelters");
+    };
 
     // Helper: Clear a Three.js Group
     function clearGroup(grp) {

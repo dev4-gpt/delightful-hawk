@@ -537,18 +537,18 @@
           "label": "AgentShield Security Gatekeeper",
           "layer": "security",
           "role": "Audits incoming MCP tool calls, enforces sandboxed execution limits, and protects against prompt injection or illicit coordinate exfiltration (affaan-m/agentshield).",
-          "tools": ["AgentShield Scanner", "Predicate Filter", "Rate Governor"],
+          "tools": ["AgentShield Scanner", "Predicate Filter", "Coordinate Clamping"],
           "failover": "Strict tool-whitelisting fallback",
-          "file": "packages/earthmind-mcp/src/index.js"
+          "file": "gods-eye-view/src/agents/agentShieldGuard.js"
         },
         "master-agent": {
           "id": "master-agent",
           "label": "Aetheris Master Router",
           "layer": "orchestration",
-          "role": "Central autonomous router utilizing Google Antigravity SDK and ECC multi-agent harness to decompose multi-domain tasks to specialized subagents.",
-          "tools": ["LocalAgentConfig", "ECC Swarm Dispatcher", "Budget Governor"],
+          "role": "Central autonomous router utilizing Google Antigravity SDK and ECC multi-agent harness to coordinate RadarLOSAgent, ThreatAssessorAgent, FireControlAgent, AgentShieldGuard, and BudgetGovernor.",
+          "tools": ["RadarLOSAgent", "ThreatAssessorAgent", "FireControlAgent", "AgentShieldGuard", "BudgetGovernor"],
           "failover": "Graceful downgrade to cached telemetry snapshots",
-          "file": "gods-eye-view/src/modules/cartridgeRegistry.js"
+          "file": "gods-eye-view/src/agents/masterRouterSwarm.js"
         },
         "ingest-fleet": {
           "id": "ingest-fleet",
