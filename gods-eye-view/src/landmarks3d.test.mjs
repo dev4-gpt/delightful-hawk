@@ -9,16 +9,16 @@ test('landmarks3d: verifies high-fidelity 3D PBR buildings across all major metr
   const austinBuildings = BUILDINGS.filter(b => b.lon > -98.0 && b.lon < -97.0 && b.lat > 30.0 && b.lat < 31.0);
   assert.ok(austinBuildings.length >= 5, `Expected >= 5 Austin buildings, got ${austinBuildings.length}`);
 
-  const capitol = austinBuildings.find(b => b.name.includes('Capitol'));
-  assert.ok(capitol, 'Texas State Capitol must exist');
-  assert.equal(capitol.groundAlt, 158, 'Austin Capitol ground elevation offset must be 158m');
-
   const frost = austinBuildings.find(b => b.name.includes('Frost Bank'));
   assert.ok(frost, 'Frost Bank Tower must exist');
   assert.equal(frost.architecturalType, 'frost-bank');
 
   const jenga = austinBuildings.find(b => b.name.includes('Jenga Tower') || b.name.includes('The Independent'));
   assert.ok(jenga, 'The Independent (Jenga Tower) must exist');
+
+  const sixth = austinBuildings.find(b => b.name.includes('Sixth and Guadalupe'));
+  assert.ok(sixth, 'Sixth and Guadalupe must exist');
+  assert.equal(sixth.h, 265);
 
   // 2. San Francisco Verification
   const sfBuildings = BUILDINGS.filter(b => b.lon > -122.5 && b.lon < -122.3 && b.lat > 37.7 && b.lat < 37.9);
@@ -53,8 +53,9 @@ test('landmarks3d: verifies high-fidelity 3D PBR buildings across all major metr
   assert.ok(gurgaon, 'Gurgaon Cyber City must exist');
   assert.equal(gurgaon.groundAlt, 225);
 
-  const southCity2 = BUILDINGS.filter(b => b.name.includes('South City II') || b.name.includes('Unitech Fresco') || b.name.includes('Nirvana'));
-  assert.ok(southCity2.length >= 240, `Expected >= 240 South City II & sector buildings, got ${southCity2.length}`);
+  const vatika = BUILDINGS.find(b => b.name.includes('Vatika Business Park'));
+  assert.ok(vatika, 'Vatika Business Park on Sohna Rd must exist');
+  assert.equal(vatika.groundAlt, 224);
 });
 
 test('landmarks3d: all buildings have valid coordinates, dimensions, and groundAlt', () => {
