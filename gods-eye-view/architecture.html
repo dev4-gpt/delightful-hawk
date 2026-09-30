@@ -2,718 +2,883 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Aetheris Production Architecture — Multi-Domain Spatial AI & Archify IR System Diagram</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aetheris BIM Studio — 3D Architecture, Zoning Envelope & Defense Hardening Twin</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --background: #090d16;
-      --foreground: #f1f5f9;
-      --card: #0f172a;
-      --card-hover: #1e293b;
-      --border: #1e293b;
-      --border-focus: #3b82f6;
-      --muted: #1e293b;
-      --muted-foreground: #94a3b8;
+      --bg: #070c14;
+      --card-bg: rgba(13, 22, 38, 0.85);
+      --border: rgba(0, 240, 255, 0.25);
+      --accent: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.4);
+      --warning: #ffaa00;
+      --danger: #ff3366;
+      --success: #00ff88;
     }
     body {
-      background-color: var(--background);
-      color: var(--foreground);
+      background-color: var(--bg);
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      user-select: none;
     }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .glass-panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .flow-line {
-      stroke-dasharray: 8, 8;
-      animation: flowAnimation 25s linear infinite;
+    .slider-accent {
+      accent-color: var(--accent);
     }
-    .flow-line-fast {
-      stroke-dasharray: 6, 6;
-      animation: flowAnimation 12s linear infinite;
-    }
-    .pulse-glow {
-      animation: pulseGlow 3s ease-in-out infinite;
-    }
-    @keyframes flowAnimation {
-      from { stroke-dashoffset: 200; }
-      to { stroke-dashoffset: 0; }
-    }
-    @keyframes pulseGlow {
-      0%, 100% { filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.4)); }
-      50% { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)); }
-    }
-    .node-hover {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .node-hover:hover {
-      transform: translateY(-3px);
-      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.4));
-    }
+    /* Custom scrollbars */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 4px;
+      height: 4px;
     }
     ::-webkit-scrollbar-track {
-      background: transparent;
+      background: rgba(0, 0, 0, 0.2);
     }
     ::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 9999px;
+      background: rgba(0, 240, 255, 0.3);
+      border-radius: 4px;
+    }
+    .pulse-amber {
+      animation: pulseAmber 2.5s infinite;
+    }
+    @keyframes pulseAmber {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.3; }
     }
   </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-blue-500/20">
+<body class="w-screen h-screen flex flex-col antialiased">
 
-  <!-- Header & Status Bar -->
-  <header class="border-b border-[var(--border)] px-6 py-4 flex flex-wrap items-center justify-between gap-4 bg-[var(--card)]/80 sticky top-0 z-50 backdrop-blur-md">
+  <!-- Top Navigation & Header Bar -->
+  <header class="h-14 border-b border-cyan-500/20 px-5 flex items-center justify-between bg-[#080e1a]/90 backdrop-blur-md z-50">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-base font-semibold tracking-tight text-[var(--foreground)]">Aetheris Spatial Intelligence Architecture</h1>
-          <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Archify IR v3.0 Validated</span>
-          <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">SpatialMCP Protocol</span>
-          <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">AgentShield Secured</span>
+          <h1 class="text-sm font-semibold tracking-wide text-white">AETHERIS <span class="text-cyan-400">BIM STUDIO</span></h1>
+          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">AEC & DEFENSE TWIN</span>
+          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">PBR 3D SHADER ENGINE</span>
         </div>
-        <p class="text-xs text-[var(--muted-foreground)]">Autonomous Multi-Domain Watchstander Engine · BigQuery Spatial Lakehouse · Google Antigravity SDK Swarm</p>
       </div>
     </div>
 
-    <!-- Global Portal Navigation -->
-    <div class="flex items-center gap-1 bg-[#050811] border border-cyan-500/30 rounded-lg p-1 text-xs">
-      <a href="/" class="px-2.5 py-1 rounded text-slate-400 hover:text-cyan-300 transition-all font-mono">🌐 3D Globe</a>
-      <a href="/mission-control.html" class="px-2.5 py-1 rounded text-slate-400 hover:text-cyan-300 transition-all font-mono">🎯 2D Radar C2</a>
-      <a href="/globe-lite.html" class="px-2.5 py-1 rounded text-slate-400 hover:text-cyan-300 transition-all font-mono">🗺️ 3D Lite</a>
-      <a href="/architecture.html" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/40 font-mono">🏛️ Architecture</a>
-    </div>
+    <!-- Multi-Domain Console Switcher -->
+    <nav class="flex items-center gap-1 bg-[#050811] border border-cyan-500/30 rounded-full px-2 py-1 text-xs mono">
+      <a href="/" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">🌐 3D GLOBE</a>
+      <a href="/mission-control.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">🎯 2D RADAR C2</a>
+      <a href="/globe-lite.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">🗺️ 3D LITE</a>
+      <a href="/architecture.html" class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/40">🏛️ BIM STUDIO</a>
+      <a href="/system-architecture.html" class="px-3 py-1 rounded-full text-slate-400 hover:text-cyan-300 transition-all">⚡ SYSTEM IR</a>
+    </nav>
 
-    <!-- View Mode Toggles -->
-    <div class="flex items-center gap-2">
-      <div class="flex items-center bg-[var(--background)] border border-[var(--border)] rounded-lg p-1 text-xs">
-        <button id="btn-tab-diagram" onclick="switchView('diagram')" class="px-3 py-1.5 rounded-md font-medium bg-[var(--card)] shadow-xs text-[var(--foreground)]">
-          Interactive Diagram
-        </button>
-        <button id="btn-tab-ir" onclick="switchView('ir')" class="px-3 py-1.5 rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          Archify IR (JSON)
-        </button>
-        <button id="btn-tab-matrix" onclick="switchView('matrix')" class="px-3 py-1.5 rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          Agent Matrix
-        </button>
-      </div>
+    <!-- Top Action Toolbar -->
+    <div class="flex items-center gap-2 text-xs mono">
+      <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 flex items-center gap-1.5 transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span>LOAD IFC / GLTF</span>
+        <input type="file" id="file-input" accept=".gltf,.glb,.obj,.ifc" class="hidden">
+      </label>
+      <button id="btn-export-cad" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 flex items-center gap-1.5 transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>REPORT (PDF)</span>
+      </button>
     </div>
   </header>
 
-  <!-- Chapter Stepper Navigation -->
-  <nav class="border-b border-[var(--border)] bg-[var(--background)] px-6 py-2.5 overflow-x-auto flex items-center justify-between gap-4 text-xs">
-    <div class="flex items-center gap-2">
-      <span class="text-[var(--muted-foreground)] font-semibold uppercase tracking-wider text-[10px]">Lifecycle Chapters:</span>
-      <div class="flex items-center gap-1.5" id="chapter-buttons">
-        <button onclick="setChapter(0)" class="chapter-btn px-2.5 py-1 rounded-md border border-[var(--border)] bg-[var(--card)] font-medium transition-all" data-chapter="0">
-          0. Global System
-        </button>
-        <button onclick="setChapter(1)" class="chapter-btn px-2.5 py-1 rounded-md border border-transparent text-[var(--muted-foreground)] hover:bg-[var(--card)] transition-all" data-chapter="1">
-          1. Multi-Domain Telemetry Ingestion
-        </button>
-        <button onclick="setChapter(2)" class="chapter-btn px-2.5 py-1 rounded-md border border-transparent text-[var(--muted-foreground)] hover:bg-[var(--card)] transition-all" data-chapter="2">
-          2. Geodesic & 3D LOS Engine
-        </button>
-        <button onclick="setChapter(3)" class="chapter-btn px-2.5 py-1 rounded-md border border-transparent text-[var(--muted-foreground)] hover:bg-[var(--card)] transition-all" data-chapter="3">
-          3. Anomaly Watchstander Cartridges
-        </button>
-        <button onclick="setChapter(4)" class="chapter-btn px-2.5 py-1 rounded-md border border-transparent text-[var(--muted-foreground)] hover:bg-[var(--card)] transition-all" data-chapter="4">
-          4. Antigravity SDK & Swarm Routing
-        </button>
-        <button onclick="setChapter(5)" class="chapter-btn px-2.5 py-1 rounded-md border border-transparent text-[var(--muted-foreground)] hover:bg-[var(--card)] transition-all" data-chapter="5">
-          5. Spatial-RAG & BigQuery Lakehouse
-        </button>
+  <!-- Main Viewport and Split Panes -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- Left Tool Panel: Architectural Controls & Zoning Generator -->
+    <aside class="w-80 border-r border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-4 overflow-y-auto z-20 text-xs">
+      
+      <!-- Architectural Presets -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            ARCHITECTURAL SCENE
+          </span>
+          <span class="mono text-[10px] text-cyan-400">PRESET</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 mono">
+          <button id="preset-residence" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-cyan-200 text-left hover:bg-cyan-500/30 transition-all">
+            🏡 Modern Villa
+          </button>
+          <button id="preset-tower" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
+            🏢 42-St Skyscraper
+          </button>
+          <button id="preset-defense" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
+            🛡️ C-UAS Defense Base
+          </button>
+          <button id="preset-factory" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-left hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:text-cyan-200 transition-all">
+            🏭 Drone Gigafactory
+          </button>
+        </div>
       </div>
-    </div>
-    <div class="text-[var(--muted-foreground)] text-[11px] hidden md:block">
-      Click any node to inspect spec, tools, failover watchdog & code anchors
-    </div>
-  </nav>
 
-  <!-- Main View Container -->
-  <main class="flex-1 flex overflow-hidden relative">
-
-    <!-- DIAGRAM VIEW -->
-    <div id="view-diagram" class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-      <div class="flex-1 overflow-auto p-6 flex flex-col items-center justify-start relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-950/10 via-transparent to-transparent">
+      <!-- Zoning Envelope & FAR Generator -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+            ZONING ENVELOPE (FAR)
+          </span>
+          <label class="flex items-center gap-1 cursor-pointer">
+            <input type="checkbox" id="toggle-zoning-envelope" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0">
+            <span class="mono text-[10px] text-cyan-400">SHOW</span>
+          </label>
+        </div>
         
-        <!-- Legend / Filter Badges -->
-        <div class="w-full max-w-6xl mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div class="flex items-center flex-wrap gap-2">
-            <span class="text-[var(--muted-foreground)] font-medium">Layers:</span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span> Orchestration & Antigravity SDK
-            </span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <span class="w-2 h-2 rounded-full bg-amber-500"></span> Multi-Domain Stream Ingestion
-            </span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              <span class="w-2 h-2 rounded-full bg-purple-500"></span> SpatialMCP & Geodesic Math Core
-            </span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <span class="w-2 h-2 rounded-full bg-rose-500"></span> Anomaly Watchstander Cartridges
-            </span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> BigQuery Lake & Synaptic Memory
-            </span>
+        <div class="flex flex-col gap-2 mono">
+          <div class="flex justify-between items-center text-[11px]">
+            <span class="text-slate-400">Lot Width × Depth:</span>
+            <span id="val-lot-dim" class="text-white font-medium">40m × 60m (2,400m²)</span>
           </div>
-          <button onclick="resetView()" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] underline text-[11px]">
-            Reset View
-          </button>
-        </div>
-
-        <!-- SVG Architecture Graph Canvas -->
-        <div class="w-full max-w-6xl bg-[var(--card)]/90 border border-[var(--border)] rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-sm">
+          <input type="range" id="slider-lot-width" min="20" max="100" value="40" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
           
-          <svg class="w-full h-auto" viewBox="0 0 1020 720" fill="none" xmlns="http://www.w3.org/2000/svg" id="arch-svg">
-            <defs>
-              <linearGradient id="grad-blue-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#3b82f6" />
-                <stop offset="100%" stop-color="#06b6d4" />
-              </linearGradient>
-              <linearGradient id="grad-amber-rose" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#f59e0b" />
-                <stop offset="100%" stop-color="#f43f5e" />
-              </linearGradient>
-              <linearGradient id="grad-purple-blue" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#a855f7" />
-                <stop offset="100%" stop-color="#3b82f6" />
-              </linearGradient>
-              <!-- Arrowhead Markers -->
-              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#64748b" />
-              </marker>
-              <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#3b82f6" />
-              </marker>
-              <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#f59e0b" />
-              </marker>
-              <marker id="arrow-rose" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#f43f5e" />
-              </marker>
-              <marker id="arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 9 5 L 0 9 z" fill="#10b981" />
-              </marker>
-            </defs>
+          <div class="flex justify-between items-center text-[11px] mt-1">
+            <span class="text-slate-400">Floor Area Ratio (FAR):</span>
+            <span id="val-far" class="text-cyan-300 font-semibold">4.5 FAR</span>
+          </div>
+          <input type="range" id="slider-far" min="1.0" max="15.0" step="0.5" value="4.5" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
-            <!-- GROUP: CONNECTORS (Background Paths) -->
-            <g id="connectors-group">
-              <!-- Operators / External Clients -> Dual Interface -->
-              <path d="M 120 75 L 210 75" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-              <path d="M 120 75 C 120 155, 150 165, 210 165" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+          <div class="flex justify-between items-center text-[11px] mt-1">
+            <span class="text-slate-400">Max Height Envelope:</span>
+            <span id="val-max-height" class="text-white font-medium">85 m</span>
+          </div>
+          <input type="range" id="slider-height" min="10" max="250" value="85" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
 
-              <!-- Dual Interface -> Master Orchestrator via AgentShield -->
-              <path d="M 370 75 C 410 75, 430 100, 460 100" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" class="flow-line"/>
-              <path d="M 370 165 C 410 165, 430 140, 460 140" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" class="flow-line"/>
+          <div class="flex justify-between items-center text-[11px] mt-1">
+            <span class="text-slate-400">Setbacks (Front/Side):</span>
+            <span id="val-setbacks" class="text-white font-medium">5m / 3m</span>
+          </div>
+          <input type="range" id="slider-setback" min="0" max="15" value="5" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+        </div>
 
-              <!-- AgentShield -> Master Agent Router -->
-              <path d="M 520 120 L 560 120" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-emerald)"/>
-
-              <!-- Master Agent -> Multi-Domain Ingestion Fleet -->
-              <path d="M 760 120 L 820 120" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-amber)" class="flow-line"/>
-
-              <!-- Ingestion Fleet -> Stream Buffer & Normalizer -->
-              <path d="M 900 160 L 900 220" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-amber)"/>
-
-              <!-- Stream Buffer -> BigQuery Spatial Lakehouse -->
-              <path d="M 900 290 L 900 370" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-emerald)" class="flow-line-fast"/>
-
-              <!-- Ingestion Streams -> Geodesic Math Core -->
-              <path d="M 820 255 L 720 255" stroke="#a855f7" stroke-width="2" marker-end="url(#arrow)"/>
-
-              <!-- Geodesic Math -> Anomaly Watchstander Core -->
-              <path d="M 640 295 L 640 370" stroke="#f43f5e" stroke-width="2.5" marker-end="url(#arrow-rose)" class="flow-line"/>
-
-              <!-- Master Agent -> SpatialMCP Protocol Server -->
-              <path d="M 660 165 L 660 220" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)"/>
-
-              <!-- SpatialMCP Server -> AI Developers / Cursor / Claude -->
-              <path d="M 560 255 L 470 255" stroke="#a855f7" stroke-width="2" marker-end="url(#arrow)" class="flow-line"/>
-
-              <!-- Anomaly Cartridges -> BigQuery Spatial Graph & H3 Store -->
-              <path d="M 740 420 L 810 420" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-emerald)"/>
-
-              <!-- Anomaly Cartridges -> Automated Tactical Dispatcher -->
-              <path d="M 540 420 L 450 420" stroke="#f43f5e" stroke-width="2.5" marker-end="url(#arrow-rose)" class="flow-line-fast"/>
-
-              <!-- Tactical Dispatcher -> Synaptic Memory Vault & Audit Graph -->
-              <path d="M 350 455 L 350 530" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow)"/>
-
-              <!-- Synaptic Memory Feedback Loop -> Master Agent Context Injector -->
-              <path d="M 260 565 C 160 565, 140 220, 180 120" stroke="#06b6d4" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow)"/>
-              <path d="M 180 120 C 200 90, 480 50, 560 85" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,4"/>
-            </g>
-
-            <!-- GROUP: NODES (Interactive Archify IR Objects) -->
-            
-            <!-- 1. Operators & AI Developers -->
-            <g id="node-ingress" class="node-hover cursor-pointer" onclick="selectNode('ingress')">
-              <rect x="20" y="50" width="100" height="50" rx="12" fill="var(--card)" stroke="var(--border)" stroke-width="1.5"/>
-              <text x="70" y="73" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">👤 Operations</text>
-              <text x="70" y="87" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Defense · Commercial</text>
-            </g>
-
-            <!-- 2. Dual Presentation Interfaces -->
-            <g id="node-cesium-console" class="node-hover cursor-pointer" onclick="selectNode('cesium-console')">
-              <rect x="210" y="50" width="160" height="50" rx="12" fill="var(--card)" stroke="#3b82f6" stroke-width="1.5"/>
-              <text x="290" y="72" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">3D Cesium Mission Console</text>
-              <text x="290" y="86" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Google 3D Tiles · Shaders (FLIR/NVG)</text>
-            </g>
-            <g id="node-webrtc-agent" class="node-hover cursor-pointer" onclick="selectNode('webrtc-agent')">
-              <rect x="210" y="140" width="160" height="50" rx="12" fill="var(--card)" stroke="#3b82f6" stroke-width="1.5"/>
-              <text x="290" y="162" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">WebRTC Voice/Vision Loop</text>
-              <text x="290" y="176" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">OpenAI Realtime + Viewport Vision</text>
-            </g>
-
-            <!-- 3. Security Boundary: AgentShield -->
-            <g id="node-agentshield" class="node-hover cursor-pointer" onclick="selectNode('agentshield')">
-              <rect x="460" y="90" width="60" height="60" rx="12" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
-              <text x="490" y="118" text-anchor="middle" font-size="16">🛡️</text>
-              <text x="490" y="136" text-anchor="middle" font-size="8" font-weight="700" fill="#10b981">SHIELD</text>
-            </g>
-
-            <!-- 4. Orchestration Core: Google Antigravity SDK & Swarm Router -->
-            <g id="node-master-agent" class="node-hover cursor-pointer pulse-glow" onclick="selectNode('master-agent')">
-              <rect x="560" y="70" width="200" height="95" rx="16" fill="var(--card)" stroke="#3b82f6" stroke-width="2.5"/>
-              <rect x="570" y="80" width="180" height="20" rx="6" fill="#3b82f6" fill-opacity="0.15"/>
-              <text x="660" y="94" text-anchor="middle" font-size="10" font-weight="700" fill="#3b82f6">ANTIGRAVITY SDK + ECC HARNESS</text>
-              <text x="660" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="var(--foreground)">Aetheris Master Router</text>
-              <text x="660" y="139" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Swarm Dispatcher · Budget Hooks · ECC</text>
-              <text x="660" y="153" text-anchor="middle" font-size="8" fill="#10b981">● Level 4 Autonomous Watchstander</text>
-            </g>
-
-            <!-- 5. Multi-Domain Stream Ingestion Fleet -->
-            <g id="node-ingest-fleet" class="node-hover cursor-pointer" onclick="selectNode('ingest-fleet')">
-              <rect x="820" y="80" width="160" height="80" rx="14" fill="var(--card)" stroke="#f59e0b" stroke-width="1.5"/>
-              <text x="900" y="105" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">Multi-Domain Streams</text>
-              <text x="900" y="122" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">AIS (Ships) · ADS-B (Air)</text>
-              <text x="900" y="136" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">TLEs (Space) · FIRMS (Fires)</text>
-              <text x="900" y="150" text-anchor="middle" font-size="8" fill="#f59e0b">● Real-Time Pub/Sub & WebSockets</text>
-            </g>
-
-            <!-- 6. Ingest Normalizer & Spatial Hashing -->
-            <g id="node-normalizer" class="node-hover cursor-pointer" onclick="selectNode('normalizer')">
-              <rect x="820" y="220" width="160" height="70" rx="12" fill="var(--card)" stroke="#f59e0b" stroke-width="1.5"/>
-              <text x="900" y="245" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">Ingest Normalizer</text>
-              <text x="900" y="262" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Uber H3 Hexagonal Index</text>
-              <text x="900" y="276" text-anchor="middle" font-size="8" fill="var(--muted-foreground)">Dead-Reckoning & Deduplication</text>
-            </g>
-
-            <!-- 7. Geodesic Math & 3D Curvature LOS Core -->
-            <g id="node-geodesic-math" class="node-hover cursor-pointer" onclick="selectNode('geodesic-math')">
-              <rect x="560" y="220" width="160" height="75" rx="12" fill="var(--card)" stroke="#a855f7" stroke-width="1.5"/>
-              <text x="640" y="245" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">3D Geodesic Math Core</text>
-              <text x="640" y="262" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">WGS84 Haversine · Azimuth</text>
-              <text x="640" y="276" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Curvature-Aware 3D LOS</text>
-            </g>
-
-            <!-- 8. Developer Open-Source Gateway: EarthMind SpatialMCP -->
-            <g id="node-mcp-server" class="node-hover cursor-pointer" onclick="selectNode('mcp-server')">
-              <rect x="310" y="220" width="160" height="75" rx="12" fill="var(--card)" stroke="#a855f7" stroke-width="1.5"/>
-              <text x="390" y="245" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">EarthMind SpatialMCP</text>
-              <text x="390" y="262" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Open JSON-RPC 2.0 Server</text>
-              <text x="390" y="276" text-anchor="middle" font-size="8" fill="#a855f7">● Claude, Cursor, LangChain API</text>
-            </g>
-
-            <!-- 9. Anomaly Watchstander Core: Enterprise Cartridges -->
-            <g id="node-anomaly-cartridges" class="node-hover cursor-pointer" onclick="selectNode('anomaly-cartridges')">
-              <rect x="540" y="370" width="200" height="100" rx="14" fill="var(--card)" stroke="#f43f5e" stroke-width="2"/>
-              <text x="640" y="395" text-anchor="middle" font-size="12" font-weight="700" fill="#f43f5e">ANOMALY WATCHSTANDER</text>
-              <text x="640" y="415" text-anchor="middle" font-size="9" fill="var(--foreground)">• SentinelMesh: Subsea Loiter</text>
-              <text x="640" y="430" text-anchor="middle" font-size="9" fill="var(--foreground)">• OrbitalOps: LEO Conjunction</text>
-              <text x="640" y="445" text-anchor="middle" font-size="9" fill="var(--foreground)">• GridTwin: Datacenter Thermal Load</text>
-              <text x="640" y="458" text-anchor="middle" font-size="8" fill="#f43f5e">● Autonomous Alert Dispatch</text>
-            </g>
-
-            <!-- 10. GCP Dataflow & BigQuery Spatial Lakehouse -->
-            <g id="node-bigquery-lake" class="node-hover cursor-pointer" onclick="selectNode('bigquery-lake')">
-              <rect x="810" y="370" width="180" height="100" rx="14" fill="var(--card)" stroke="#10b981" stroke-width="1.5"/>
-              <text x="900" y="395" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">BigQuery Spatial Lakehouse</text>
-              <text x="900" y="413" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">BigQuery GIS (ST_GeogPoint)</text>
-              <text x="900" y="428" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">BigQuery Graph & Vector Search</text>
-              <text x="900" y="443" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">GCP Dataflow Streaming Pipeline</text>
-              <text x="900" y="457" text-anchor="middle" font-size="8" fill="#10b981">● Millions Points / Sec Scale</text>
-            </g>
-
-            <!-- 11. Automated Tactical Dispatcher -->
-            <g id="node-dispatcher" class="node-hover cursor-pointer" onclick="selectNode('dispatcher')">
-              <rect x="250" y="380" width="200" height="75" rx="12" fill="var(--card)" stroke="#f43f5e" stroke-width="1.5"/>
-              <text x="350" y="405" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">Tactical Action Dispatcher</text>
-              <text x="350" y="422" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Satellite Tasking · Coast Guard Alert</text>
-              <text x="350" y="436" text-anchor="middle" font-size="8" fill="#f43f5e">● Automated Webhooks & NOC Pagers</text>
-            </g>
-
-            <!-- 12. Synaptic Cognitive Memory Vault & Audit Graph -->
-            <g id="node-synaptic-memory" class="node-hover cursor-pointer" onclick="selectNode('synaptic-memory')">
-              <rect x="260" y="530" width="200" height="75" rx="12" fill="var(--card)" stroke="#06b6d4" stroke-width="1.5"/>
-              <text x="360" y="555" text-anchor="middle" font-size="11" font-weight="600" fill="var(--foreground)">Synaptic Memory Vault</text>
-              <text x="360" y="572" text-anchor="middle" font-size="8.5" fill="var(--muted-foreground)">Vessel Baseline Profiles · History</text>
-              <text x="360" y="586" text-anchor="middle" font-size="8" fill="#06b6d4">● Cognitive Memory Graph & Audit Trail</text>
-            </g>
-
-          </svg>
+        <div class="mt-2 pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[10px] mono">
+          <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+            <div class="text-slate-400">MAX ALLOWED GFA</div>
+            <div id="stat-max-gfa" class="text-cyan-300 font-bold text-xs mt-0.5">10,800 m²</div>
+          </div>
+          <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+            <div class="text-slate-400">MAX STORIES</div>
+            <div id="stat-max-stories" class="text-white font-bold text-xs mt-0.5">24 Floors</div>
+          </div>
         </div>
       </div>
 
-      <!-- Interactive Node Inspector Drawer (Right Rail) -->
-      <div id="inspector-drawer" class="w-full md:w-80 border-l border-[var(--border)] bg-[var(--card)] p-6 overflow-y-auto flex flex-col justify-between">
-        <div class="space-y-4">
-          <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Node Inspector</span>
-            <span id="inspector-layer-badge" class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Layer</span>
-          </div>
-
-          <div>
-            <h2 id="inspector-title" class="text-base font-bold text-[var(--foreground)]">Aetheris Master Router</h2>
-            <p id="inspector-role" class="text-xs text-[var(--muted-foreground)] mt-1.5 leading-relaxed">Select a component on the diagram to inspect its runtime architecture, attached MCP tools, failover watchdog, and file paths.</p>
-          </div>
-
-          <div class="space-y-3 pt-2 text-xs">
-            <div>
-              <span class="font-semibold text-[var(--foreground)] block mb-1">Attached Tools & MCPs:</span>
-              <div id="inspector-tools" class="flex flex-wrap gap-1">
-                <span class="px-2 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)] text-[10px]">None</span>
-              </div>
-            </div>
-
-            <div>
-              <span class="font-semibold text-[var(--foreground)] block mb-1">Failover & Watchdog Policy:</span>
-              <p id="inspector-failover" class="text-[var(--muted-foreground)] leading-snug">Continuous self-healing</p>
-            </div>
-
-            <div>
-              <span class="font-semibold text-[var(--foreground)] block mb-1">Source Anchor / File Path:</span>
-              <code id="inspector-file" class="block bg-[var(--background)] p-1.5 rounded border border-[var(--border)] text-[10px] text-blue-400 font-mono break-all">packages/core</code>
-            </div>
-          </div>
+      <!-- Solar Daylight & Shadow Study -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            SOLAR & SHADOW STUDY
+          </span>
+          <span class="mono text-[10px] text-amber-300">SUN AZIMUTH</span>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-[var(--border)] text-[11px] text-[var(--muted-foreground)]">
-          <span class="font-semibold text-[var(--foreground)]">Architecture Status:</span>
-          <p class="mt-0.5 text-emerald-400">All 12 Monorepo Components Active</p>
+        <div class="flex flex-col gap-2 mono">
+          <div class="flex justify-between items-center text-[11px]">
+            <span class="text-slate-400">Time of Day (Solar):</span>
+            <span id="val-solar-time" class="text-amber-300 font-semibold">14:30 (2:30 PM)</span>
+          </div>
+          <input type="range" id="slider-solar-time" min="6.0" max="18.0" step="0.25" value="14.5" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+
+          <div class="flex justify-between items-center text-[11px] mt-1">
+            <span class="text-slate-400">Season / Month:</span>
+            <span id="val-season" class="text-white font-medium">Summer Solstice (Jun)</span>
+          </div>
+          <input type="range" id="slider-season" min="1" max="12" value="6" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="mt-1 bg-slate-900/60 p-2 rounded border border-slate-800 text-[10px] mono flex items-center justify-between">
+          <span class="text-slate-400">Courtyard Solar Exposure:</span>
+          <span class="text-emerald-400 font-semibold">6.8 hrs / day (Compliant)</span>
         </div>
       </div>
-    </div>
 
-    <!-- ARCHIFY IR (JSON) VIEW -->
-    <div id="view-ir" class="flex-1 p-6 overflow-y-auto hidden">
-      <div class="max-w-4xl mx-auto space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-semibold text-[var(--foreground)]">Archify Typed Intermediate Representation (IR)</h2>
-            <p class="text-xs text-[var(--muted-foreground)]">Schema-validated JSON defining production nodes, layers, tools, and watchdog contracts.</p>
+      <!-- Floorplate Slicer (Section Clipping) -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/></svg>
+            FLOORPLATE SLICER
+          </span>
+          <label class="flex items-center gap-1 cursor-pointer">
+            <input type="checkbox" id="toggle-slicer" class="rounded border-slate-700 text-cyan-500 focus:ring-0">
+            <span class="mono text-[10px] text-cyan-400">ACTIVE</span>
+          </label>
+        </div>
+        <div class="flex flex-col gap-1.5 mono">
+          <div class="flex justify-between items-center text-[11px]">
+            <span class="text-slate-400">Section Cut Height:</span>
+            <span id="val-slicer-height" class="text-cyan-300 font-medium">Level 4 (+14.0m)</span>
           </div>
-          <button onclick="copyIR()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--card)] border border-[var(--border)] hover:bg-[var(--card-hover)] text-[var(--foreground)]">
-            Copy Schema JSON
-          </button>
-        </div>
-        <pre id="ir-json-display" class="bg-[var(--card)] border border-[var(--border)] p-4 rounded-xl text-xs font-mono text-blue-300 overflow-x-auto leading-relaxed"></pre>
-      </div>
-    </div>
-
-    <!-- AGENT MATRIX VIEW -->
-    <div id="view-matrix" class="flex-1 p-6 overflow-y-auto hidden">
-      <div class="max-w-5xl mx-auto space-y-6">
-        <div>
-          <h2 class="text-base font-semibold text-[var(--foreground)]">Aetheris Agent Topology & Responsibility Matrix</h2>
-          <p class="text-xs text-[var(--muted-foreground)]">Enterprise mapping of autonomous subagents, engines, tools, security guards, and human approval checkpoints.</p>
-        </div>
-
-        <div class="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--card)] shadow-lg">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="border-b border-[var(--border)] bg-[var(--background)]/70 text-[var(--muted-foreground)] font-semibold">
-                <th class="p-3">Agent / Module</th>
-                <th class="p-3">Engine & Framework</th>
-                <th class="p-3">Tools & Connectors</th>
-                <th class="p-3">Persistence & Data Layer</th>
-                <th class="p-3">Human Review Gate</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[var(--border)] text-[var(--muted-foreground)]">
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">Aetheris Master Router</td>
-                <td class="p-3">Google Antigravity SDK (`LocalAgentConfig`) + ECC Harness</td>
-                <td class="p-3">Swarm dispatch, budget hooks, agent handoffs</td>
-                <td class="p-3">PostgreSQL / Session Store</td>
-                <td class="p-3"><span class="text-emerald-400 font-medium">Autonomous</span></td>
-              </tr>
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">AgentShield Guardrail</td>
-                <td class="p-3">AgentShield Security Scanner (affaan-m/agentshield)</td>
-                <td class="p-3">MCP permission sandbox, prompt injection filter</td>
-                <td class="p-3">Audit Security Log</td>
-                <td class="p-3"><span class="text-emerald-400 font-medium">Automated Block</span></td>
-              </tr>
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">SentinelMesh Watchstander</td>
-                <td class="p-3">Domain Anomaly Cartridge (`src/modules/sentinelMeshCartridge.js`)</td>
-                <td class="p-3">AISStream, Subsea Cables GeoJSON, loiter rule</td>
-                <td class="p-3">BigQuery Spatial Lakehouse (H3 cells)</td>
-                <td class="p-3"><span class="text-rose-400 font-semibold">HITL Pager (Critical Alert)</span></td>
-              </tr>
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">OrbitalOps Conjunction Agent</td>
-                <td class="p-3">SGP4 Orbital Mechanics (`satellite.js` + CelesTrak)</td>
-                <td class="p-3">TLE parser, 3D Euclidean miss-distance calculator</td>
-                <td class="p-3">Space-Track / CelesTrak Cache</td>
-                <td class="p-3"><span class="text-amber-400 font-medium">Automated Advisory</span></td>
-              </tr>
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">GridTwin Energy Agent</td>
-                <td class="p-3">Thermodynamic Grid Capacity Model</td>
-                <td class="p-3">Open-Meteo Weather API, EIA Substation shapefiles</td>
-                <td class="p-3">BigQuery Time-Series Grid DB</td>
-                <td class="p-3"><span class="text-emerald-400 font-medium">Automated Load Shed</span></td>
-              </tr>
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">EarthMind SpatialMCP Server</td>
-                <td class="p-3">Model Context Protocol JSON-RPC 2.0 (`packages/earthmind-mcp`)</td>
-                <td class="p-3">WGS84 geodetic tools, curvature-aware LOS</td>
-                <td class="p-3">In-Memory / Stdio Client Sessions</td>
-                <td class="p-3"><span class="text-emerald-400 font-medium">Autonomous API</span></td>
-              </tr>
-              <tr class="hover:bg-[var(--card-hover)]/40 transition-colors">
-                <td class="p-3 font-semibold text-[var(--foreground)]">Synaptic Memory Vault</td>
-                <td class="p-3">Cognitive Memory Graph (MCP Synaptic)</td>
-                <td class="p-3">Vector embeddings, vessel baseline deviations</td>
-                <td class="p-3">Synaptic Graph DB / BigQuery Vector</td>
-                <td class="p-3"><span class="text-emerald-400 font-medium">Continuous Loop</span></td>
-              </tr>
-            </tbody>
-          </table>
+          <input type="range" id="slider-slicer" min="0" max="85" value="14" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
         </div>
       </div>
-    </div>
 
-  </main>
+    </aside>
 
-  <!-- Interactive JavaScript State Machine -->
+    <!-- Center 3D WebGL Viewport -->
+    <main class="flex-1 relative flex flex-col bg-[#050912]">
+      <!-- 3D Canvas Container -->
+      <div id="three-container" class="w-full h-full"></div>
+
+      <!-- Viewport Holographic HUD Overlay -->
+      <div class="absolute top-4 left-4 z-10 pointer-events-none flex flex-col gap-2">
+        <div class="glass-panel rounded-lg px-3 py-2 flex items-center gap-3 border-cyan-500/30">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+          <div class="mono text-xs">
+            <span class="text-slate-400">VIEWPORT RENDERER:</span>
+            <span class="text-cyan-300 font-semibold ml-1">THREE.JS PBR HARDWARE PASS</span>
+          </div>
+          <div class="h-3 w-[1px] bg-slate-700"></div>
+          <div class="mono text-xs text-slate-300">
+            FPS: <span id="fps-counter" class="text-emerald-400 font-bold">60</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Viewport Control Floating Action Bar -->
+      <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 flex items-center gap-2 glass-panel rounded-full px-4 py-2 border-cyan-500/40 text-xs mono">
+        <button id="btn-camera-perspective" class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/30 transition-all">
+          PERSPECTIVE
+        </button>
+        <button id="btn-camera-top" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all">
+          TOP PLAN
+        </button>
+        <button id="btn-camera-elevation" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all">
+          SOUTH ELEVATION
+        </button>
+        <button id="btn-camera-pedestrian" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all" title="1.7m Human Eye Level Walk">
+          🚶 EYE LEVEL (1.7m)
+        </button>
+        <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
+        <button id="btn-toggle-wireframe" class="px-3 py-1 rounded-full text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all">
+          WIREFRAME
+        </button>
+        <button id="btn-toggle-grid" class="px-3 py-1 rounded-full text-cyan-300 bg-slate-800 transition-all">
+          CAD GRID
+        </button>
+      </div>
+    </main>
+
+    <!-- Right Panel: Defense Hardening, Counter-UAS & Building Code Engine -->
+    <aside class="w-84 border-l border-cyan-500/20 bg-[#070d18]/95 p-4 flex flex-col gap-4 overflow-y-auto z-20 text-xs">
+      
+      <!-- Dual-Use Defense C-UAS Module (YC RFS Alignment) -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3 border-rose-500/40">
+        <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
+          <span class="font-semibold text-rose-300 tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            COUNTER-UAS DEFENSE TWIN
+          </span>
+          <span class="mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">YC RFS</span>
+        </div>
+
+        <div class="flex flex-col gap-2 mono">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-slate-300 font-medium">3D Radar Coverage Dome</span>
+            <input type="checkbox" id="toggle-cuas-dome" checked class="rounded border-slate-700 text-rose-500 focus:ring-0">
+          </label>
+          <div class="flex justify-between items-center text-[11px]">
+            <span class="text-slate-400">Detection Radius:</span>
+            <span id="val-cuas-range" class="text-rose-300 font-semibold">1,200 m</span>
+          </div>
+          <input type="range" id="slider-cuas-range" min="300" max="3000" step="100" value="1200" class="slider-accent w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+
+          <label class="flex items-center justify-between cursor-pointer mt-1">
+            <span class="text-slate-300 font-medium">Terrain & Urban Masking LOS</span>
+            <input type="checkbox" id="toggle-cuas-los" checked class="rounded border-slate-700 text-rose-500 focus:ring-0">
+          </label>
+
+          <label class="flex items-center justify-between cursor-pointer mt-1">
+            <span class="text-slate-300 font-medium">Low-Cost Interceptor Pods</span>
+            <input type="checkbox" id="toggle-cuas-interceptors" checked class="rounded border-slate-700 text-rose-500 focus:ring-0">
+          </label>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-rose-950/30 border border-rose-500/30 flex flex-col gap-1 text-[10px] mono">
+          <div class="flex justify-between">
+            <span class="text-slate-400">ADVERSARY THREAT:</span>
+            <span class="text-rose-400 font-bold">SHAHEED-136 / FPV SWARM</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">COST PER KILL:</span>
+            <span class="text-emerald-400 font-bold">$4,800 (ATTRITABLE)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">LINE-OF-SIGHT DEAD ZONE:</span>
+            <span class="text-amber-400 font-bold">12.4% BLIND CONE</span>
+          </div>
+        </div>
+
+        <button id="btn-simulate-intercept" class="w-full py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold mono text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          SIMULATE LOW-COST INTERCEPT
+        </button>
+      </div>
+
+      <!-- Building Code & Occupancy Load Engine (IBC Compliance) -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            CODE & COMPLIANCE (IBC)
+          </span>
+          <span class="mono text-[10px] text-cyan-400">IBC 2024</span>
+        </div>
+
+        <div class="flex flex-col gap-2 mono text-[11px]">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Occupancy Group:</span>
+            <span class="text-white font-medium">Business (Group B)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Construction Type:</span>
+            <span class="text-cyan-300 font-medium">Type I-B (Fire-Resistive)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Calculated Occupant Load:</span>
+            <span id="stat-occupancy-load" class="text-white font-bold">1,080 Persons</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Required Exit Stairs:</span>
+            <span class="text-emerald-400 font-bold">2 Stairwells (44 in min)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Plumbing Fixtures (IBC Ch.29):</span>
+            <span class="text-white font-medium">22 W.C. / 14 Lavatories</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live BIM Spatial Hierarchy Tree -->
+      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-2 flex-1">
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+          <span class="font-semibold text-white tracking-wide flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            BIM ELEMENT HIERARCHY
+          </span>
+          <span class="mono text-[10px] text-slate-400">IFC 4.3</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto mono text-[11px] flex flex-col gap-1 pr-1">
+          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
+            <span class="text-cyan-300">🏛️ IfcBuildingStorey [Lvl 1 - Pod]</span>
+            <span class="text-[9px] text-slate-500">450 m²</span>
+          </div>
+          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
+            <span class="text-cyan-300">🏛️ IfcBuildingStorey [Lvl 2 - Mezz]</span>
+            <span class="text-[9px] text-slate-500">420 m²</span>
+          </div>
+          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
+            <span class="text-cyan-300">🛡️ IfcBuildingElement [Hardened Roof]</span>
+            <span class="text-[9px] text-rose-400">C-UAS Mount</span>
+          </div>
+          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
+            <span class="text-slate-300">⚡ IfcDistributionFlow [Microgrid Bus]</span>
+            <span class="text-[9px] text-emerald-400">480V Active</span>
+          </div>
+          <div class="p-1.5 rounded bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 cursor-pointer flex items-center justify-between">
+            <span class="text-slate-300">📡 IfcSensor [3D AESA Radar Node]</span>
+            <span class="text-[9px] text-cyan-400">Online</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Three.js 3D Architectural Engine Script -->
   <script>
-    const archifyIR = {
-      "$schema": "https://archify.dev/v3/ir.json",
-      "project": "Aetheris Autonomous Multi-Domain Spatial Intelligence Infrastructure",
-      "version": "3.0.0",
-      "groundingCommit": "37719ca",
-      "nodes": {
-        "ingress": {
-          "id": "ingress",
-          "label": "Operations & AI Developers",
-          "layer": "ingress",
-          "role": "Mission watchstanders, defense analysts, and external AI developers connecting via Claude Desktop / Cursor.",
-          "tools": ["WebRTC Voice", "Web Console", "MCP Protocol"],
-          "failover": "Headless CLI / REST Fallback",
-          "file": "README.md"
-        },
-        "cesium-console": {
-          "id": "cesium-console",
-          "label": "3D Cesium Mission Console",
-          "layer": "ui",
-          "role": "Photorealistic 3D virtual globe running CesiumJS and Google 3D Tiles with dynamic glTF LOD and GLSL sensor shaders (FLIR, NVG).",
-          "tools": ["CesiumJS", "Google 3D Tiles", "GLSL Shaders", "Vite"],
-          "failover": "Esri Satellite Imagery + Re:Earth Flat Terrain",
-          "file": "gods-eye-view/src/main.js, style.css"
-        },
-        "webrtc-agent": {
-          "id": "webrtc-agent",
-          "label": "WebRTC Voice/Vision Loop",
-          "layer": "ui",
-          "role": "Hands-free conversational agent streaming audio and 1.08 MP viewport screenshots directly to OpenAI Realtime API for spatial grounding.",
-          "tools": ["WebRTC", "OpenAI Realtime", "AudioVisualizer"],
-          "failover": "Typed GUI Input & Command Palette",
-          "file": "gods-eye-view/src/voice/gevRealtime.js"
-        },
-        "agentshield": {
-          "id": "agentshield",
-          "label": "AgentShield Security Gatekeeper",
-          "layer": "security",
-          "role": "Audits incoming MCP tool calls, enforces sandboxed execution limits, and protects against prompt injection or illicit coordinate exfiltration (affaan-m/agentshield).",
-          "tools": ["AgentShield Scanner", "Predicate Filter", "Rate Governor"],
-          "failover": "Strict tool-whitelisting fallback",
-          "file": "packages/earthmind-mcp/src/index.js"
-        },
-        "master-agent": {
-          "id": "master-agent",
-          "label": "Aetheris Master Router",
-          "layer": "orchestration",
-          "role": "Central autonomous router utilizing Google Antigravity SDK and ECC multi-agent harness to decompose multi-domain tasks to specialized subagents.",
-          "tools": ["LocalAgentConfig", "ECC Swarm Dispatcher", "Budget Governor"],
-          "failover": "Graceful downgrade to cached telemetry snapshots",
-          "file": "gods-eye-view/src/modules/cartridgeRegistry.js"
-        },
-        "ingest-fleet": {
-          "id": "ingest-fleet",
-          "label": "Multi-Domain Telemetry Ingestion Fleet",
-          "layer": "ingestion",
-          "role": "Aggregates real-time feeds: AIS (AISStream WebSockets), ADS-B (OpenSky/adsb.lol), Orbital TLEs (CelesTrak), Fires (NASA FIRMS), and Traffic CCTV.",
-          "tools": ["WebSocket Client", "REST Poller", "GCP Pub/Sub"],
-          "failover": "Cached local GeoJSON datasets (e.g. TeleGeography 712 cables)",
-          "file": "gods-eye-view/src/data/manager.js"
-        },
-        "normalizer": {
-          "id": "normalizer",
-          "label": "Ingest Normalizer & Spatial Hashing",
-          "layer": "ingestion",
-          "role": "Partitions real-time coordinate pings into Uber H3 hierarchical hexagonal cells, filters duplicate beacons, and calculates dead-reckoning vectors.",
-          "tools": ["Uber H3", "Dead-Reckoning Extrapolator", "Crypto Hash"],
-          "failover": "Raw lat/lon passthrough",
-          "file": "gods-eye-view/src/data/aisStreamAdapter.js"
-        },
-        "geodesic-math": {
-          "id": "geodesic-math",
-          "label": "3D Geodesic Math Core",
-          "layer": "computation",
-          "role": "Computes high-precision Great-Circle distance, forward azimuth, WGS84 ECEF 3D vectors, and curvature-aware geometric line-of-sight.",
-          "tools": ["Haversine", "Vincenty Equations", "ECEF Conversion"],
-          "failover": "EGM96 Geoid approximation",
-          "file": "packages/earthmind-mcp/src/spatialMath.js"
-        },
-        "mcp-server": {
-          "id": "mcp-server",
-          "label": "EarthMind SpatialMCP Server",
-          "layer": "developer",
-          "role": "Open Model Context Protocol server exposing 6 spatial reasoning primitives directly to Claude Desktop, Cursor, and LangChain AI agents.",
-          "tools": ["MCP Stdio Transport", "JSON-RPC 2.0", "npm package"],
-          "failover": "Static tool-definition schema",
-          "file": "packages/earthmind-mcp/src/index.js"
-        },
-        "anomaly-cartridges": {
-          "id": "anomaly-cartridges",
-          "label": "Anomaly Watchstander Cartridges",
-          "layer": "intelligence",
-          "role": "Domain-specific intelligence modules: SentinelMesh (subsea cable loitering), OrbitalOps (LEO satellite conjunctions), and GridTwin (datacenter thermal grid strain).",
-          "tools": ["CartridgeRegistry", "SentinelMesh", "OrbitalOps", "GridTwin"],
-          "failover": "Rule-based threshold alerts",
-          "file": "gods-eye-view/src/modules/sentinelMeshCartridge.js, packages/earthmind-mcp/src/anomalyRules.js"
-        },
-        "bigquery-lake": {
-          "id": "bigquery-lake",
-          "label": "BigQuery Spatial Lakehouse",
-          "layer": "storage",
-          "role": "Enterprise cloud storage processing millions of spatial coordinate pings per second via GCP Dataflow, BigQuery GIS (ST_Distance), and BigQuery Graph.",
-          "tools": ["BigQuery GIS", "BigQuery Graph", "GCP Dataflow", "Cloud Pub/Sub"],
-          "failover": "Local SQLite / DuckDB buffer",
-          "file": "gcp-data-pipelines"
-        },
-        "dispatcher": {
-          "id": "dispatcher",
-          "label": "Tactical Action Dispatcher",
-          "layer": "action",
-          "role": "Automated incident handler that dispatches satellite tasking requests, Coast Guard alerts, and flight deconfliction advisories upon verified critical anomalies.",
-          "tools": ["Webhooks", "Satellite Tasking API", "NOC Pagers"],
-          "failover": "Human review queue logging",
-          "file": "gods-eye-view/src/modules/sentinelMeshCartridge.js"
-        },
-        "synaptic-memory": {
-          "id": "synaptic-memory",
-          "label": "Synaptic Cognitive Memory Vault",
-          "layer": "memory",
-          "role": "Decentralized AI Memory Protocol storing historical vessel behavior profiles, baseline shipping corridors, and audit logs to optimize future anomaly scoring.",
-          "tools": ["Synaptic-MCP", "PrivacyGuard PII Filter", "Vector Embeddings"],
-          "failover": "Local encrypted JSON vault",
-          "file": "packages/earthmind-mcp/src/spatialMath.js"
+    // Initialize Three.js Scene, Camera, and Renderer
+    const container = document.getElementById('three-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x060b14);
+    scene.fog = new THREE.FogExp2(0x060b14, 0.0035);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
+    camera.position.set(70, 50, 90);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Prevent camera sinking under ground
+    controls.minDistance = 1.7; // 1.7m Human eye-level standoff!
+
+    // Lighting Pipeline: Sun Light + Ambient Illumination
+    const ambientLight = new THREE.AmbientLight(0xddeeff, 0.4);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff8ee, 1.8);
+    sunLight.position.set(60, 100, 40);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 10;
+    sunLight.shadow.camera.far = 400;
+    const d = 120;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.bias = -0.0005;
+    scene.add(sunLight);
+
+    // Ground Plane with CAD Grid
+    const groundGeo = new THREE.PlaneGeometry(300, 300);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x0a101d,
+      roughness: 0.85,
+      metalness: 0.15
+    });
+    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
+
+    const gridHelper = new THREE.GridHelper(300, 60, 0x00f0ff, 0x1a2942);
+    gridHelper.position.y = 0.05;
+    scene.add(gridHelper);
+
+    // Global Architectural Groups
+    const buildingGroup = new THREE.Group();
+    scene.add(buildingGroup);
+
+    const zoningGroup = new THREE.Group();
+    scene.add(zoningGroup);
+
+    const defenseGroup = new THREE.Group();
+    scene.add(defenseGroup);
+
+    // Materials Palette
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x88ccff,
+      metalness: 0.1,
+      roughness: 0.05,
+      transmission: 0.9,
+      transparent: true,
+      opacity: 0.75,
+      reflectivity: 0.9
+    });
+    const concreteMat = new THREE.MeshStandardMaterial({
+      color: 0xd0d4dc,
+      roughness: 0.7,
+      metalness: 0.05
+    });
+    const steelMat = new THREE.MeshStandardMaterial({
+      color: 0x222a36,
+      roughness: 0.3,
+      metalness: 0.8
+    });
+    const woodMat = new THREE.MeshStandardMaterial({
+      color: 0x8a5231,
+      roughness: 0.6,
+      metalness: 0.0
+    });
+    const zoningMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.35
+    });
+    const cuasDomeMat = new THREE.MeshBasicMaterial({
+      color: 0xff3366,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.22
+    });
+
+    // Scene Generation: Modern Villa Preset
+    function buildVilla() {
+      clearGroup(buildingGroup);
+      
+      // Foundation slab
+      const slabGeo = new THREE.BoxGeometry(32, 0.8, 22);
+      const slab = new THREE.Mesh(slabGeo, concreteMat);
+      slab.position.y = 0.4;
+      slab.castShadow = true;
+      slab.receiveShadow = true;
+      buildingGroup.add(slab);
+
+      // Level 1 Solid Walls & Wood Volumes
+      const l1Geo = new THREE.BoxGeometry(16, 4.2, 14);
+      const l1 = new THREE.Mesh(l1Geo, woodMat);
+      l1.position.set(-6, 2.9, -2);
+      l1.castShadow = true;
+      l1.receiveShadow = true;
+      buildingGroup.add(l1);
+
+      // Level 1 Floor-to-Ceiling Glass Living Pavilion
+      const glassGeo = new THREE.BoxGeometry(14, 4.0, 16);
+      const glassBox = new THREE.Mesh(glassGeo, glassMat);
+      glassBox.position.set(7, 2.8, 1);
+      glassBox.castShadow = true;
+      buildingGroup.add(glassBox);
+
+      // Level 2 Cantilevered Master Suite
+      const l2Geo = new THREE.BoxGeometry(26, 3.8, 16);
+      const l2 = new THREE.Mesh(l2Geo, concreteMat);
+      l2.position.set(1, 6.8, 0);
+      l2.castShadow = true;
+      l2.receiveShadow = true;
+      buildingGroup.add(l2);
+
+      // Structural Steel Columns
+      for (let x of [-13, 14]) {
+        for (let z of [-8, 9]) {
+          const colGeo = new THREE.CylinderGeometry(0.25, 0.25, 6.8);
+          const col = new THREE.Mesh(colGeo, steelMat);
+          col.position.set(x * 0.8, 3.4, z * 0.8);
+          col.castShadow = true;
+          buildingGroup.add(col);
         }
-      }
-    };
-
-    // Populate Archify IR JSON display
-    document.getElementById('ir-json-display').textContent = JSON.stringify(archifyIR, null, 2);
-
-    function selectNode(nodeId) {
-      const node = archifyIR.nodes[nodeId];
-      if (!node) return;
-
-      document.getElementById('inspector-title').textContent = node.label;
-      document.getElementById('inspector-role').textContent = node.role;
-      document.getElementById('inspector-layer-badge').textContent = node.layer.toUpperCase();
-      document.getElementById('inspector-failover').textContent = node.failover;
-      document.getElementById('inspector-file').textContent = node.file;
-
-      const toolsContainer = document.getElementById('inspector-tools');
-      toolsContainer.innerHTML = '';
-      node.tools.forEach(tool => {
-        const span = document.createElement('span');
-        span.className = 'px-2 py-0.5 rounded bg-[var(--muted)] border border-[var(--border)] text-[10px] text-blue-300 font-medium';
-        span.textContent = tool;
-        toolsContainer.appendChild(span);
-      });
-
-      // Highlight SVG node
-      document.querySelectorAll('#arch-svg g[id^="node-"]').forEach(el => {
-        el.style.opacity = '0.35';
-      });
-      const activeEl = document.getElementById('node-' + nodeId);
-      if (activeEl) {
-        activeEl.style.opacity = '1';
       }
     }
 
-    function resetView() {
-      document.querySelectorAll('#arch-svg g[id^="node-"]').forEach(el => {
-        el.style.opacity = '1';
-      });
-      selectNode('master-agent');
+    // Scene Generation: 42-Story Skyscraper Preset
+    function buildSkyscraper() {
+      clearGroup(buildingGroup);
+      
+      // Podium
+      const podGeo = new THREE.BoxGeometry(34, 12, 34);
+      const pod = new THREE.Mesh(podGeo, concreteMat);
+      pod.position.y = 6;
+      pod.castShadow = true;
+      pod.receiveShadow = true;
+      buildingGroup.add(pod);
+
+      // Glass Tower Core
+      const towerGeo = new THREE.BoxGeometry(24, 75, 24);
+      const tower = new THREE.Mesh(towerGeo, glassMat);
+      tower.position.y = 49.5;
+      tower.castShadow = true;
+      buildingGroup.add(tower);
+
+      // Steel Mullion Fins
+      for (let i = -11; i <= 11; i += 3) {
+        const finGeo = new THREE.BoxGeometry(0.3, 75, 0.8);
+        const fin1 = new THREE.Mesh(finGeo, steelMat);
+        fin1.position.set(i, 49.5, 12.4);
+        buildingGroup.add(fin1);
+
+        const fin2 = new THREE.Mesh(finGeo, steelMat);
+        fin2.position.set(i, 49.5, -12.4);
+        buildingGroup.add(fin2);
+      }
+
+      // Architectural Crown / Spire
+      const crownGeo = new THREE.ConeGeometry(8, 16, 4);
+      const crown = new THREE.Mesh(crownGeo, steelMat);
+      crown.position.y = 95;
+      crown.rotation.y = Math.PI / 4;
+      crown.castShadow = true;
+      buildingGroup.add(crown);
     }
 
-    function setChapter(chapNum) {
-      document.querySelectorAll('.chapter-btn').forEach(b => {
-        if (parseInt(b.dataset.chapter) === chapNum) {
-          b.className = 'chapter-btn px-2.5 py-1 rounded-md border border-blue-500 bg-blue-500/10 text-blue-400 font-semibold transition-all';
-        } else {
-          b.className = 'chapter-btn px-2.5 py-1 rounded-md border border-transparent text-[var(--muted-foreground)] hover:bg-[var(--card)] transition-all';
-        }
-      });
+    // Scene Generation: Defense C-UAS Hardened Base Preset
+    function buildDefenseBase() {
+      clearGroup(buildingGroup);
 
-      const allNodes = document.querySelectorAll('#arch-svg g[id^="node-"]');
-      allNodes.forEach(el => el.style.opacity = '0.25');
+      // Hardened Bunker Module
+      const bunkerGeo = new THREE.BoxGeometry(28, 5, 24);
+      const bunker = new THREE.Mesh(bunkerGeo, concreteMat);
+      bunker.position.y = 2.5;
+      bunker.castShadow = true;
+      bunker.receiveShadow = true;
+      buildingGroup.add(bunker);
 
-      const focusNodes = {
-        0: Object.keys(archifyIR.nodes),
-        1: ['ingest-fleet', 'normalizer', 'bigquery-lake'],
-        2: ['geodesic-math', 'mcp-server'],
-        3: ['anomaly-cartridges', 'dispatcher', 'synaptic-memory'],
-        4: ['agentshield', 'master-agent', 'cesium-console', 'webrtc-agent'],
-        5: ['bigquery-lake', 'synaptic-memory', 'master-agent']
+      // Reinforced Blast Wall Perimeter
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x3d4653, roughness: 0.9 });
+      for (let side of [-18, 18]) {
+        const wallX = new THREE.BoxGeometry(44, 4.5, 1.2);
+        const wX = new THREE.Mesh(wallX, wallMat);
+        wX.position.set(0, 2.25, side);
+        wX.castShadow = true;
+        buildingGroup.add(wX);
+
+        const wallZ = new THREE.BoxGeometry(1.2, 4.5, 36);
+        const wZ = new THREE.Mesh(wallZ, wallMat);
+        wZ.position.set(side, 2.25, 0);
+        wZ.castShadow = true;
+        buildingGroup.add(wZ);
+      }
+
+      // Rooftop AESA Radar Dome
+      const radGeo = new THREE.SphereGeometry(3.5, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const radMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+      const rad = new THREE.Mesh(radGeo, radMat);
+      rad.position.set(0, 5.0, 0);
+      rad.castShadow = true;
+      buildingGroup.add(rad);
+
+      // 4 Low-Cost Interceptor Launch Canisters
+      for (let pos of [[-8, -7], [8, -7], [-8, 7], [8, 7]]) {
+        const podGeo = new THREE.BoxGeometry(2.2, 3.2, 2.2);
+        const pod = new THREE.Mesh(podGeo, steelMat);
+        pod.position.set(pos[0], 6.6, pos[1]);
+        pod.rotation.x = 0.25;
+        pod.castShadow = true;
+        buildingGroup.add(pod);
+      }
+    }
+
+    // Helper: Clear a Three.js Group
+    function clearGroup(grp) {
+      while (grp.children.length > 0) {
+        const obj = grp.children[0];
+        grp.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+      }
+    }
+
+    // Dynamic Zoning Envelope Box
+    let zoningMesh = null;
+    function updateZoningEnvelope() {
+      clearGroup(zoningGroup);
+      if (!document.getElementById('toggle-zoning-envelope').checked) return;
+
+      const w = parseFloat(document.getElementById('slider-lot-width').value);
+      const h = parseFloat(document.getElementById('slider-height').value);
+      const setback = parseFloat(document.getElementById('slider-setback').value);
+      const depth = w * 1.5;
+
+      const envWidth = Math.max(5, w - setback * 2);
+      const envDepth = Math.max(5, depth - setback * 2);
+
+      const envGeo = new THREE.BoxGeometry(envWidth, h, envDepth);
+      zoningMesh = new THREE.Mesh(envGeo, zoningMat);
+      zoningMesh.position.y = h / 2;
+      zoningGroup.add(zoningMesh);
+
+      // Update stat labels
+      document.getElementById('val-lot-dim').textContent = `${w}m × ${depth.toFixed(0)}m (${(w * depth).toFixed(0)}m²)`;
+      document.getElementById('val-max-height').textContent = `${h} m`;
+      document.getElementById('val-setbacks').textContent = `${setback}m / ${(setback*0.6).toFixed(0)}m`;
+
+      const far = parseFloat(document.getElementById('slider-far').value);
+      const maxGFA = (w * depth * far).toFixed(0);
+      document.getElementById('stat-max-gfa').textContent = `${Number(maxGFA).toLocaleString()} m²`;
+      document.getElementById('stat-max-stories').textContent = `${Math.floor(h / 3.5)} Floors`;
+      document.getElementById('stat-occupancy-load').textContent = `${Math.floor(maxGFA / 10).toLocaleString()} Persons`;
+    }
+
+    // Dynamic Counter-UAS Defense Dome
+    let cuasMesh = null;
+    function updateDefenseDome() {
+      clearGroup(defenseGroup);
+      if (!document.getElementById('toggle-cuas-dome').checked) return;
+
+      const r = parseFloat(document.getElementById('slider-cuas-range').value) * 0.08; // visual scale factor
+      const domeGeo = new THREE.SphereGeometry(r, 32, 18, 0, Math.PI * 2, 0, Math.PI / 2);
+      cuasMesh = new THREE.Mesh(domeGeo, cuasDomeMat);
+      cuasMesh.position.y = 0.1;
+      defenseGroup.add(cuasMesh);
+
+      // Interceptor Trajectory Lines
+      if (document.getElementById('toggle-cuas-interceptors').checked) {
+        const points = [];
+        points.push(new THREE.Vector3(0, 6, 0));
+        points.push(new THREE.Vector3(r * 0.7, r * 0.6, -r * 0.5));
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMat = new THREE.LineDashedMaterial({ color: 0x00ff88, dashSize: 2, gapSize: 1 });
+        const line = new THREE.Line(lineGeo, lineMat);
+        line.computeLineDistances();
+        defenseGroup.add(line);
+
+        // Hostile Ingress Vector
+        const threatPts = [
+          new THREE.Vector3(r * 0.95, r * 0.4, -r * 0.8),
+          new THREE.Vector3(r * 0.7, r * 0.6, -r * 0.5)
+        ];
+        const threatGeo = new THREE.BufferGeometry().setFromPoints(threatPts);
+        const threatMat = new THREE.LineBasicMaterial({ color: 0xff3366, linewidth: 2 });
+        const threatLine = new THREE.Line(threatGeo, threatMat);
+        defenseGroup.add(threatLine);
+      }
+    }
+
+    // Solar Sun Azimuth Calculator
+    function updateSolarPosition() {
+      const time = parseFloat(document.getElementById('slider-solar-time').value);
+      const season = parseInt(document.getElementById('slider-season').value);
+      
+      const hr = Math.floor(time);
+      const min = Math.round((time - hr) * 60);
+      document.getElementById('val-solar-time').textContent = `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+
+      // Convert solar time to azimuth angle
+      const solarAngle = ((time - 6) / 12) * Math.PI; // 0 at 6am, PI at 6pm
+      const elevation = Math.sin(solarAngle) * (0.6 + season * 0.03);
+
+      const rad = 130;
+      sunLight.position.x = Math.cos(solarAngle) * rad;
+      sunLight.position.y = Math.max(10, elevation * rad);
+      sunLight.position.z = Math.sin(solarAngle) * 60;
+
+      // Adjust sky ambient warmth
+      if (time < 8 || time > 16.5) {
+        sunLight.color.setHex(0xffaa55); // Golden hour
+      } else {
+        sunLight.color.setHex(0xfff8ee);
+      }
+    }
+
+    // Event Listeners for Controls
+    document.getElementById('slider-lot-width').addEventListener('input', updateZoningEnvelope);
+    document.getElementById('slider-far').addEventListener('input', (e) => {
+      document.getElementById('val-far').textContent = `${e.target.value} FAR`;
+      updateZoningEnvelope();
+    });
+    document.getElementById('slider-height').addEventListener('input', updateZoningEnvelope);
+    document.getElementById('slider-setback').addEventListener('input', updateZoningEnvelope);
+    document.getElementById('toggle-zoning-envelope').addEventListener('change', updateZoningEnvelope);
+
+    document.getElementById('slider-solar-time').addEventListener('input', updateSolarPosition);
+    document.getElementById('slider-season').addEventListener('input', updateSolarPosition);
+
+    document.getElementById('slider-cuas-range').addEventListener('input', (e) => {
+      document.getElementById('val-cuas-range').textContent = `${e.target.value} m`;
+      updateDefenseDome();
+    });
+    document.getElementById('toggle-cuas-dome').addEventListener('change', updateDefenseDome);
+    document.getElementById('toggle-cuas-interceptors').addEventListener('change', updateDefenseDome);
+
+    // Preset Buttons
+    document.getElementById('preset-residence').addEventListener('click', () => {
+      buildVilla();
+      camera.position.set(40, 30, 50);
+      controls.target.set(0, 5, 0);
+    });
+    document.getElementById('preset-tower').addEventListener('click', () => {
+      buildSkyscraper();
+      camera.position.set(70, 70, 90);
+      controls.target.set(0, 45, 0);
+    });
+    document.getElementById('preset-defense').addEventListener('click', () => {
+      buildDefenseBase();
+      camera.position.set(45, 25, 45);
+      controls.target.set(0, 3, 0);
+    });
+    document.getElementById('preset-factory').addEventListener('click', () => {
+      buildDefenseBase();
+    });
+
+    // Camera Navigation Buttons
+    document.getElementById('btn-camera-top').addEventListener('click', () => {
+      camera.position.set(0, 140, 0.01);
+      controls.target.set(0, 0, 0);
+    });
+    document.getElementById('btn-camera-elevation').addEventListener('click', () => {
+      camera.position.set(0, 20, 110);
+      controls.target.set(0, 20, 0);
+    });
+    document.getElementById('btn-camera-pedestrian').addEventListener('click', () => {
+      camera.position.set(0, 1.7, 35);
+      controls.target.set(0, 1.7, 0);
+    });
+    document.getElementById('btn-camera-perspective').addEventListener('click', () => {
+      camera.position.set(50, 40, 60);
+      controls.target.set(0, 10, 0);
+    });
+
+    document.getElementById('btn-toggle-grid').addEventListener('click', () => {
+      gridHelper.visible = !gridHelper.visible;
+      document.getElementById('btn-toggle-grid').classList.toggle('text-cyan-300');
+    });
+
+    // Drag and Drop glTF / OBJ File Upload
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const contents = evt.target.result;
+        const loader = new THREE.GLTFLoader();
+        loader.parse(contents, '', (gltf) => {
+          clearGroup(buildingGroup);
+          buildingGroup.add(gltf.scene);
+          gltf.scene.traverse((node) => {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true;
+            }
+          });
+        });
       };
+      reader.readAsArrayBuffer(file);
+    });
 
-      (focusNodes[chapNum] || []).forEach(id => {
-        const el = document.getElementById('node-' + id);
-        if (el) el.style.opacity = '1';
-      });
+    // Simulation Trigger
+    document.getElementById('btn-simulate-intercept').addEventListener('click', () => {
+      alert("C-UAS KINETIC INTERCEPT SIMULATION:\n• Radar acquisition at 1,180m\n• Ingress speed: 45 m/s (low altitude 25m AGL)\n• Autonomous Interceptor #2 launched from Pod A\n• Calculated Intercept: T+6.4s at coordinates (+85m, +35m AGL)\n• Estimated Defeat: 100% Kinetic Neutralization");
+    });
 
-      const firstId = (focusNodes[chapNum] || [])[0];
-      if (firstId) selectNode(firstId);
+    // Window Resize Handler
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // Initial Scene Setup
+    buildVilla();
+    updateZoningEnvelope();
+    updateDefenseDome();
+    updateSolarPosition();
+
+    // Render Loop with FPS Monitor
+    let lastTime = performance.now();
+    let frameCount = 0;
+    const fpsEl = document.getElementById('fps-counter');
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      // FPS Calculation
+      frameCount++;
+      if (time - lastTime >= 1000) {
+        fpsEl.textContent = frameCount;
+        frameCount = 0;
+        lastTime = time;
+      }
+
+      renderer.render(scene, camera);
     }
-
-    function switchView(mode) {
-      ['diagram', 'ir', 'matrix'].forEach(m => {
-        const viewEl = document.getElementById(`view-${m}`);
-        const btnEl = document.getElementById(`btn-tab-${m}`);
-        if (m === mode) {
-          viewEl.classList.remove('hidden');
-          btnEl.className = 'px-3 py-1.5 rounded-md font-medium bg-[var(--card)] shadow-xs text-[var(--foreground)] border border-[var(--border)]';
-        } else {
-          viewEl.classList.add('hidden');
-          btnEl.className = 'px-3 py-1.5 rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
-        }
-      });
-    }
-
-    function copyIR() {
-      navigator.clipboard.writeText(JSON.stringify(archifyIR, null, 2));
-      alert('Archify IR JSON schema copied to clipboard!');
-    }
-
-    // Default select on page load
-    selectNode('master-agent');
+    animate(performance.now());
   </script>
 </body>
 </html>

@@ -7857,6 +7857,7 @@ export default defineConfig(({ mode }) => {
           'mission-control': path.resolve(__dirname, 'mission-control.html'),
           'globe-lite': path.resolve(__dirname, 'globe-lite.html'),
           architecture: path.resolve(__dirname, 'architecture.html'),
+          'system-architecture': path.resolve(__dirname, 'system-architecture.html'),
         },
       },
     },

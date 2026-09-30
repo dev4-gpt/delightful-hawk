@@ -134,10 +134,21 @@ async function init() {
       },
     });
 
-    // Enforce sun-independent daylight reconnaissance illumination
-    viewer.scene.globe.enableLighting = false;
-    viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date('2026-06-21T12:00:00Z'));
-    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0b1d3a');
+    // Dynamic solar ephemeris & daylight illumination
+    viewer.scene.globe.enableLighting = true;
+    viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date());
+    viewer.clock.clockRange = Cesium.ClockRange.UNBOUNDED;
+    viewer.clock.multiplier = 1.0;
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#081220');
+
+    // Cascaded Directional Shadows with PCF Soft Penumbras
+    viewer.shadows = true;
+    if (viewer.scene.shadowMap) {
+      viewer.scene.shadowMap.enabled = true;
+      viewer.scene.shadowMap.softShadows = true;
+      viewer.scene.shadowMap.size = 2048;
+      viewer.scene.shadowMap.darkness = 0.55;
+    }
 
     // Cap the default render loop at 60 fps. Cesium's loop otherwise runs at
     // the display's refresh rate — 120 Hz on ProMotion panels — doubling GPU
@@ -152,9 +163,9 @@ async function init() {
     const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
     viewer.resolutionScale = Math.min(dpr, 2.0);
 
-    // Architectural Standoff Floor: Set minimum zoom distance to 25m so operators can zoom
-    // down to street level, 3D buildings, CCTV sensors, and ground Gaussian splats without clipping.
-    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 25;
+    // Architectural & Pedestrian Standoff: Allow camera descent to human eye level (1.7m)
+    // so operators and architects can inspect street level, building entrances, and sensors without clipping.
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 1.7;
 
     // Sharpen fallback base globe elevation & textures
     viewer.scene.globe.maximumScreenSpaceError = 1.33;
@@ -180,6 +191,29 @@ async function init() {
     // Enable hardware Fast Approximate Anti-Aliasing (FXAA) to eliminate stair-stepping on building silhouettes
     if (viewer.scene.postProcessStages?.fxaa) {
       viewer.scene.postProcessStages.fxaa.enabled = true;
+    }
+
+    // Cinematic Horizon-Based Ambient Occlusion (HBAO) for Tactile Crevice & Ground Contact Shadows
+    if (viewer.scene.postProcessStages?.ambientOcclusion) {
+      const ao = viewer.scene.postProcessStages.ambientOcclusion;
+      ao.enabled = true;
+      ao.uniforms.ambientOcclusionOnly = false;
+      ao.uniforms.intensity = 3.5;
+      ao.uniforms.bias = 0.1;
+      ao.uniforms.lengthCap = 0.035;
+      ao.uniforms.stepCount = 32;
+      ao.uniforms.directionCount = 16;
+    }
+
+    // Calibrated cinematic bloom for specular architectural glass highlights
+    if (viewer.scene.postProcessStages?.bloom) {
+      const bloom = viewer.scene.postProcessStages.bloom;
+      bloom.enabled = true;
+      bloom.uniforms.contrast = 128;
+      bloom.uniforms.brightness = -0.3;
+      bloom.uniforms.delta = 1.0;
+      bloom.uniforms.sigma = 2.0;
+      bloom.uniforms.stepSize = 1.0;
     }
 
     loaderStatus.textContent = googleApiKey || cesiumToken
