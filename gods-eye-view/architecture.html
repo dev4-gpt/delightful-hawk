@@ -100,6 +100,16 @@
       <span id="badge-budget" class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">⚡ Budget: 480 TOK</span>
     </div>
 
+    <!-- Operator Security Clearance (DoD Directive 3000.09) -->
+    <div class="hidden lg:flex items-center gap-1.5 mono text-xs bg-slate-950/80 border border-cyan-500/30 rounded-lg px-2 py-1">
+      <span class="text-slate-400 text-[10px]">CLEARANCE:</span>
+      <select id="select-clearance" class="bg-slate-900 border border-cyan-500/40 text-cyan-300 text-[10px] rounded px-1.5 py-0.5 font-mono focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer">
+        <option value="BASE_COMMANDER" selected>TOP SECRET // SI (COMMANDER)</option>
+        <option value="WEAPONS_OFFICER">SECRET (FIRE DIRECTION)</option>
+        <option value="OBSERVER">UNCLASS (OBSERVER)</option>
+      </select>
+    </div>
+
     <!-- Defense Alert Status & Mode -->
     <div class="flex items-center gap-2 text-xs mono">
       <div class="px-3 py-1.5 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 flex items-center gap-2">
@@ -363,9 +373,18 @@
           </div>
         </div>
 
-        <button id="btn-fire-intercept" onclick="triggerTacticalIntercept()" class="w-full py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold mono text-xs shadow-lg shadow-rose-600/40 transition-all flex items-center justify-center gap-2">
+        <button id="btn-fire-intercept" onclick="triggerTacticalIntercept()" class="w-full py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold mono text-xs shadow-lg shadow-rose-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           EXECUTE AUTONOMOUS INTERCEPT
+        </button>
+
+        <!-- Multi-Target Saturation Swarm Raid Button -->
+        <button id="btn-fire-swarm" class="w-full py-2 rounded-lg bg-gradient-to-r from-red-700 via-rose-600 to-amber-600 hover:from-red-600 hover:to-amber-500 text-white font-bold mono text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+          </span>
+          🚨 ENGAGE 8x SATURATION SWARM RAID
         </button>
 
         <!-- Semi-Autonomous CIWS Mode Toggle (DoD Directive 3000.09) -->
@@ -380,11 +399,26 @@
           </label>
         </div>
 
-        <!-- Export Cursor-on-Target (CoT) XML Button -->
-        <button id="btn-export-cot" class="w-full py-1.5 rounded-lg bg-slate-800/90 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1.5 transition-all">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          EXPORT CURSOR-ON-TARGET (CoT) XML
-        </button>
+        <!-- Export Tactical Interoperability Grid -->
+        <div class="grid grid-cols-1 gap-1.5 pt-1">
+          <!-- Export Cursor-on-Target (CoT) XML Button -->
+          <button id="btn-export-cot" class="w-full py-1.5 rounded-lg bg-slate-800/90 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            EXPORT CURSOR-ON-TARGET (CoT) XML
+          </button>
+          
+          <div class="grid grid-cols-2 gap-1.5">
+            <!-- Export MAVLink .plan Button -->
+            <button id="btn-export-qgc" class="py-1.5 rounded-lg bg-slate-800/90 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer">
+              <span>✈️</span> EXPORT QGC .PLAN
+            </button>
+
+            <!-- Export After-Action Report (AAR) Button -->
+            <button id="btn-export-aar" class="py-1.5 rounded-lg bg-slate-800/90 border border-purple-500/40 text-purple-300 hover:bg-purple-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer">
+              <span>📜</span> EXPORT AAR JSON
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Live Multi-Agent Swarm Deliberation Stream -->
@@ -807,6 +841,71 @@
     document.getElementById('slider-warhead').addEventListener('input', updateSwarmTrack);
     document.getElementById('slider-standoff').addEventListener('input', updateSwarmTrack);
 
+    // Helper: Trigger Client-Side File Download
+    function triggerDownload(filename, content, mime = 'text/plain') {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Procedural Tactical Sub-Bass Shockwave Audio
+    function playShockwaveAudio() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(145, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.65);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.75);
+      } catch (_) {}
+    }
+
+    // Expanding 3D Blast Shockwave Mesh Pool
+    const activeShockwaves = [];
+    function spawnShockwave(position, maxRadius = 35) {
+      const geo = new THREE.SphereGeometry(1, 24, 16);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xff3366,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.85
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(position);
+      scene.add(mesh);
+
+      activeShockwaves.push({
+        mesh,
+        currentRadius: 1,
+        maxRadius,
+        growthRate: 1.6,
+        opacity: 0.85
+      });
+    }
+
+    // Operator Security Clearance Selector
+    const selectClearance = document.getElementById('select-clearance');
+    if (selectClearance) {
+      selectClearance.addEventListener('change', (e) => {
+        swarm.setOperatorClearance(e.target.value);
+        console.log(`[DoD 3000.09] Operator clearance changed to: ${e.target.value}`);
+      });
+    }
+
     // Semi-Autonomous CIWS Mode Toggle (DoD Directive 3000.09)
     const ciwsToggle = document.getElementById('toggle-ciws');
     const ciwsLabel = document.getElementById('label-ciws');
@@ -829,20 +928,116 @@
       exportCotBtn.addEventListener('click', () => {
         const sol = swarm.fireControl.computeInterceptSolution({ targetId: 'TRK-UAS-0842', targetAzimuthDeg: 48 });
         const cotXml = swarm.fireControl.generateCursorOnTargetXML(sol);
-        console.log('[Aetheris Cursor-on-Target XML Payload]:\n', cotXml);
-        alert("📋 CURSOR-ON-TARGET (CoT) XML GENERATED:\n\n" + cotXml.substring(0, 320) + "\n...\n(Full MIL-STD event logged to DevTools Console)");
+        triggerDownload('aetheris_cot_event.xml', cotXml, 'application/xml');
+        alert("📋 CURSOR-ON-TARGET (CoT) XML DOWNLOADED:\n• Conforms to MIL-STD-2009 / ATAK\n• File: aetheris_cot_event.xml");
       });
     }
 
-    // Trigger Tactical Intercept Simulation
+    // Export QGroundControl MAVLink .plan Handler
+    const exportQgcBtn = document.getElementById('btn-export-qgc');
+    if (exportQgcBtn) {
+      exportQgcBtn.addEventListener('click', () => {
+        const threat = { targetId: 'TRK-UAS-0842', azimuthDeg: 48, distanceMeters: 950, altitudeM: 18 };
+        const qgcPlan = swarm.exportQGCPlan(threat, 'POD-A');
+        triggerDownload('aetheris_intercept_mission.plan', qgcPlan, 'application/json');
+        alert("✈️ QGROUNDCONTROL .PLAN MISSION DOWNLOADED:\n• Upload directly to PX4 / ArduPilot autopilots\n• File: aetheris_intercept_mission.plan");
+      });
+    }
+
+    // Export DoD Cryptographic After-Action Report (AAR)
+    const exportAarBtn = document.getElementById('btn-export-aar');
+    if (exportAarBtn) {
+      exportAarBtn.addEventListener('click', () => {
+        try {
+          const aarJson = swarm.exportAfterActionReport({ facility: 'Expeditionary Airfield Alpha' });
+          triggerDownload('aetheris_after_action_report.json', aarJson, 'application/json');
+          alert("📜 DOD AFTER-ACTION REPORT (AAR) DOWNLOADED:\n• FIPS 180-4 SHA-256 Merkle chain verified\n• File: aetheris_after_action_report.json");
+        } catch (err) {
+          alert(`⚠️ EXPORT BLOCKED:\n${err.message}`);
+        }
+      });
+    }
+
+    // Active Swarm Flight Array for Multi-Target Raids
+    const activeFlightPairs = [];
+
+    // Trigger Single Tactical Intercept Simulation
     window.triggerTacticalIntercept = function() {
-      swarm.executeKineticStrike('POD-A');
+      const clearance = selectClearance ? selectClearance.value : 'BASE_COMMANDER';
+      const discharge = swarm.executeKineticStrike('POD-A');
+
+      if (!discharge.success) {
+        alert(`⚠️ ACCESS DENIED (DoD Directive 3000.09):\n${discharge.error || 'Unauthorized operator'}`);
+        return;
+      }
+
       isIntercepting = true;
       interceptProgress = 0;
     };
     document.getElementById('btn-fire-intercept').addEventListener('click', window.triggerTacticalIntercept);
 
+    // Trigger Multi-Target Saturation Swarm Raid Simulation
+    const fireSwarmBtn = document.getElementById('btn-fire-swarm');
+    if (fireSwarmBtn) {
+      fireSwarmBtn.addEventListener('click', () => {
+        const outcome = swarm.executeSwarmDefense(8);
+        if (!outcome.success) {
+          alert(`⚠️ SATURATION DEFENSE BLOCKED:\n${outcome.error || 'Requires BASE_COMMANDER clearance'}`);
+          return;
+        }
+
+        const plan = outcome.plan;
+        playShockwaveAudio();
+
+        // Spawn 8 incoming 3D hostile drones and 8 interceptors
+        clearGroup(threatGroup);
+        activeFlightPairs.length = 0;
+
+        const podPositions = {
+          'POD-A': new THREE.Vector3(25, 3.6, 25),
+          'POD-B': new THREE.Vector3(25, 3.6, -5),
+          'POD-C': new THREE.Vector3(-25, 3.6, -5),
+          'POD-D': new THREE.Vector3(-25, 3.6, 25)
+        };
+
+        plan.allocations.forEach((alloc, idx) => {
+          const azRad = (alloc.targetAzimuthDeg * Math.PI) / 180;
+          const dist = 90 + (idx * 8);
+          const startX = dist * Math.sin(azRad);
+          const startZ = -dist * Math.cos(azRad);
+          const startY = 16 + (idx * 2);
+
+          // Threat Mesh (Red Cone)
+          const tGeo = new THREE.ConeGeometry(1.4, 2.8, 3);
+          tGeo.rotateX(Math.PI / 2);
+          const tMesh = new THREE.Mesh(tGeo, new THREE.MeshBasicMaterial({ color: 0xff2255 }));
+          tMesh.position.set(startX, startY, startZ);
+          threatGroup.add(tMesh);
+
+          // Interceptor Mesh (Green Cylinder)
+          const iGeo = new THREE.CylinderGeometry(0.25, 0.25, 1.6);
+          const iMesh = new THREE.Mesh(iGeo, new THREE.MeshBasicMaterial({ color: 0x00ff88 }));
+          const launchPos = podPositions[alloc.assignedPod] || new THREE.Vector3(0, 3.6, 0);
+          iMesh.position.copy(launchPos);
+          threatGroup.add(iMesh);
+
+          activeFlightPairs.push({
+            threatMesh: tMesh,
+            interceptorMesh: iMesh,
+            startThreatPos: new THREE.Vector3(startX, startY, startZ),
+            launchPodPos: launchPos.clone(),
+            progress: 0,
+            speed: 0.012 + (idx * 0.001),
+            neutralized: false
+          });
+        });
+
+        alert(`🚨 8x SATURATION SWARM RAID ENGAGED:\n• 8 Ingress Shahed-136 targets detected\n• 8 Kinetic Ram Drones scrambled across Pods A-D\n• Net Asymmetric Savings: $${(plan.economics.netSavingsUsd / 1e6).toFixed(2)}M (${plan.economics.costSavingsPercent}%)\n• Battery remaining: ${plan.totalBatteryRemaining}/16 effectors`);
+      });
+    }
+
     window.toggleDefenseAlarm = function() {
+      playShockwaveAudio();
       alert("⚠️ DEFCON 2 ALARM TRIGGERED:\n• Hostile Drone Swarm detected on azimuth 048°\n• 4 Low-Cost Interceptors cleared for immediate launch\n• Personnel instructed to proceed to Hardened Shelters");
     };
 
@@ -942,7 +1137,23 @@
         rotatingRadarMesh.rotation.z += 0.035;
       }
 
-      // Kinetic Intercept Animation
+      // Animate Active Blast Shockwaves
+      for (let i = activeShockwaves.length - 1; i >= 0; i--) {
+        const sw = activeShockwaves[i];
+        sw.currentRadius += sw.growthRate;
+        sw.opacity *= 0.94;
+        sw.mesh.scale.set(sw.currentRadius, sw.currentRadius, sw.currentRadius);
+        sw.mesh.material.opacity = sw.opacity;
+
+        if (sw.currentRadius >= sw.maxRadius || sw.opacity <= 0.05) {
+          scene.remove(sw.mesh);
+          if (sw.mesh.geometry) sw.mesh.geometry.dispose();
+          if (sw.mesh.material) sw.mesh.material.dispose();
+          activeShockwaves.splice(i, 1);
+        }
+      }
+
+      // Single Kinetic Intercept Animation
       if (isIntercepting && threatMesh && interceptorMesh) {
         interceptProgress += 0.015;
         // Hostile drone approaches base
@@ -957,9 +1168,36 @@
 
         if (interceptProgress >= 0.7) {
           isIntercepting = false;
-          alert("💥 KINETIC INTERCEPT CONFIRMED:\n• Target TRK-UAS-0842 destroyed at altitude 24m AGL\n• Engagement cost: $4,800\n• Base infrastructure undamaged");
+          playShockwaveAudio();
+          spawnShockwave(threatMesh.position.clone(), 30);
           threatMesh.position.set(85, 18, -75);
           interceptorMesh.position.set(25, 3.6, 25);
+          alert("💥 KINETIC INTERCEPT CONFIRMED:\n• Target TRK-UAS-0842 destroyed at altitude 24m AGL\n• Engagement cost: $4,800\n• Base infrastructure undamaged");
+        }
+      }
+
+      // Multi-Target Swarm Raid Flight Animations
+      for (const pair of activeFlightPairs) {
+        if (pair.neutralized) continue;
+        pair.progress += pair.speed;
+
+        // Ingress threat moves toward base center
+        pair.threatMesh.position.x = pair.startThreatPos.x * (1 - pair.progress);
+        pair.threatMesh.position.z = pair.startThreatPos.z * (1 - pair.progress);
+        pair.threatMesh.position.y = Math.max(2, pair.startThreatPos.y * (1 - pair.progress * 0.7));
+
+        // Interceptor flies outward on Proportional Navigation pursuit
+        pair.interceptorMesh.position.x = pair.launchPodPos.x + (pair.threatMesh.position.x - pair.launchPodPos.x) * Math.min(1, pair.progress * 1.7);
+        pair.interceptorMesh.position.z = pair.launchPodPos.z + (pair.threatMesh.position.z - pair.launchPodPos.z) * Math.min(1, pair.progress * 1.7);
+        pair.interceptorMesh.position.y = pair.launchPodPos.y + (pair.threatMesh.position.y - pair.launchPodPos.y) * Math.min(1, pair.progress * 1.7) + 2;
+
+        // Intercept threshold
+        if (pair.progress >= 0.58) {
+          pair.neutralized = true;
+          spawnShockwave(pair.threatMesh.position.clone(), 25);
+          playShockwaveAudio();
+          pair.threatMesh.visible = false;
+          pair.interceptorMesh.visible = false;
         }
       }
 

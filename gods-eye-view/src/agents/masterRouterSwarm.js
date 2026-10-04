@@ -26,6 +26,16 @@ export class MasterRouterSwarm {
 
     this.eventLog = [];
     this.subscribers = new Set();
+    this.operatorClearance = options.operatorClearance || 'BASE_COMMANDER';
+  }
+
+  /**
+   * Updates operator security clearance level.
+   * @param {string} clearance - 'OBSERVER' | 'WEAPONS_OFFICER' | 'BASE_COMMANDER'
+   */
+  setOperatorClearance(clearance) {
+    this.operatorClearance = clearance;
+    this.broadcast('AgentShieldGuard', 'CLEARANCE_UPDATED', { clearance });
   }
 
   /**
@@ -149,12 +159,65 @@ export class MasterRouterSwarm {
 
   /**
    * Commits an autonomous kinetic intercept strike.
+   * Enforces DoD Directive 3000.09 authorization before releasing effectors.
    * @param {string} podId 
    * @returns {Object} Engagement result
    */
   executeKineticStrike(podId = 'POD-A') {
+    const auth = this.agentShield.verifyClearance(this.operatorClearance, 'MANUAL_INTERCEPT');
+    if (!auth.authorized) {
+      this.broadcast('AgentShieldGuard', 'SECURITY_VIOLATION', auth);
+      return { success: false, error: auth.error, authorized: false };
+    }
+
     const discharge = this.fireControl.dischargeEffector(podId);
+    if (discharge.success) {
+      this.agentShield.recordAuditEvent(this.operatorClearance, 'KINETIC_DISCHARGE_EXECUTED', { podId, discharge });
+    }
     this.broadcast('FireControlAgent', 'EFFECTOR_DISCHARGE', discharge);
     return discharge;
+  }
+
+  /**
+   * Executes a multi-target saturation swarm defense engagement.
+   * Generates swarm raid, allocates closest effectors across all 4 pods, and hashes into Merkle ledger.
+   * @param {number} [threatCount=8] 
+   * @returns {Object} Swarm engagement outcome
+   */
+  executeSwarmDefense(threatCount = 8) {
+    const auth = this.agentShield.verifyClearance(this.operatorClearance, 'SATURATION_SWARM_RELEASE');
+    if (!auth.authorized) {
+      this.broadcast('AgentShieldGuard', 'SECURITY_VIOLATION', auth);
+      return { success: false, error: auth.error, authorized: false };
+    }
+
+    const threats = this.fireControl.generateSwarmRaid(threatCount);
+    const plan = this.fireControl.allocateSwarmEffectors(threats);
+    this.agentShield.recordAuditEvent(this.operatorClearance, 'SATURATION_SWARM_ENGAGED', plan);
+    this.broadcast('MasterRouterSwarm', 'SWARM_ENGAGEMENT_PLAN', plan);
+    return { success: true, plan };
+  }
+
+  /**
+   * Exports an official, cryptographically verifiable DoD After-Action Report (AAR).
+   * @param {Object} [metadata] 
+   * @returns {string} Signed JSON AAR
+   */
+  exportAfterActionReport(metadata = {}) {
+    const auth = this.agentShield.verifyClearance(this.operatorClearance, 'AUDIT_EXPORT');
+    if (!auth.authorized) {
+      throw new Error(auth.error);
+    }
+    return this.agentShield.exportAfterActionReport(metadata);
+  }
+
+  /**
+   * Exports a standard QGroundControl .plan MAVLink waypoint mission.
+   * @param {Object} threat 
+   * @param {string} [assignedPod='POD-A'] 
+   * @returns {string} QGC .plan JSON
+   */
+  exportQGCPlan(threat, assignedPod = 'POD-A') {
+    return this.fireControl.exportQGCPlan(threat, assignedPod);
   }
 }

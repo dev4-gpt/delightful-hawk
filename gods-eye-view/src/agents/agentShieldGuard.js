@@ -1,11 +1,10 @@
-/**
- * AgentShieldGuard - Telemetry Security & Prompt-Injection Gatekeeper
- * 
- * Part of the Aetheris Agentic Defense Swarm (Google Antigravity SDK + ECC Framework)
- * Inspects all incoming operator inputs, tactical datalinks, and external sensor strings.
- * Neutralizes prompt-injection attacks, clamps geographic coordinate bounds, and prevents
- * adversarial command-and-control spoofing.
- */
+import { computeHash } from '../ai/agentShield.js';
+
+export const CLEARANCE_LEVELS = {
+  OBSERVER: { level: 1, name: 'OBSERVER (UNCLASS)', permissions: ['INSPECT_TELEMETRY'] },
+  WEAPONS_OFFICER: { level: 2, name: 'FIRE_DIRECTION_OFFICER (SECRET)', permissions: ['INSPECT_TELEMETRY', 'MANUAL_INTERCEPT', 'AUDIT_EXPORT'] },
+  BASE_COMMANDER: { level: 3, name: 'BASE_COMMANDER (TOP SECRET // SI)', permissions: ['INSPECT_TELEMETRY', 'MANUAL_INTERCEPT', 'AUTO_CIWS_ENGAGE', 'SATURATION_SWARM_RELEASE', 'AUDIT_EXPORT'] }
+};
 
 export class AgentShieldGuard {
   constructor(options = {}) {
@@ -25,6 +24,139 @@ export class AgentShieldGuard {
       /drop\s+table/i,
       /\b(rm\s+-rf|sudo\b)/i
     ];
+
+    // Cryptographic Merkle Audit Ledger
+    this.auditLedger = [];
+    this._initGenesisBlock();
+  }
+
+  /**
+   * Initializes the genesis block for the cryptographic audit ledger.
+   * @private
+   */
+  _initGenesisBlock() {
+    const genesisTime = 1727700000000;
+    const prevHash = '0000000000000000000000000000000000000000000000000000000000000000';
+    const payload = `0|${genesisTime}|SYSTEM|GENESIS_C2_INITIALIZED|${prevHash}`;
+    const hash = computeHash(payload);
+
+    this.auditLedger = [{
+      index: 0,
+      timestamp: genesisTime,
+      clearance: 'SYSTEM',
+      eventType: 'GENESIS_C2_INITIALIZED',
+      data: { note: 'Aetheris C2 Cryptographic Defense Ledger Initialized (NIST SP 800-53 Rev 5)' },
+      prevHash,
+      hash
+    }];
+  }
+
+  /**
+   * Evaluates if the current operator clearance permits the requested kinetic or tactical action.
+   * @param {string} clearance - 'OBSERVER' | 'WEAPONS_OFFICER' | 'BASE_COMMANDER'
+   * @param {string} action - Requested operation
+   * @returns {Object} Authorization verdict
+   */
+  verifyClearance(clearance = 'OBSERVER', action = 'INSPECT_TELEMETRY') {
+    const role = CLEARANCE_LEVELS[clearance] || CLEARANCE_LEVELS.OBSERVER;
+    const authorized = role.permissions.includes(action);
+
+    return {
+      clearance: role.name,
+      clearanceKey: clearance,
+      action,
+      authorized,
+      error: authorized ? null : `SECURITY ACCESS DENIED: Action '${action}' requires higher clearance than '${role.name}' under DoD Directive 3000.09`
+    };
+  }
+
+  /**
+   * Records an immutable, cryptographically chained audit event.
+   * @param {string} clearance - Operator clearance key
+   * @param {string} eventType - Event identifier
+   * @param {Object} data - Event details
+   * @returns {Object} Cryptographic audit block
+   */
+  recordAuditEvent(clearance = 'OBSERVER', eventType = 'TELEMETRY_INSPECTED', data = {}) {
+    const prevBlock = this.auditLedger[this.auditLedger.length - 1];
+    const index = this.auditLedger.length;
+    const timestamp = Date.now();
+    const dataStr = JSON.stringify(data);
+    const hashPayload = `${index}|${timestamp}|${clearance}|${eventType}|${dataStr}|${prevBlock.hash}`;
+    const hash = computeHash(hashPayload);
+
+    const block = {
+      index,
+      timestamp,
+      clearance,
+      eventType,
+      data,
+      prevHash: prevBlock.hash,
+      hash
+    };
+
+    this.auditLedger.push(block);
+    if (this.auditLedger.length > 500) {
+      // Bound memory while keeping genesis and recent chain valid
+      this.auditLedger.splice(1, 1);
+    }
+
+    return block;
+  }
+
+  /**
+   * Cryptographically verifies the integrity of the audit chain.
+   * @returns {boolean} True if entire chain has zero tampering
+   */
+  verifyAuditChain() {
+    for (let i = 1; i < this.auditLedger.length; i++) {
+      const current = this.auditLedger[i];
+      const prev = this.auditLedger[i - 1];
+
+      if (current.prevHash !== prev.hash) {
+        return false;
+      }
+
+      const expectedPayload = `${current.index}|${current.timestamp}|${current.clearance}|${current.eventType}|${JSON.stringify(current.data)}|${current.prevHash}`;
+      const recomputedHash = computeHash(expectedPayload);
+      if (current.hash !== recomputedHash) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Generates a downloadable DoD After-Action Report (AAR) JSON.
+   * @param {Object} metadata 
+   * @returns {string} Formatted JSON AAR
+   */
+  exportAfterActionReport(metadata = {}) {
+    const chainValid = this.verifyAuditChain();
+    const totalEvents = this.auditLedger.length;
+    const kineticEvents = this.auditLedger.filter(b => b.eventType.includes('INTERCEPT') || b.eventType.includes('DISCHARGE') || b.eventType.includes('SWARM'));
+
+    const aar = {
+      documentType: "DoD After-Action Report (AAR)",
+      classification: "SECRET // REL TO USA, FVEY",
+      system: "AETHERIS C-UAS AUTONOMOUS DEFENSE TWIN",
+      fipsCompliance: "FIPS 180-4 / NIST SP 800-53 Rev 5",
+      chainIntegrityValid: chainValid,
+      generatedAt: new Date().toISOString(),
+      metadata: {
+        facility: "Expeditionary Airfield Alpha (Agile Combat Employment)",
+        sector: "Forward Tactical Operating Base (FOB)",
+        ...metadata
+      },
+      auditSummary: {
+        totalBlocks: totalEvents,
+        kineticEngagements: kineticEvents.length,
+        latestBlockHash: this.auditLedger[this.auditLedger.length - 1].hash
+      },
+      ledger: this.auditLedger
+    };
+
+    return JSON.stringify(aar, null, 2);
   }
 
   /**

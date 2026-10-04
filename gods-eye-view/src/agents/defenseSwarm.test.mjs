@@ -196,11 +196,104 @@ test('MasterRouterSwarm: executes end-to-end tactical C-UAS deliberation loop', 
   assert.ok(events.length >= 5, 'All 5 agents must emit events');
 });
 
-test('MasterRouterSwarm: executes kinetic intercept strike', () => {
-  const swarm = new MasterRouterSwarm();
+test('MasterRouterSwarm: executes kinetic intercept strike with valid clearance', () => {
+  const swarm = new MasterRouterSwarm({ operatorClearance: 'BASE_COMMANDER' });
   const discharge = swarm.executeKineticStrike('POD-A');
 
   assert.equal(discharge.success, true);
   assert.equal(discharge.podId, 'POD-A');
   assert.equal(discharge.remainingInPod, 3);
 });
+
+// ==========================================
+// 7. TRL 6.5 Improvisation Tests
+// ==========================================
+test('FireControlAgent: generates 8-threat saturation swarm raid and allocates across pods', () => {
+  const agent = new FireControlAgent();
+  const raid = agent.generateSwarmRaid(8, 45);
+
+  assert.equal(raid.length, 8);
+  assert.equal(raid[0].targetId, 'TRK-SWARM-01');
+
+  const outcome = agent.allocateSwarmEffectors(raid);
+  assert.equal(outcome.totalThreats, 8);
+  assert.equal(outcome.interceptedCount, 8);
+  assert.equal(outcome.leakedCount, 0);
+  assert.equal(outcome.totalBatteryRemaining, 8); // 16 - 8 = 8 left
+  assert.ok(outcome.economics.costSavingsPercent > 99.0);
+});
+
+test('FireControlAgent: exports valid QGroundControl .plan MAVLink mission', () => {
+  const agent = new FireControlAgent();
+  const threat = { targetId: 'TRK-UAS-0842', azimuthDeg: 48, distanceMeters: 950, altitudeM: 18 };
+  const rawPlan = agent.exportQGCPlan(threat, 'POD-A');
+  const plan = JSON.parse(rawPlan);
+
+  assert.equal(plan.fileType, 'Plan');
+  assert.equal(plan.version, 1);
+  assert.equal(plan.mission.items.length, 4);
+  assert.equal(plan.mission.items[0].command, 22); // TAKEOFF
+  assert.equal(plan.mission.items[1].command, 16); // WAYPOINT
+  assert.equal(plan.mission.items[2].command, 183); // SERVO RAM RELEASE
+  assert.equal(plan.mission.items[3].command, 20); // RTL
+});
+
+test('AgentShieldGuard: enforces RBAC clearances under DoD Directive 3000.09', () => {
+  const guard = new AgentShieldGuard();
+
+  // Observer cannot launch kinetic intercepts
+  const obsCheck = guard.verifyClearance('OBSERVER', 'MANUAL_INTERCEPT');
+  assert.equal(obsCheck.authorized, false);
+  assert.ok(obsCheck.error.includes('SECURITY ACCESS DENIED'));
+
+  // Weapons Officer can launch manual intercept
+  const wepCheck = guard.verifyClearance('WEAPONS_OFFICER', 'MANUAL_INTERCEPT');
+  assert.equal(wepCheck.authorized, true);
+
+  // Weapons Officer cannot trigger autonomous saturation release without Commander
+  const swarmCheckWep = guard.verifyClearance('WEAPONS_OFFICER', 'SATURATION_SWARM_RELEASE');
+  assert.equal(swarmCheckWep.authorized, false);
+
+  // Commander has full release authority
+  const cmdCheck = guard.verifyClearance('BASE_COMMANDER', 'SATURATION_SWARM_RELEASE');
+  assert.equal(cmdCheck.authorized, true);
+});
+
+test('AgentShieldGuard: builds tamper-evident SHA-256 Merkle audit ledger', () => {
+  const guard = new AgentShieldGuard();
+
+  guard.recordAuditEvent('BASE_COMMANDER', 'TEST_EVENT_ALPHA', { value: 100 });
+  guard.recordAuditEvent('WEAPONS_OFFICER', 'TEST_EVENT_BRAVO', { value: 200 });
+
+  assert.equal(guard.verifyAuditChain(), true, 'Cryptographic chain must be valid');
+
+  // Tamper test: modify past block and verify corruption is caught
+  guard.auditLedger[1].data.value = 999;
+  assert.equal(guard.verifyAuditChain(), false, 'Chain tampering must be detected');
+});
+
+test('MasterRouterSwarm: executes saturation swarm defense and exports signed AAR', () => {
+  const swarm = new MasterRouterSwarm({ operatorClearance: 'BASE_COMMANDER' });
+  const swarmResult = swarm.executeSwarmDefense(8);
+
+  assert.equal(swarmResult.success, true);
+  assert.equal(swarmResult.plan.interceptedCount, 8);
+
+  const rawAar = swarm.exportAfterActionReport({ missionCode: 'COVERT_WATCH' });
+  const aar = JSON.parse(rawAar);
+
+  assert.equal(aar.documentType, 'DoD After-Action Report (AAR)');
+  assert.equal(aar.chainIntegrityValid, true);
+  assert.ok(aar.auditSummary.totalBlocks >= 2);
+  assert.ok(aar.auditSummary.latestBlockHash.length === 64);
+});
+
+test('MasterRouterSwarm: blocks kinetic discharge when operator is OBSERVER', () => {
+  const swarm = new MasterRouterSwarm({ operatorClearance: 'OBSERVER' });
+  const result = swarm.executeKineticStrike('POD-A');
+
+  assert.equal(result.success, false);
+  assert.equal(result.authorized, false);
+  assert.ok(result.error.includes('SECURITY ACCESS DENIED'));
+});
+

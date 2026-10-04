@@ -165,4 +165,175 @@ export class FireControlAgent {
       `</event>`
     ].join('\n');
   }
+
+  /**
+   * Generates a multi-threat saturation raid scenario (e.g. 8x Shahed-136 / FPV UAS).
+   * @param {number} [count=8] - Number of converging threats
+   * @param {number} [baseAzimuth=45] - Central raid axis
+   * @returns {Array<Object>} Ingress threat tracks
+   */
+  generateSwarmRaid(count = 8, baseAzimuth = 45) {
+    const threats = [];
+    const azimuthSpread = 360 / Math.max(1, count);
+
+    for (let i = 0; i < count; i++) {
+      const az = Math.round((baseAzimuth + i * azimuthSpread + (i % 2 === 0 ? 12 : -8)) % 360);
+      const dist = Math.round(850 + (i * 140) + ((i * 37) % 150)); // Staggered 850m - 2000m
+      const speed = Math.round(165 + ((i * 13) % 45)); // 165 - 210 km/h
+      const alt = Math.round(14 + ((i * 7) % 35)); // 14m - 49m nap-of-the-earth
+
+      threats.push({
+        targetId: `TRK-SWARM-${String(i + 1).padStart(2, '0')}`,
+        speedKmh: speed,
+        altitudeM: alt,
+        azimuthDeg: az,
+        distanceMeters: dist,
+        warheadKg: 50,
+        threatClass: 'Shahed-136 Loitering Munition'
+      });
+    }
+
+    return threats;
+  }
+
+  /**
+   * Allocates battery effectors across a multi-target saturation raid.
+   * Employs greedy bipartite matching weighted by Time-to-Impact and angular pod alignment.
+   * @param {Array<Object>} swarmTracks 
+   * @returns {Object} Swarm engagement plan
+   */
+  allocateSwarmEffectors(swarmTracks) {
+    // Sort threats by Time-to-Impact ascending (closest / fastest first)
+    const prioritized = [...swarmTracks].map(t => {
+      const targetSpeedMps = (t.speedKmh || 180) / 3.6;
+      const timeToImpactSeconds = Number(((t.distanceMeters || 1000) / Math.max(10, targetSpeedMps)).toFixed(1));
+      return { ...t, timeToImpactSeconds };
+    }).sort((a, b) => a.timeToImpactSeconds - b.timeToImpactSeconds);
+
+    const allocations = [];
+    let interceptedCount = 0;
+    let leakedCount = 0;
+
+    for (const threat of prioritized) {
+      const podSelection = this.selectOptimalPod(threat.azimuthDeg);
+      if (podSelection.available && podSelection.podId) {
+        // Discharge from battery inventory
+        const discharge = this.dischargeEffector(podSelection.podId);
+        allocations.push({
+          targetId: threat.targetId,
+          targetAzimuthDeg: threat.azimuthDeg,
+          distanceMeters: threat.distanceMeters,
+          timeToImpactSeconds: threat.timeToImpactSeconds,
+          assignedPod: podSelection.podId,
+          assignedSector: podSelection.sector,
+          remainingInPod: discharge.remainingInPod,
+          status: 'INTERCEPT_SCHEDULED'
+        });
+        interceptedCount++;
+      } else {
+        allocations.push({
+          targetId: threat.targetId,
+          targetAzimuthDeg: threat.azimuthDeg,
+          distanceMeters: threat.distanceMeters,
+          timeToImpactSeconds: threat.timeToImpactSeconds,
+          assignedPod: null,
+          assignedSector: null,
+          status: 'LEAKAGE_BATTERY_DEPLETED'
+        });
+        leakedCount++;
+      }
+    }
+
+    const totalPatriotUsd = prioritized.length * this.patriotCostUsd;
+    const totalAetherisUsd = interceptedCount * this.interceptorCostUsd;
+    const costSavingsUsd = totalPatriotUsd - totalAetherisUsd;
+    const costSavingsPercent = Number(((costSavingsUsd / totalPatriotUsd) * 100).toFixed(2));
+
+    let totalBatteryRemaining = 0;
+    for (const p of Object.values(this.battery)) {
+      totalBatteryRemaining += p.count;
+    }
+
+    return {
+      totalThreats: prioritized.length,
+      interceptedCount,
+      leakedCount,
+      totalBatteryRemaining,
+      allocations,
+      economics: {
+        totalPatriotCostUsd: totalPatriotUsd,
+        totalAetherisCostUsd: totalAetherisUsd,
+        netSavingsUsd: costSavingsUsd,
+        costSavingsPercent
+      }
+    };
+  }
+
+  /**
+   * Generates a standard QGroundControl .plan (MAVLink 2.0 waypoint mission)
+   * ready to upload directly to PX4 or ArduPilot kinetic ram-drone autopilots.
+   * @param {Object} threat - Ingress threat state
+   * @param {string} [assignedPod='POD-A'] - Launch pod
+   * @param {Object} [baseCoords] - Base GPS origin { lat, lon, alt }
+   * @returns {string} QGroundControl .plan JSON formatted string
+   */
+  exportQGCPlan(threat, assignedPod = 'POD-A', baseCoords = { lat: 28.4312, lon: 77.0545, alt: 220 }) {
+    const azRad = ((threat.azimuthDeg || 48) * Math.PI) / 180;
+    const distM = threat.distanceMeters || 950;
+    const interceptDistM = distM * 0.45; // Intercept ~45% along ingress vector
+
+    // Geodesic offset calculation
+    const dLat = (interceptDistM * Math.cos(azRad)) / 111320;
+    const dLon = (interceptDistM * Math.sin(azRad)) / (111320 * Math.cos((baseCoords.lat * Math.PI) / 180));
+    const interceptLat = Number((baseCoords.lat + dLat).toFixed(6));
+    const interceptLon = Number((baseCoords.lon + dLon).toFixed(6));
+    const interceptAltM = Math.round((threat.altitudeM || 18) + 12);
+
+    const plan = {
+      fileType: "Plan",
+      version: 1,
+      groundStation: "AETHERIS_DEFENSE_C2",
+      mission: {
+        cruiseSpeed: 77.7, // 280 km/h
+        hoverSpeed: 0,
+        firmwareType: 12, // MAV_AUTOPILOT_PX4
+        vehicleType: 2, // MAV_TYPE_QUADROTOR / FIXED-WING RAM
+        plannedHomePosition: [baseCoords.lat, baseCoords.lon, baseCoords.alt],
+        items: [
+          {
+            autoContinue: true,
+            command: 22, // MAV_CMD_NAV_TAKEOFF
+            frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+            params: [15, 0, 0, null, baseCoords.lat, baseCoords.lon, 45]
+          },
+          {
+            autoContinue: true,
+            command: 16, // MAV_CMD_NAV_WAYPOINT (Kinetic lead intercept point)
+            frame: 3,
+            params: [0, 0, 0, null, interceptLat, interceptLon, interceptAltM]
+          },
+          {
+            autoContinue: true,
+            command: 183, // MAV_CMD_DO_SET_SERVO (Deploy ram / net payload)
+            frame: 2, // MAV_FRAME_MISSION
+            params: [9, 2000, 0, 0, 0, 0, 0]
+          },
+          {
+            autoContinue: true,
+            command: 20, // MAV_CMD_NAV_RETURN_TO_LAUNCH
+            frame: 2,
+            params: [0, 0, 0, 0, 0, 0, 0]
+          }
+        ]
+      },
+      metadata: {
+        callsign: `AETHERIS-RAM-${assignedPod}`,
+        targetId: threat.targetId || 'TRK-UAS-0842',
+        targetAzimuthDeg: threat.azimuthDeg || 48,
+        generatedAt: new Date().toISOString()
+      }
+    };
+
+    return JSON.stringify(plan, null, 2);
+  }
 }
