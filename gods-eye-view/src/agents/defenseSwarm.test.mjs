@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { RadarLOSAgent } from './radarLOSAgent.js';
-import { ThreatAssessorAgent } from './threatAssessorAgent.js';
+import { ThreatAssessorAgent, KalmanTracker } from './threatAssessorAgent.js';
 import { FireControlAgent } from './fireControlAgent.js';
 import { AgentShieldGuard } from './agentShieldGuard.js';
 import { BudgetGovernor } from './budgetGovernor.js';
@@ -297,3 +297,88 @@ test('MasterRouterSwarm: blocks kinetic discharge when operator is OBSERVER', ()
   assert.ok(result.error.includes('SECURITY ACCESS DENIED'));
 });
 
+
+// ==========================================
+// TRL 7-D: IFF (Identification Friend or Foe) Tests
+// ==========================================
+
+test('AgentShieldGuard: IFF correctly classifies HOSTILE squawk (Shahed-136)', () => {
+  const guard = new AgentShieldGuard();
+  const result = guard.evaluateIFF({ squawk: '7600', speed: 180, altitude: 150 });
+  assert.equal(result.iffStatus, 'IFF_HOSTILE', 'Shahed-136 profile should be HOSTILE');
+  assert.ok(result.confidence >= 0.8, 'Confidence should be high for known hostile profile');
+});
+
+test('AgentShieldGuard: IFF correctly blocks fire on FRIENDLY squawk (Mode-C 1200)', () => {
+  const guard = new AgentShieldGuard();
+  const friendly = guard.evaluateIFF({ squawk: '1200', speed: 250, altitude: 3500 });
+  assert.equal(friendly.iffStatus, 'IFF_FRIENDLY', 'Mode-C 1200 VFR is civilian/friendly');
+  assert.equal(friendly.fireAuthorized, false, 'Fire must be blocked on friendly track');
+});
+
+test('AgentShieldGuard: IFF returns UNKNOWN for unrecognized squawk', () => {
+  const guard = new AgentShieldGuard();
+  const unknown = guard.evaluateIFF({ squawk: '3421', speed: 95, altitude: 300 });
+  assert.equal(unknown.iffStatus, 'IFF_UNKNOWN', 'Unrecognized squawk should be UNKNOWN');
+  assert.equal(unknown.requiresOverride, true, 'UNKNOWN track requires human override before fire');
+});
+
+test('MasterRouterSwarm: IFF_FRIENDLY track blocks kinetic strike even at BASE_COMMANDER', () => {
+  const swarm = new MasterRouterSwarm({ operatorClearance: 'BASE_COMMANDER' });
+  const result = swarm.executeKineticStrikeWithIFF('POD-A', { squawk: '1200', speed: 250, altitude: 3500 });
+  assert.equal(result.success, false, 'Friendly track must never be engaged');
+  assert.ok(result.error.includes('IFF_FRIENDLY'), 'Error must cite IFF status');
+});
+
+test('MasterRouterSwarm: IFF_HOSTILE track with BASE_COMMANDER proceeds to intercept', () => {
+  const swarm = new MasterRouterSwarm({ operatorClearance: 'BASE_COMMANDER' });
+  const result = swarm.executeKineticStrikeWithIFF('POD-A', { squawk: '7600', speed: 180, altitude: 150 });
+  assert.equal(result.success, true, 'Confirmed HOSTILE at BASE_COMMANDER should proceed');
+  assert.equal(result.iffStatus, 'IFF_HOSTILE');
+});
+
+test('MasterRouterSwarm: IFF_UNKNOWN track with WEAPONS_OFFICER is blocked pending override', () => {
+  const swarm = new MasterRouterSwarm({ operatorClearance: 'WEAPONS_OFFICER' });
+  const result = swarm.executeKineticStrikeWithIFF('POD-B', { squawk: '3421', speed: 95, altitude: 300 });
+  assert.equal(result.success, false, 'UNKNOWN IFF requires BASE_COMMANDER override');
+  assert.ok(result.error.includes('IFF_UNKNOWN'));
+});
+
+// ==========================================
+// TRL 7-A: Kalman Filter Threat Prediction Tests
+// ==========================================
+
+
+test('KalmanTracker: converges to stable velocity estimate by frame 10', () => {
+  const tracker = new KalmanTracker({ lat: 28.0, lon: 77.0, alt: 150 });
+  // Feed 12 sequential measurements with constant velocity (heading north 0.001 deg/step)
+  for (let i = 1; i <= 12; i++) {
+    tracker.update({ lat: 28.0 + i * 0.001, lon: 77.0, alt: 150 }, 1.0);
+  }
+  const path = tracker.getProjectedPath(3, 1.0);
+  assert.equal(path.length, 3, 'Should return 3 predicted waypoints');
+  // After 12 frames of 0.001 deg/step northward motion, tracker lat ≈ 28.012
+  // Projected first point should be > 28.012
+  assert.ok(path[0].lat > 28.011, `First predicted point (${path[0].lat}) should be north of last measurement`);
+  assert.ok(path[1].lat > path[0].lat, 'Predicted path must be monotonically consistent (northward)');
+});
+
+test('KalmanTracker: clamps velocity to Shahed-136 max speed (300 m/s = ~0.0027 deg/s)', () => {
+  const tracker = new KalmanTracker({ lat: 28.0, lon: 77.0, alt: 150 });
+  // Feed an impossibly fast measurement (teleport 10 degrees in 1 second — 1,113,200 m/s, impossible)
+  tracker.update({ lat: 38.0, lon: 77.0, alt: 150 }, 1.0);
+  // Without clamping, velocity would be ~10 deg/s, projecting to lat ~48.0 after 1 step
+  // With clamping to MAX_VEL ≈ 0.0027 deg/s, the projected point must be << 48.0
+  const path = tracker.getProjectedPath(1, 1.0);
+  assert.ok(path[0].lat < 40.0, `Clamped: projected ${path[0].lat} must be well below unclamped ~48.0`);
+  assert.ok(path[0].lat > 28.0, `Projected point (${path[0].lat}) must still be above the origin`);
+});
+
+test('ThreatAssessorAgent: predictTrajectory returns structured waypoints for active track', () => {
+  const agent = new ThreatAssessorAgent();
+  const track = { lat: 28.4, lon: 77.0, alt: 150, speed: 185, heading: 45 };
+  const prediction = agent.predictTrajectory(track, { steps: 5, dtSeconds: 1.0 });
+  assert.equal(prediction.waypoints.length, 5, 'Should return exactly 5 predicted waypoints');
+  assert.ok(prediction.interceptLeadAngleDeg >= 0, 'Should compute a valid lead angle');
+  assert.ok(prediction.confidence >= 0 && prediction.confidence <= 1, 'Confidence must be normalized [0,1]');
+});

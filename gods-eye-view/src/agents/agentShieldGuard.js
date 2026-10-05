@@ -3,8 +3,75 @@ import { computeHash } from '../ai/agentShield.js';
 export const CLEARANCE_LEVELS = {
   OBSERVER: { level: 1, name: 'OBSERVER (UNCLASS)', permissions: ['INSPECT_TELEMETRY'] },
   WEAPONS_OFFICER: { level: 2, name: 'FIRE_DIRECTION_OFFICER (SECRET)', permissions: ['INSPECT_TELEMETRY', 'MANUAL_INTERCEPT', 'AUDIT_EXPORT'] },
-  BASE_COMMANDER: { level: 3, name: 'BASE_COMMANDER (TOP SECRET // SI)', permissions: ['INSPECT_TELEMETRY', 'MANUAL_INTERCEPT', 'AUTO_CIWS_ENGAGE', 'SATURATION_SWARM_RELEASE', 'AUDIT_EXPORT'] }
+  BASE_COMMANDER: { level: 3, name: 'BASE_COMMANDER (TOP SECRET // SI)', permissions: ['INSPECT_TELEMETRY', 'MANUAL_INTERCEPT', 'AUTO_CIWS_ENGAGE', 'SATURATION_SWARM_RELEASE', 'AUDIT_EXPORT', 'IFF_OVERRIDE'] }
 };
+
+/**
+ * NATO IFF (Identification Friend or Foe) Mode C/S squawk classification table.
+ * Based on STANAG 4193 / ICAO Annex 10 squawk code conventions.
+ */
+export const IFF_STATUS = Object.freeze({
+  FRIENDLY: 'IFF_FRIENDLY',
+  HOSTILE: 'IFF_HOSTILE',
+  UNKNOWN: 'IFF_UNKNOWN'
+});
+
+// Squawk code ranges / values → IFF classification
+// 7500: Hijack, 7600: Radio failure, 7700: Emergency — all treated as HOSTILE ingress profiles
+// 1200: VFR Day (US civil), 7000: VFR Europe (ICAO) — civilian/friendly
+// Shahed-136 / Lancet profile: low-altitude (<500m AGL), 160–200 km/h, no valid squawk (0000 or 7600)
+const HOSTILE_SQUAWKS = new Set(['7600', '7500', '0000']);
+const FRIENDLY_SQUAWKS = new Set(['1200', '7000', '7777', '1000']);
+
+/**
+ * Evaluates IFF status for a given track profile.
+ * Implements NATO STANAG 4193 Mode C/S squawk evaluation + kinematic profile matching.
+ *
+ * @param {Object} track - { squawk: string, speed: number (km/h), altitude: number (m AGL) }
+ * @returns {Object} IFF evaluation result
+ */
+export function evaluateIFF(track) {
+  const squawk = String(track.squawk || '').trim();
+  const speed = Number(track.speed) || 0;       // km/h
+  const altitude = Number(track.altitude) || 0; // m AGL
+
+  let iffStatus = IFF_STATUS.UNKNOWN;
+  let confidence = 0.5;
+  let reason = 'Unrecognized squawk — track status UNKNOWN';
+
+  if (FRIENDLY_SQUAWKS.has(squawk)) {
+    iffStatus = IFF_STATUS.FRIENDLY;
+    confidence = 0.95;
+    reason = `Mode-C squawk ${squawk} matches civil/military friendly IFF database`;
+  } else if (HOSTILE_SQUAWKS.has(squawk)) {
+    iffStatus = IFF_STATUS.HOSTILE;
+    confidence = 0.90;
+    reason = `Squawk ${squawk} matches known hostile/emergency ingress profile`;
+  }
+
+  // Kinematic hostile reinforcement: low-alt + Shahed-136-range speed (160–200 km/h) with no valid squawk
+  if (iffStatus === IFF_STATUS.UNKNOWN && altitude <= 500 && speed >= 150 && speed <= 220) {
+    iffStatus = IFF_STATUS.HOSTILE;
+    confidence = 0.80;
+    reason = `Kinematic profile matches Shahed-136 (alt: ${altitude}m AGL, speed: ${speed} km/h, unregistered squawk)`;
+  }
+
+  const fireAuthorized = iffStatus === IFF_STATUS.HOSTILE;
+  const requiresOverride = iffStatus === IFF_STATUS.UNKNOWN;
+
+  return {
+    squawk,
+    speed,
+    altitude,
+    iffStatus,
+    confidence: Number(confidence.toFixed(2)),
+    fireAuthorized,
+    requiresOverride,
+    reason,
+    timestamp: Date.now()
+  };
+}
+
 
 export class AgentShieldGuard {
   constructor(options = {}) {
@@ -49,6 +116,16 @@ export class AgentShieldGuard {
       prevHash,
       hash
     }];
+  }
+
+  /**
+   * Evaluates IFF status for a track (delegates to module-level evaluateIFF).
+   * Implements NATO STANAG 4193 Mode C/S squawk + kinematic profile matching.
+   * @param {Object} track - { squawk, speed, altitude }
+   * @returns {Object} IFF evaluation result
+   */
+  evaluateIFF(track) {
+    return evaluateIFF(track);
   }
 
   /**

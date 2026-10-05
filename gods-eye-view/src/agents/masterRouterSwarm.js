@@ -220,4 +220,64 @@ export class MasterRouterSwarm {
   exportQGCPlan(threat, assignedPod = 'POD-A') {
     return this.fireControl.exportQGCPlan(threat, assignedPod);
   }
+
+  /**
+   * Executes a kinetic strike with NATO IFF evaluation gate (DoD Directive 3000.09 §4.c.2).
+   * - IFF_FRIENDLY: ALWAYS blocked, regardless of clearance.
+   * - IFF_HOSTILE: proceeds if operator has MANUAL_INTERCEPT permission.
+   * - IFF_UNKNOWN: blocked unless operator is BASE_COMMANDER with IFF_OVERRIDE permission.
+   *
+   * @param {string} podId - Interceptor pod ID ('POD-A' | 'POD-B' | 'POD-C' | 'POD-D')
+   * @param {Object} track - { squawk: string, speed: number, altitude: number }
+   * @returns {Object} Strike result with IFF status and authorization details
+   */
+  executeKineticStrikeWithIFF(podId = 'POD-A', track = {}) {
+    // 1. Evaluate IFF status
+    const iff = this.agentShield.evaluateIFF(track);
+
+    // 2. FRIENDLY — absolute block, no override possible under any clearance
+    if (iff.iffStatus === 'IFF_FRIENDLY') {
+      this.agentShield.recordAuditEvent(this.operatorClearance, 'IFF_FRIENDLY_FIRE_BLOCKED', {
+        podId, track, iff
+      });
+      this.broadcast('AgentShieldGuard', 'IFF_FRIENDLY_FIRE_BLOCKED', { podId, iff });
+      return {
+        success: false,
+        authorized: false,
+        iffStatus: iff.iffStatus,
+        error: `IFF_FRIENDLY FIRE BLOCKED: Track squawk ${iff.squawk} is classified as FRIENDLY under STANAG 4193. Engagement prohibited by DoD Directive 3000.09 §4.c.2.`,
+        iff
+      };
+    }
+
+    // 3. UNKNOWN — requires BASE_COMMANDER IFF_OVERRIDE permission
+    if (iff.iffStatus === 'IFF_UNKNOWN') {
+      const overrideAuth = this.agentShield.verifyClearance(this.operatorClearance, 'IFF_OVERRIDE');
+      if (!overrideAuth.authorized) {
+        this.agentShield.recordAuditEvent(this.operatorClearance, 'IFF_UNKNOWN_OVERRIDE_DENIED', {
+          podId, track, iff
+        });
+        return {
+          success: false,
+          authorized: false,
+          iffStatus: iff.iffStatus,
+          error: `IFF_UNKNOWN: Track squawk ${iff.squawk} is UNKNOWN. BASE_COMMANDER IFF_OVERRIDE required. Current clearance: ${this.operatorClearance}.`,
+          iff
+        };
+      }
+      // Override granted — log it
+      this.agentShield.recordAuditEvent(this.operatorClearance, 'IFF_UNKNOWN_OVERRIDE_GRANTED', {
+        podId, track, iff
+      });
+    }
+
+    // 4. IFF_HOSTILE (or UNKNOWN + override) — proceed through standard RBAC gate
+    const result = this.executeKineticStrike(podId);
+    return {
+      ...result,
+      iffStatus: iff.iffStatus,
+      iffReason: iff.reason,
+      iffConfidence: iff.confidence
+    };
+  }
 }
