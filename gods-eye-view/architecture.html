@@ -537,23 +537,45 @@
           </label>
         </div>
 
-        <!-- Export Tactical Interoperability Grid -->
+        <!-- Export Tactical Interoperability Grid (TRL 7 Suite) -->
         <div class="grid grid-cols-1 gap-1.5 pt-1">
-          <!-- Export Cursor-on-Target (CoT) XML Button -->
-          <button id="btn-export-cot" class="w-full py-1.5 rounded-lg bg-slate-800/90 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            EXPORT CURSOR-ON-TARGET (CoT) XML
-          </button>
+          <div class="grid grid-cols-2 gap-1.5">
+            <!-- Export Cursor-on-Target (CoT) XML Button -->
+            <button id="btn-export-cot" class="py-1.5 rounded-lg bg-slate-800/90 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              CoT XML
+            </button>
+            <!-- Stream Cursor-on-Target (CoT) Broadcast -->
+            <button id="btn-stream-cot" class="py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-400/60 text-cyan-200 hover:bg-cyan-900/60 font-semibold mono text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+              STREAM CoT
+            </button>
+          </div>
           
           <div class="grid grid-cols-2 gap-1.5">
             <!-- Export MAVLink .plan Button -->
             <button id="btn-export-qgc" class="py-1.5 rounded-lg bg-slate-800/90 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer">
-              <span>✈️</span> EXPORT QGC .PLAN
+              <span>✈️</span> QGC .PLAN
             </button>
 
             <!-- Export After-Action Report (AAR) Button -->
             <button id="btn-export-aar" class="py-1.5 rounded-lg bg-slate-800/90 border border-purple-500/40 text-purple-300 hover:bg-purple-500/20 font-semibold mono text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer">
-              <span>📜</span> EXPORT AAR JSON
+              <span>📜</span> EXPORT AAR
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1">
+            <!-- AAR Replay Button (TRL 7-E) -->
+            <button id="btn-replay-aar" class="py-1.5 rounded-lg bg-purple-950/60 border border-purple-400/50 text-purple-200 hover:bg-purple-900/50 font-semibold mono text-[9px] flex items-center justify-center gap-0.5 transition-all cursor-pointer" title="Replay AAR event timeline">
+              <span>▶️</span> REPLAY AAR
+            </button>
+            <!-- 3D Radar Fence Toggle (TRL 7-F) -->
+            <button id="btn-toggle-fence" class="py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-400/50 text-cyan-200 hover:bg-cyan-900/50 font-semibold mono text-[9px] flex items-center justify-center gap-0.5 transition-all cursor-pointer" title="Toggle 3D Radar Coverage Fence">
+              <span>🌐</span> FENCE 3D
+            </button>
+            <!-- ADS-B Telemetry Bridge (TRL 7-G) -->
+            <button id="btn-toggle-adsb" class="py-1.5 rounded-lg bg-amber-950/60 border border-amber-400/50 text-amber-200 hover:bg-amber-900/50 font-semibold mono text-[9px] flex items-center justify-center gap-0.5 transition-all cursor-pointer" title="Ingest Live ADS-B Airspace Feed">
+              <span>🛰️</span> ADS-B AIR
             </button>
           </div>
         </div>
@@ -739,6 +761,7 @@
     // 1. FORWARD OPERATING AIRBASE (ACE ARCHETYPE)
     // ==========================================
     let rotatingRadarMesh = null;
+    let radarFenceMeshGroup = null;
 
     function buildAirbase() {
       clearGroup(facilityGroup);
@@ -794,6 +817,38 @@
       rotatingRadarMesh.position.set(-50, 12.6, 25);
       rotatingRadarMesh.rotation.x = Math.PI / 2.3;
       facilityGroup.add(rotatingRadarMesh);
+
+      // 3D Radar Fence Coverage Volume (TRL 7-F)
+      radarFenceMeshGroup = new THREE.Group();
+      radarFenceMeshGroup.name = 'radarFenceVolume';
+      radarFenceMeshGroup.visible = false;
+
+      const fenceConeGeo = new THREE.ConeGeometry(95, 38, 36, 1, true);
+      const fenceConeMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        transparent: true,
+        opacity: 0.14,
+        wireframe: false,
+        side: THREE.DoubleSide
+      });
+      const fenceConeMesh = new THREE.Mesh(fenceConeGeo, fenceConeMat);
+      fenceConeMesh.rotation.x = Math.PI;
+      fenceConeMesh.position.set(-50, 24, 25);
+      radarFenceMeshGroup.add(fenceConeMesh);
+
+      const ringGeo = new THREE.RingGeometry(93, 95, 48);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        transparent: true,
+        opacity: 0.45,
+        side: THREE.DoubleSide
+      });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.set(-50, 0.2, 25);
+      radarFenceMeshGroup.add(ringMesh);
+
+      facilityGroup.add(radarFenceMeshGroup);
 
       // Low-Cost Attritable Interceptor Quad-Canisters (4 Batteries)
       const podPositions = [[-25, 25], [25, 25], [-25, -5], [25, -5]];
@@ -1096,6 +1151,88 @@
       });
     }
 
+    // Stream Cursor-on-Target (CoT) Live Broadcast Handler (TRL 7-B)
+    const streamCotBtn = document.getElementById('btn-stream-cot');
+    if (streamCotBtn) {
+      streamCotBtn.addEventListener('click', () => {
+        const envelope = swarm.streamCotThreat({
+          uid: 'TRK-UAS-0842',
+          lat: 30.2672,
+          lon: -97.7431,
+          alt: 18,
+          speed: 185,
+          heading: 48
+        });
+        if (typeof window.appendSwarmEvent === 'function') {
+          window.appendSwarmEvent(`[CotStreamAgent] Live broadcast: ${envelope.uid} (${envelope.type}) seq #${envelope.seq} → ATAK Bus`, 'text-cyan-300 font-semibold');
+        }
+        alert(`📡 CURSOR-ON-TARGET (CoT) BROADCAST ACTIVE:\n• UID: ${envelope.uid}\n• Type: ${envelope.type} (MIL-STD-2525C)\n• Bus: BroadcastChannel 'aetheris-cot-bus'\n• Seq: #${envelope.seq}`);
+      });
+    }
+
+    // AAR Replay Timeline Handler (TRL 7-E)
+    const replayAarBtn = document.getElementById('btn-replay-aar');
+    if (replayAarBtn) {
+      replayAarBtn.addEventListener('click', () => {
+        try {
+          const aarJson = JSON.parse(swarm.exportAfterActionReport({ facility: 'Expeditionary Airfield Alpha' }));
+          if (typeof window.appendSwarmEvent === 'function') {
+            window.appendSwarmEvent(`[AarReplayEngine] Replaying session ${aarJson.sessionId}...`, 'text-purple-300 font-bold');
+          }
+          
+          const engine = swarm.createReplayEngine(aarJson, { speedMultiplier: 4, minIntervalMs: 250 });
+          engine.onEvent = (evt) => {
+            if (typeof window.appendSwarmEvent === 'function') {
+              window.appendSwarmEvent(`[REPLAY #${evt.seq}] ${evt.actor} → ${evt.action}`, 'text-purple-300');
+            }
+          };
+          engine.onComplete = () => {
+            const debrief = engine.generateDebrief();
+            if (typeof window.appendSwarmEvent === 'function') {
+              window.appendSwarmEvent(`[REPLAY COMPLETE] ${debrief.verdict} (${debrief.totalEvents} events replayed)`, 'text-emerald-400 font-bold');
+            }
+            alert(`▶️ AAR REPLAY DEBRIEF COMPLETE:\n• Session: ${debrief.sessionId}\n• Total Events: ${debrief.totalEvents}\n• Intercepts: ${debrief.intercepts}\n• Verdict: ${debrief.verdict}`);
+          };
+          engine.play();
+        } catch (err) {
+          alert(`⚠️ REPLAY FAILED:\n${err.message}`);
+        }
+      });
+    }
+
+    // 3D Radar Fence Toggle Handler (TRL 7-F)
+    const toggleFenceBtn = document.getElementById('btn-toggle-fence');
+    if (toggleFenceBtn) {
+      toggleFenceBtn.addEventListener('click', () => {
+        if (!radarFenceMeshGroup) return;
+        radarFenceMeshGroup.visible = !radarFenceMeshGroup.visible;
+        const active = radarFenceMeshGroup.visible;
+        toggleFenceBtn.className = active
+          ? "py-1.5 rounded-lg bg-cyan-500/30 border border-cyan-400 text-cyan-200 font-bold mono text-[9px] flex items-center justify-center gap-0.5 transition-all shadow-md shadow-cyan-500/20"
+          : "py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-400/50 text-cyan-200 hover:bg-cyan-900/50 font-semibold mono text-[9px] flex items-center justify-center gap-0.5 transition-all cursor-pointer";
+        if (typeof window.appendSwarmEvent === 'function') {
+          window.appendSwarmEvent(`[RadarFenceAgent] 3D Coverage Fence: ${active ? 'ENGAGED (3.2km conical volume)' : 'DISENGAGED'}`, active ? 'text-cyan-300' : 'text-slate-400');
+        }
+      });
+    }
+
+    // ADS-B Airspace Feed Handler (TRL 7-G)
+    const toggleAdsbBtn = document.getElementById('btn-toggle-adsb');
+    if (toggleAdsbBtn) {
+      toggleAdsbBtn.addEventListener('click', () => {
+        const tracks = swarm.adsbBridge.generateDemoTracks();
+        if (typeof window.appendSwarmEvent === 'function') {
+          window.appendSwarmEvent(`[AdsbBridge] Ingested ${tracks.length} ADS-B airspace tracks`, 'text-amber-300 font-bold');
+          tracks.forEach(t => {
+            const color = t.military ? 'text-rose-400' : (t.squawk === '7700' ? 'text-red-400 font-bold' : (!t.cooperative ? 'text-purple-400' : 'text-slate-300'));
+            const tag = t.military ? ' [MILITARY]' : (t.squawk === '7700' ? ' [EMERGENCY 7700]' : (!t.cooperative ? ' [NON-COOP GHOST]' : ''));
+            window.appendSwarmEvent(`  ✈️ ${t.callsign} (${t.uid})${tag} Alt: ${t.alt || 0}m, Spd: ${Math.round(t.speed || 0)}km/h`, color);
+          });
+        }
+        alert(`🛰️ ADS-B AIRSPACE INGESTION ACTIVE:\n• Total Tracks: ${tracks.length}\n• Military Track: TOPGUN1 (ICAO AE45BC)\n• Emergency: N12345 (Squawk 7700)\n• Non-Cooperative: GHOST (RCS only, no transponder)`);
+      });
+    }
+
     // Active Swarm Flight Array for Multi-Target Raids
     const activeFlightPairs = [];
 
@@ -1275,6 +1412,11 @@
         rotatingRadarMesh.rotation.z += 0.035;
       }
 
+      // Radar Fence Volume gentle rotation
+      if (radarFenceMeshGroup && radarFenceMeshGroup.visible) {
+        radarFenceMeshGroup.rotation.y += 0.003;
+      }
+
       // Animate Active Blast Shockwaves
       for (let i = activeShockwaves.length - 1; i >= 0; i--) {
         const sw = activeShockwaves[i];
@@ -1335,9 +1477,10 @@
           spawnShockwave(pair.threatMesh.position.clone(), 25);
           playShockwaveAudio();
           pair.threatMesh.visible = false;
-          pair.interceptorMesh.visible = false;
         }
-      }\n\n      // FPS Monitor
+      }
+
+      // FPS Monitor
       frameCount++;
       if (time - lastTime >= 1000) {
         fpsEl.textContent = frameCount;
@@ -1502,6 +1645,7 @@
       el.appendChild(div);
       el.scrollTop = el.scrollHeight;
     }
+    window.appendSwarmEvent = appendSwarmEvent;
   </script>
 </body>
 </html>

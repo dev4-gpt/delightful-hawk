@@ -11,6 +11,10 @@ import { ThreatAssessorAgent } from './threatAssessorAgent.js';
 import { FireControlAgent } from './fireControlAgent.js';
 import { AgentShieldGuard } from './agentShieldGuard.js';
 import { BudgetGovernor } from './budgetGovernor.js';
+import { CotStreamAgent } from './cotStreamAgent.js';
+import { RadarFenceAgent } from './radarFenceAgent.js';
+import { AdsbBridge } from './adsbBridge.js';
+import { AarReplayEngine } from './aarReplayEngine.js';
 
 export class MasterRouterSwarm {
   constructor(options = {}) {
@@ -23,6 +27,11 @@ export class MasterRouterSwarm {
     this.fireControl = new FireControlAgent(options.fireOptions);
     this.agentShield = new AgentShieldGuard(options.shieldOptions);
     this.budgetGovernor = new BudgetGovernor(options.budgetOptions);
+
+    // TRL 7 Multi-Domain specialist agents
+    this.cotStream = new CotStreamAgent(options.cotOptions);
+    this.radarFence = new RadarFenceAgent(options.fenceOptions);
+    this.adsbBridge = new AdsbBridge(options.adsbOptions);
 
     this.eventLog = [];
     this.subscribers = new Set();
@@ -279,5 +288,57 @@ export class MasterRouterSwarm {
       iffReason: iff.reason,
       iffConfidence: iff.confidence
     };
+  }
+
+  /**
+   * Instantiates an AAR Replay Engine from a previously exported report.
+   * @param {Object} aar - Parsed AAR JSON object
+   * @param {Object} [options] - Replay options (speedMultiplier, etc.)
+   * @returns {AarReplayEngine}
+   */
+  createReplayEngine(aar, options = {}) {
+    return new AarReplayEngine(aar, options);
+  }
+
+  /**
+   * Broadcasts a hostile threat track via Cursor-on-Target XML.
+   * @param {Object} track - Threat track
+   * @returns {Object} CoT broadcast envelope
+   */
+  streamCotThreat(track) {
+    const envelope = this.cotStream.broadcastThreat(track);
+    this.broadcast('CotStreamAgent', 'COT_THREAT_BROADCAST', { uid: envelope.uid });
+    return envelope;
+  }
+
+  /**
+   * Broadcasts a friendly kinetic interceptor launch via Cursor-on-Target XML.
+   * @param {Object} pod - Interceptor pod descriptor
+   * @returns {Object} CoT broadcast envelope
+   */
+  streamCotInterceptorLaunch(pod) {
+    const envelope = this.cotStream.broadcastInterceptorLaunch(pod);
+    this.broadcast('CotStreamAgent', 'COT_INTERCEPTOR_LAUNCH', { uid: envelope.uid });
+    return envelope;
+  }
+
+  /**
+   * Ingests OpenSky state vectors or synthetic ADS-B telemetry into the ADS-B Bridge.
+   * @param {Object} openskyResponse - OpenSky format response
+   * @returns {Array<Object>} Ingested threat tracks
+   */
+  ingestAdsbStates(openskyResponse) {
+    const tracks = this.adsbBridge.ingestOpenSky(openskyResponse);
+    this.broadcast('AdsbBridge', 'ADSB_TRACKS_INGESTED', { count: tracks.length });
+    return tracks;
+  }
+
+  /**
+   * Evaluates interlocking radar fence coverage against an ingress scenario.
+   * @param {Object} [scenario] - Ingress altitude and terrain parameters
+   * @returns {Object} Fence assessment
+   */
+  assessRadarFence(scenario = {}) {
+    return this.radarFence.assessFence(scenario);
   }
 }
