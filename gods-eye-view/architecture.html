@@ -10,16 +10,41 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- GSAP 3 + ScrollTrigger (Antigravity Design Expert) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <!-- Premium Military Typography: Rajdhani (headers) + Space Mono (data readouts) -->
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ── DEFCON Color Theme System ────────────────────────────────────── */
     :root {
       --bg: #050811;
-      --card-bg: rgba(9, 14, 26, 0.92);
-      --border: rgba(0, 240, 255, 0.25);
+      --card-bg: rgba(9, 14, 26, 0.88);
+      --border: rgba(0, 240, 255, 0.22);
       --accent: #00f0ff;
       --danger: #ff2255;
       --warning: #ffaa00;
       --success: #00ff88;
+
+      /* DEFCON theme tokens — toggled by JS */
+      --defcon-glow:   rgba(0, 240, 255, 0.18);
+      --defcon-ring:   rgba(0, 240, 255, 0.35);
+      --defcon-text:   #00f0ff;
+      --defcon-badge:  rgba(0, 240, 255, 0.12);
     }
+    :root[data-defcon="2"] {
+      --defcon-glow:   rgba(255, 34, 85, 0.22);
+      --defcon-ring:   rgba(255, 34, 85, 0.50);
+      --defcon-text:   #ff2255;
+      --defcon-badge:  rgba(255, 34, 85, 0.15);
+    }
+    :root[data-defcon="1"] {
+      --defcon-glow:   rgba(255, 255, 255, 0.18);
+      --defcon-ring:   rgba(255, 255, 255, 0.55);
+      --defcon-text:   #ffffff;
+      --defcon-badge:  rgba(255, 255, 255, 0.12);
+    }
+
+    /* ── Base ─────────────────────────────────────────────────────────── */
     body {
       background-color: var(--bg);
       color: #e2e8f0;
@@ -27,36 +52,138 @@
       overflow: hidden;
       user-select: none;
     }
-    .mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
+    h1, .hud-title { font-family: 'Rajdhani', sans-serif; letter-spacing: 0.08em; }
+    .mono         { font-family: 'JetBrains Mono', monospace; }
+    .data-mono    { font-family: 'Space Mono', monospace; }
+
+    /* ── Glassmorphism Panels (Antigravity Design Expert) ─────────────── */
     .glass-panel {
       background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
       border: 1px solid var(--border);
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.80),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 0 0 1px rgba(0, 0, 0, 0.3);
+      will-change: transform;
     }
-    .slider-accent {
-      accent-color: var(--accent);
+    /* Floating depth: elements appear lifted off the surface */
+    .glass-panel:hover {
+      box-shadow:
+        0 28px 72px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        0 0 24px var(--defcon-glow);
+      transition: box-shadow 0.4s ease-out;
     }
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+
+    /* ── DEFCON-aware animated ring border on fire control ────────────── */
+    .fire-control-panel {
+      position: relative;
     }
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.25);
+    .fire-control-panel::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--defcon-ring), transparent 60%);
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: -1;
+      transition: background 0.8s ease;
     }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 240, 255, 0.35);
+
+    /* ── IFF Status Badge ─────────────────────────────────────────────── */
+    .iff-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
       border-radius: 4px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: background 0.3s ease, color 0.3s ease;
     }
+    .iff-badge.hostile  { background: rgba(255,34,85,0.18);  color: #ff2255; border: 1px solid rgba(255,34,85,0.45); }
+    .iff-badge.friendly { background: rgba(0,255,136,0.15);  color: #00ff88; border: 1px solid rgba(0,255,136,0.40); }
+    .iff-badge.unknown  { background: rgba(255,170,0,0.15);  color: #ffaa00; border: 1px solid rgba(255,170,0,0.40); }
+
+    /* ── Kalman Prediction Badge ──────────────────────────────────────── */
+    .kalman-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+      border: 1px solid rgba(139, 92, 246, 0.35);
+    }
+    .kalman-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #a78bfa;
+      animation: kalmanPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes kalmanPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.3; transform: scale(0.6); }
+    }
+
+    /* ── Agent swarm mesh badges ──────────────────────────────────────── */
+    .swarm-badge {
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--defcon-badge);
+      border: 1px solid var(--defcon-ring);
+      color: var(--defcon-text);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      transition: background 0.5s, border-color 0.5s;
+      will-change: transform;
+    }
+
+    /* ── Fire button: spatial 3D press effect ─────────────────────────── */
+    #btn-fire-intercept, #btn-fire-swarm {
+      transform: perspective(400px) rotateX(3deg);
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    #btn-fire-intercept:active, #btn-fire-swarm:active {
+      transform: perspective(400px) rotateX(0deg) scale(0.97);
+    }
+
+    /* ── GSAP entrance: panels start invisible/shifted ────────────────── */
+    .hud-panel-enter {
+      opacity: 0;
+      transform: translateY(22px);
+      will-change: transform, opacity;
+    }
+
+    /* ── Scrollbar ────────────────────────────────────────────────────── */
+    .slider-accent { accent-color: var(--accent); }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.25); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.35); border-radius: 4px; }
+
+    /* ── Pulse animations ─────────────────────────────────────────────── */
     .pulse-danger {
       animation: pulseRed 2s infinite ease-in-out;
     }
     @keyframes pulseRed {
-      0%, 100% { opacity: 0.9; filter: drop-shadow(0 0 6px rgba(255, 34, 85, 0.6)); }
-      50% { opacity: 0.4; filter: drop-shadow(0 0 1px rgba(255, 34, 85, 0.2)); }
+      0%, 100% { opacity: 0.9; filter: drop-shadow(0 0 6px rgba(255,34,85,0.6)); }
+      50%       { opacity: 0.4; filter: drop-shadow(0 0 1px rgba(255,34,85,0.2)); }
+    }
+
+    /* ── Reduced motion override ──────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -70,10 +197,11 @@
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-sm font-semibold tracking-wide text-white">AETHERIS <span class="text-rose-400">DEFENSE TWIN</span></h1>
-          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-rose-500/15 text-rose-300 border border-rose-500/40">DoD C-UAS BASE C2</span>
-          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">YC RFS COMPLIANT</span>
-          <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">DEFCON 2 ARMED</span>
+          <h1 class="hud-title text-sm font-bold tracking-widest text-white uppercase">AETHERIS <span class="text-rose-400">DEFENSE TWIN</span></h1>
+          <span class="px-2 py-0.5 text-[10px] data-mono rounded bg-rose-500/15 text-rose-300 border border-rose-500/40">DoD C-UAS</span>
+          <span class="px-2 py-0.5 text-[10px] data-mono rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">YC RFS</span>
+          <!-- DEFCON Level Toggle -->
+          <button id="btn-defcon-toggle" onclick="cycleDefcon()" class="px-2 py-0.5 text-[10px] data-mono rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-all cursor-pointer" title="Cycle DEFCON Level">DEFCON 2 ARMED</button>
         </div>
       </div>
     </div>
@@ -340,36 +468,46 @@
         </div>
       </div>
 
-      <!-- Autonomous Sensor-to-Shooter Fire Control -->
-      <div class="glass-panel rounded-xl p-3.5 flex flex-col gap-3 border-rose-500/40">
+
+      <!-- Autonomous Sensor-to-Shooter Fire Control (TRL 7 — IFF + Kalman) -->
+      <div class="glass-panel fire-control-panel hud-panel-enter rounded-xl p-3.5 flex flex-col gap-3 border-rose-500/40">
         <div class="flex items-center justify-between border-b border-rose-500/30 pb-2">
-          <span class="font-semibold text-rose-300 tracking-wide flex items-center gap-1.5 mono">
+          <span class="hud-title font-bold text-rose-300 tracking-wider flex items-center gap-1.5 text-[13px]">
             <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            SENSOR-TO-SHOOTER FIRE CONTROL
+            SENSOR-TO-SHOOTER
           </span>
-          <span class="mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">AUTO TRACK</span>
+          <div class="flex items-center gap-1.5">
+            <span class="data-mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">AUTO TRACK</span>
+            <!-- IFF Status Badge (TRL 7-D) -->
+            <span id="iff-status-badge" class="iff-badge hostile">⬡ IFF: HOSTILE</span>
+          </div>
         </div>
 
-        <div class="flex flex-col gap-2 mono text-[11px]">
-          <div class="flex justify-between">
-            <span class="text-slate-400">Target Track ID:</span>
-            <span class="text-rose-400 font-bold">TRK-UAS-0842</span>
+        <div class="flex flex-col gap-2 text-[11px]">
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 mono">Target Track ID:</span>
+            <span id="hud-track-id" class="data-mono text-rose-400 font-bold">TRK-UAS-0842</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">Speed / Ingress Angle:</span>
-            <span class="text-white font-medium">185 km/h · Azimuth 048°</span>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 mono">Speed / Ingress:</span>
+            <span class="data-mono text-white">185 km/h · Az 048°</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">Altitude AGL:</span>
-            <span class="text-amber-400 font-medium">18 m (Terrain Masked)</span>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 mono">Altitude AGL:</span>
+            <span class="data-mono text-amber-400">18 m (Terrain Masked)</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">Time to Base Impact:</span>
-            <span class="text-rose-400 font-bold text-xs">T - 18.4 SECONDS</span>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 mono">Time to Impact:</span>
+            <span id="hud-tti" class="data-mono text-rose-400 font-bold">T − 18.4 SEC</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-400">Assigned Effector:</span>
-            <span class="text-emerald-400 font-bold">POD A · RAM DRONE #2</span>
+          <!-- Kalman Predicted Lead Angle (TRL 7-A) -->
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 mono">Kalman Lead Angle:</span>
+            <span class="kalman-badge"><span class="kalman-dot"></span><span id="hud-lead-angle">23.6°</span> PN-LEAD</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 mono">Assigned Effector:</span>
+            <span class="data-mono text-emerald-400 font-bold">POD-A · RAM DRONE #2</span>
           </div>
         </div>
 
@@ -1199,9 +1337,7 @@
           pair.threatMesh.visible = false;
           pair.interceptorMesh.visible = false;
         }
-      }
-
-      // FPS Monitor
+      }\n\n      // FPS Monitor
       frameCount++;
       if (time - lastTime >= 1000) {
         fpsEl.textContent = frameCount;
@@ -1212,6 +1348,160 @@
       renderer.render(scene, camera);
     }
     animate(performance.now());
+  </script>
+
+  <!-- ╔══════════════════════════════════════════════════════════════════════╗
+       ║  ANTIGRAVITY DESIGN EXPERT — TRL 7-C GLASSMORPHISM HUD SYSTEM     ║
+       ║  GSAP stagger entrance · DEFCON theme · IFF live badge · Kalman   ║
+       ╚══════════════════════════════════════════════════════════════════════╝ -->
+  <script>
+    // Wait for GSAP (loaded deferred) before running entrance animations
+    function runHudEntrance() {
+      if (typeof gsap === 'undefined') { setTimeout(runHudEntrance, 80); return; }
+
+      // Respect prefers-reduced-motion
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) {
+        document.querySelectorAll('.hud-panel-enter').forEach(el => {
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        });
+        return;
+      }
+
+      // Stagger all HUD panels in with 0.12s delay — GPU-composited (opacity + transform only)
+      gsap.to('.hud-panel-enter', {
+        opacity: 1,
+        y: 0,
+        duration: 0.55,
+        ease: 'power3.out',
+        stagger: 0.12,
+        clearProps: 'will-change'
+      });
+
+      // Left panel sections cascade
+      gsap.from('aside .glass-panel:not(.hud-panel-enter)', {
+        opacity: 0,
+        y: 18,
+        duration: 0.45,
+        ease: 'power2.out',
+        stagger: 0.09,
+        delay: 0.1,
+        clearProps: 'will-change'
+      });
+
+      // Header bar slides down
+      gsap.from('header', {
+        opacity: 0,
+        y: -16,
+        duration: 0.5,
+        ease: 'power3.out',
+        clearProps: 'transform'
+      });
+    }
+    document.addEventListener('DOMContentLoaded', runHudEntrance);
+
+    // ── DEFCON Cycle (5 = Teal | 2 = Crimson | 1 = White Phosphor) ──────
+    const DEFCON_STATES = [
+      { level: 5, label: 'DEFCON 5 — NORMAL', attr: null,   badgeClass: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' },
+      { level: 2, label: 'DEFCON 2 ARMED',    attr: '2',    badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/40' },
+      { level: 1, label: 'DEFCON 1 — WAR',    attr: '1',    badgeClass: 'bg-white/10 text-white border-white/40' },
+    ];
+    let defconIdx = 1; // start at DEFCON 2
+
+    window.cycleDefcon = function() {
+      defconIdx = (defconIdx + 1) % DEFCON_STATES.length;
+      const state = DEFCON_STATES[defconIdx];
+      const btn = document.getElementById('btn-defcon-toggle');
+      const root = document.documentElement;
+
+      // Update data attribute to swap CSS variables
+      if (state.attr) root.setAttribute('data-defcon', state.attr);
+      else root.removeAttribute('data-defcon');
+
+      // Update button label + colors
+      btn.textContent = state.label;
+      btn.className = `px-2 py-0.5 text-[10px] data-mono rounded border hover:opacity-80 transition-all cursor-pointer ${state.badgeClass}`;
+
+      // GSAP flash the fire-control panel on state change
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo('.fire-control-panel',
+          { scale: 1.012 },
+          { scale: 1, duration: 0.35, ease: 'power2.out' }
+        );
+      }
+
+      // Log to swarm stream
+      appendSwarmEvent(`[DEFCON] State change → ${state.label}`, 'text-amber-400');
+    };
+
+    // ── IFF Badge Live Cycle (simulates real-time squawk evaluation) ──────
+    const IFF_ROTATIONS = [
+      { cls: 'hostile',  label: '⬡ IFF: HOSTILE' },
+      { cls: 'unknown',  label: '◈ IFF: UNKNOWN' },
+      { cls: 'friendly', label: '◎ IFF: FRIENDLY' },
+    ];
+    let iffIdx = 0;
+
+    function tickIFF() {
+      iffIdx = (iffIdx + 1) % IFF_ROTATIONS.length;
+      const badge = document.getElementById('iff-status-badge');
+      if (!badge) return;
+      const state = IFF_ROTATIONS[iffIdx];
+      badge.className = `iff-badge ${state.cls}`;
+      badge.textContent = state.label;
+
+      // Block fire button on FRIENDLY / UNKNOWN
+      const fireBtn = document.getElementById('btn-fire-intercept');
+      if (fireBtn) {
+        const blocked = state.cls !== 'hostile';
+        fireBtn.disabled = blocked;
+        fireBtn.style.opacity = blocked ? '0.4' : '1';
+        fireBtn.title = blocked
+          ? `BLOCKED — IFF ${state.cls.toUpperCase()}: Cannot fire`
+          : 'EXECUTE AUTONOMOUS INTERCEPT';
+      }
+
+      if (state.cls !== 'hostile') {
+        appendSwarmEvent(`[AgentShieldGuard] IFF ${state.cls.toUpperCase()} — kinetic strike BLOCKED (STANAG 4193)`, 'text-amber-400');
+      }
+    }
+    setInterval(tickIFF, 6000); // cycle every 6s to simulate interrogation cycles
+
+    // ── Kalman Lead Angle Readout (simulates α-β filter convergence) ──────
+    const LEAD_ANGLES = ['21.4°', '23.1°', '22.8°', '23.6°', '24.0°', '23.3°'];
+    let leadIdx = 0;
+    function tickKalman() {
+      const el = document.getElementById('hud-lead-angle');
+      if (!el) return;
+      leadIdx = (leadIdx + 1) % LEAD_ANGLES.length;
+      el.textContent = LEAD_ANGLES[leadIdx];
+    }
+    setInterval(tickKalman, 1800);
+
+    // ── T-minus Countdown ────────────────────────────────────────────────
+    let ttiSeconds = 18.4;
+    function tickTTI() {
+      const el = document.getElementById('hud-tti');
+      if (!el) return;
+      ttiSeconds = Math.max(0, ttiSeconds - 0.1);
+      el.textContent = ttiSeconds > 0 ? `T − ${ttiSeconds.toFixed(1)} SEC` : `IMPACT IMMINENT`;
+      el.className = ttiSeconds < 5
+        ? 'data-mono text-white font-bold pulse-danger'
+        : 'data-mono text-rose-400 font-bold';
+    }
+    setInterval(tickTTI, 100);
+
+    // ── Helper: append to swarm stream ──────────────────────────────────
+    function appendSwarmEvent(text, colorClass) {
+      const el = document.getElementById('swarm-event-stream');
+      if (!el) return;
+      const div = document.createElement('div');
+      div.className = colorClass || 'text-slate-300';
+      div.textContent = `[${new Date().toISOString().substring(11,19)}Z] ${text}`;
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
   </script>
 </body>
 </html>
