@@ -39,18 +39,38 @@ export class AarReplayEngine {
    * @param {number} [opts.minIntervalMs=50]  - Minimum ms between events (prevents flooding)
    */
   constructor(aar, opts = {}) {
-    if (!aar || !Array.isArray(aar.events)) {
-      throw new TypeError('AarReplayEngine: aar must be an object with an events array');
+    let parsed = aar;
+    if (typeof aar === 'string') {
+      try {
+        parsed = JSON.parse(aar);
+      } catch (err) {
+        throw new TypeError(`AarReplayEngine: failed to parse AAR JSON string: ${err.message}`);
+      }
     }
 
-    this.sessionId       = aar.sessionId  ?? 'UNKNOWN';
-    this.generatedAt     = aar.generatedAt ?? null;
-    this.merkleRoot      = aar.merkleRoot  ?? null;
+    const rawList = parsed?.events ?? parsed?.ledger;
+    if (!parsed || !Array.isArray(rawList)) {
+      throw new TypeError('AarReplayEngine: aar must be an object with an events or ledger array');
+    }
+
+    this.sessionId       = parsed.sessionId ?? parsed.metadata?.facility ?? 'AETHERIS-C2';
+    this.generatedAt     = parsed.generatedAt ?? null;
+    this.merkleRoot      = parsed.merkleRoot ?? parsed.auditSummary?.latestBlockHash ?? null;
     this.speedMultiplier = Math.max(0.1, opts.speedMultiplier ?? 1);
     this.minIntervalMs   = opts.minIntervalMs ?? 50;
 
+    // Normalize events whether they come from raw auditLedger or normalized events array
+    const normalized = rawList.map((e, idx) => ({
+      seq:    e.seq ?? e.index ?? idx,
+      ts:     e.ts ?? e.timestamp ?? Date.now(),
+      actor:  e.actor ?? e.clearance ?? 'SYSTEM',
+      action: e.action ?? e.eventType ?? 'EVENT',
+      data:   e.data ?? {},
+      hash:   e.hash ?? null
+    }));
+
     // Sort events ascending by sequence number, then timestamp
-    this.events = [...aar.events].sort((a, b) =>
+    this.events = normalized.sort((a, b) =>
       (a.seq ?? 0) - (b.seq ?? 0) || (a.ts ?? 0) - (b.ts ?? 0)
     );
 

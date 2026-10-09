@@ -288,10 +288,9 @@ export class ThreatAssessorAgent {
       (Math.asin(1 / closureRatioMs) * (180 / Math.PI)).toFixed(2)
     );
 
-    // Confidence: higher after more Kalman warmup, degrades with high speed
-    const confidence = Number(
-      Math.min(1, (WARMUP / 5) * (1 - speedMs / 300)).toFixed(3)
-    );
+    // Confidence: higher after more Kalman warmup, degrades with high speed [0, 1]
+    const rawConf = (WARMUP / 5) * (1 - Math.min(speedMs, 300) / 300);
+    const confidence = Number(Math.max(0, Math.min(1, rawConf)).toFixed(3));
 
     return {
       agent: this.name,

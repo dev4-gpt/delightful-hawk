@@ -92,13 +92,20 @@ export function buildRadarSectorGeoJSON(params) {
   const degsPerStep = sweepDeg / steps;
   const coords     = [[lon, lat]]; // origin
 
+  // Clamp latitude to safe range [-89.99, 89.99] to prevent cos(90) = 0 polar explosion
+  const safeLat = Math.min(89.99, Math.max(-89.99, lat));
+  const cosLat  = Math.max(0.001, Math.cos(safeLat * DEG_TO_RAD));
+
   for (let i = 0; i <= steps; i++) {
     const azDeg = startDeg + i * degsPerStep;
     const azRad = azDeg * DEG_TO_RAD;
     // Approximate: 1 deg lat ≈ 111320m, lon depends on lat
     const dLat = (rangeM * Math.cos(azRad)) / 111_320;
-    const dLon = (rangeM * Math.sin(azRad)) / (111_320 * Math.cos(lat * DEG_TO_RAD));
-    coords.push([lon + dLon, lat + dLat]);
+    const dLon = (rangeM * Math.sin(azRad)) / (111_320 * cosLat);
+    const pointLat = Math.min(90, Math.max(-90, lat + dLat));
+    const rawLon   = lon + dLon;
+    const pointLon = ((((rawLon + 180) % 360) + 360) % 360) - 180;
+    coords.push([pointLon, pointLat]);
   }
   coords.push([lon, lat]); // close polygon
 

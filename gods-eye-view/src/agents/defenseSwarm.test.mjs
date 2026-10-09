@@ -649,3 +649,110 @@ test('AdsbBridge: generateDemoTracks produces 6 synthetic aircraft tracks', () =
   assert.ok(bridge.geofenceTracks.length >= 1, 'Should include tracks inside geofence');
   assert.equal(bridge.frameCount, 1);
 });
+
+// ==========================================
+// ECC AUDIT — RED TESTS (bugs to fix)
+// ==========================================
+
+// BUG-1: agentShieldGuard — audit ledger trimming breaks Merkle chain
+// When ledger exceeds 500 entries, splice(1,1) removes exactly one block
+// from position 1, leaving block[1].prevHash pointing at a removed block.
+// verifyAuditChain() must return true on a freshly trimmed chain.
+test('AgentShieldGuard: audit chain remains valid after 501 events (trim boundary)', () => {
+  const guard = new AgentShieldGuard();
+  for (let i = 0; i < 501; i++) {
+    guard.recordAuditEvent('BASE_COMMANDER', 'TEST_EVENT', { i });
+  }
+  assert.equal(guard.verifyAuditChain(), true,
+    'Merkle chain integrity broken after ledger trim: prevHash mismatch');
+});
+
+// BUG-2: agentShieldGuard — guardTelemetry fails on legitimate alt=0
+// In strictMode, alt=0 triggers ALT_CLAMPED_FLOOR and marks packet insecure.
+test('AgentShieldGuard: guardTelemetry passes for legitimate zero-altitude track', () => {
+  const guard = new AgentShieldGuard({ strictMode: true });
+  const result = guard.guardTelemetry({
+    lat: 28.4312,
+    lon: 77.0545,
+    alt: 0,
+    azimuth: 90,
+    text: 'Sensor ping nominal'
+  });
+  assert.equal(result.passed, true,
+    'guardTelemetry incorrectly fails on alt=0 (ALT_CLAMPED_FLOOR false positive)');
+});
+
+// BUG-3: cotStreamAgent — callsign XML injection not escaped
+test('buildCotXml: callsign with XML special characters is escaped safely', () => {
+  const xml = buildCotXml({
+    uid: 'TRK-001',
+    type: COT_TYPES.HOSTILE_UAS,
+    lat: 28.0,
+    lon: 77.0,
+    callsign: 'ATTACK-<script>alert(1)</script>'
+  });
+  assert.ok(!xml.includes('<script>'),
+    'CoT XML is vulnerable to callsign injection: raw <script> appears in output');
+});
+
+// BUG-4: threatAssessorAgent — confidence goes negative for max-speed tracks
+test('ThreatAssessorAgent: predictTrajectory confidence is never negative', () => {
+  const agent = new ThreatAssessorAgent();
+  const result = agent.predictTrajectory({
+    lat: 28.4,
+    lon: 77.0,
+    alt: 150,
+    speed: 1080, // km/h → 300 m/s (Shahed physical ceiling)
+    heading: 45
+  });
+  assert.ok(result.confidence >= 0,
+    `confidence must be >= 0, got ${result.confidence}`);
+});
+
+// BUG-5: radarFenceAgent — division by zero at lat=90
+test('buildRadarSectorGeoJSON: handles pole latitude (lat=90) without NaN/Infinity', () => {
+  const feature = buildRadarSectorGeoJSON({ lat: 90, lon: 0, rangeM: 3200 });
+  const coords = feature.geometry.coordinates[0];
+  const hasInvalid = coords.some(([lon, lat]) =>
+    !isFinite(lon) || !isFinite(lat) || isNaN(lon) || isNaN(lat)
+  );
+  assert.equal(hasInvalid, false,
+    'buildRadarSectorGeoJSON produces NaN/Infinity at lat=90 (pole)');
+});
+
+// BUG-6: Interoperability between AgentShieldGuard.exportAfterActionReport and AarReplayEngine
+test('AarReplayEngine: seamlessly replays real AAR exported by AgentShieldGuard (ledger format & string parsing)', () => {
+  const guard = new AgentShieldGuard();
+  guard.recordAuditEvent('BASE_COMMANDER', 'INTERCEPT_COMMITTED', { target: 'TRK-UAS-0842' });
+  guard.recordAuditEvent('WEAPONS_OFFICER', 'RADAR_SLEW_COMMAND', { azimuthDeg: 48 });
+
+  // Real DoD export JSON string
+  const rawExportJson = guard.exportAfterActionReport({ facility: 'Forward FOB Delta' });
+
+  // AarReplayEngine should parse the raw JSON string directly with its internal ledger
+  const engine = new AarReplayEngine(rawExportJson);
+  assert.equal(engine.totalEvents, 3); // genesis + 2 recorded events
+  assert.equal(engine.sessionId, 'Forward FOB Delta');
+  assert.ok(engine.merkleRoot !== null);
+
+  const debrief = engine.generateDebrief();
+  assert.equal(debrief.totalEvents, 3);
+  assert.equal(debrief.actors['BASE_COMMANDER'], 1);
+  assert.equal(debrief.actors['WEAPONS_OFFICER'], 1);
+});
+
+// BUG-7: AdsbBridge resilience to NaN coordinates
+test('AdsbBridge: gracefully marks NaN coordinates as non-cooperative ghost track', () => {
+  const malformedState = [
+    'a1b2c3', 'BAD1   ', 'United States', 1700000000, 1700000000,
+    'INVALID_LON', 'INVALID_LAT', 3000, false,
+    200, 90, 0, null, 3050, '1200', false, 0
+  ];
+
+  const track = stateVectorToTrack(malformedState, { protectedLat: 30.2, protectedLon: -97.7 });
+  assert.ok(track !== null);
+  assert.equal(track.cooperative, false, 'Non-numeric coords must be flagged as non-cooperative ghost');
+  assert.equal(track.lat, null);
+  assert.equal(track.lon, null);
+});
+

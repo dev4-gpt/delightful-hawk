@@ -22,6 +22,16 @@ export const COT_TYPES = Object.freeze({
   SENSOR_HEARTBEAT:  'a-n-G-E-S',     // Ground sensor heartbeat
 });
 
+/** Escape a string for safe XML attribute / text node embedding */
+function escapeXml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 /** Generate an ISO 8601 timestamp offset by `deltaMs` from now */
 function cotTime(deltaMs = 0) {
   return new Date(Date.now() + deltaMs).toISOString().replace(/\.\d+Z$/, '.00Z');
@@ -65,23 +75,29 @@ export function buildCotXml(params) {
   const start = cotTime(-1000);
   const stale = cotTime(staleSecs * 1000);
 
+  // Escape all user-supplied string fields before XML interpolation
+  const safeUid      = escapeXml(uid);
+  const safeType     = escapeXml(type);
+  const safeCallsign = escapeXml(callsign);
+  const safeHow      = escapeXml(how);
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <event version="2.0"
-       uid="${uid}"
-       type="${type}"
+       uid="${safeUid}"
+       type="${safeType}"
        time="${now}"
        start="${start}"
        stale="${stale}"
-       how="${how}">
+       how="${safeHow}">
   <point lat="${lat.toFixed(6)}"
          lon="${lon.toFixed(6)}"
          hae="${hae.toFixed(1)}"
          ce="${ce}"
          le="${le}"/>
   <detail>
-    <contact callsign="${callsign}"/>
+    <contact callsign="${safeCallsign}"/>
     <track speed="${speed.toFixed(2)}" course="${course.toFixed(1)}"/>
-    <remarks>Aetheris C-UAS generated CoT — ${type}</remarks>
+    <remarks>Aetheris C-UAS generated CoT — ${safeType}</remarks>
     <status readiness="true"/>
     <usericon iconsetpath="COT_MAPPING_2525B/a-h/a-h-A/a-h-A-M/a-h-A-M-F.png"/>
   </detail>

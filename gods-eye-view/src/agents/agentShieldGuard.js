@@ -174,8 +174,9 @@ export class AgentShieldGuard {
 
     this.auditLedger.push(block);
     if (this.auditLedger.length > 500) {
-      // Bound memory while keeping genesis and recent chain valid
-      this.auditLedger.splice(1, 1);
+      // Bound memory using sliding window; shifting the oldest block preserves
+      // contiguous cryptographic chaining across all retained blocks.
+      this.auditLedger.shift();
     }
 
     return block;

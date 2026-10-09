@@ -88,8 +88,10 @@ export function stateVectorToTrack(stateVector, opts = {}) {
   // Skip ground-based transponders
   if (onGround) return null;
 
-  // Non-cooperative ghost track (no position)
-  const isGhost = (lat == null || lon == null);
+  // Non-cooperative ghost track (no position or non-numeric coordinates)
+  const numLat  = lat != null ? Number(lat) : null;
+  const numLon  = lon != null ? Number(lon) : null;
+  const isGhost = (numLat == null || numLon == null || !isFinite(numLat) || !isFinite(numLon));
   const altM    = geoAlt ?? baroAlt ?? 0;
 
   const track = {
@@ -97,8 +99,8 @@ export function stateVectorToTrack(stateVector, opts = {}) {
     icao24:      icao24 ?? 'UNKNOWN',
     callsign:    callsign?.trim() || 'N/A',
     country:     originCountry ?? 'UNK',
-    lat:         isGhost ? null : Number(lat),
-    lon:         isGhost ? null : Number(lon),
+    lat:         isGhost ? null : numLat,
+    lon:         isGhost ? null : numLon,
     alt:         Number(altM),
     speed:       velocity != null ? Number(velocity) * 3.6 : null, // m/s → km/h
     heading:     trueTrack != null ? Number(trueTrack) : null,
